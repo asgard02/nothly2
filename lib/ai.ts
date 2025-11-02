@@ -1,0 +1,42 @@
+// Fichier serveur uniquement - utilisé dans les API routes
+import OpenAI from "openai"
+
+// Initialisation OpenAI (côté serveur uniquement)
+let openai: OpenAI | null = null
+
+// Initialise OpenAI uniquement si on est côté serveur
+if (typeof window === "undefined" && process.env.OPENAI_API_KEY) {
+  openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+  })
+}
+
+export async function improveNote(content: string) {
+  if (!openai) {
+    throw new Error("OpenAI not initialized - this function should only be called server-side")
+  }
+
+  try {
+    const prompt = `
+      Améliore ce texte pour le rendre plus clair, fluide et cohérent,
+      sans changer le sens ni ajouter de contenu inventé.
+      Garde le même niveau de détail et la même structure si elle est bonne.
+      
+      Texte :
+      ${content}
+    `
+
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o-mini", // rapide et peu coûteux
+      messages: [{ role: "user", content: prompt }],
+      max_tokens: 1000,
+      temperature: 0.7,
+    })
+
+    return completion.choices[0].message.content || null
+  } catch (error) {
+    console.error("Erreur IA :", error)
+    return null
+  }
+}
+

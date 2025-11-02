@@ -1,0 +1,158 @@
+"use client"
+
+import { useState } from "react"
+import { useRouter } from "next/navigation"
+import Sidebar from "@/components/Sidebar"
+import { CheckCircle } from "lucide-react"
+
+export default function DashboardPricingPage() {
+  const router = useRouter()
+  const [userPlan, setUserPlan] = useState("free")
+
+  const plans = [
+    {
+      id: "free",
+      name: "Free",
+      price: "0€",
+      period: "Gratuit",
+      description: "Pour découvrir Notlhy",
+      features: [
+        "Jusqu'à 100 notes",
+        "10 000 tokens IA offerts",
+        "Export Markdown",
+        "Synchronisation cloud",
+        "Accès mobile & desktop",
+        "Support communautaire",
+      ],
+    },
+    {
+      id: "gpt",
+      name: "Plus",
+      price: "9€",
+      period: "1 million de tokens",
+      description: "Pack de tokens à usage unique",
+      popular: true,
+      features: [
+        "1 million de tokens IA",
+        "Chat IA personnalisé",
+        "Résumé de PDF & images",
+        "Génération de quiz automatique",
+        "Historique de conversation IA",
+        "Pas d'expiration",
+      ],
+    },
+    {
+      id: "pro",
+      name: "Pro",
+      price: "29€",
+      period: "/mois",
+      description: "IA illimitée et support premium",
+      features: [
+        "IA illimitée",
+        "Support prioritaire",
+        "Accès anticipé aux nouvelles features",
+        "Tout de Plus inclus",
+        "Meilleures performances",
+        "API dédiée",
+      ],
+    },
+  ]
+
+
+  const handleUpgrade = (planId: string) => {
+    if (planId === "gpt") {
+      console.log("Achat de 1M tokens")
+      // TODO: Rediriger vers Stripe
+    } else if (planId === "pro") {
+      router.push("/settings/plan")
+    }
+  }
+
+  return (
+    <div className="flex h-screen bg-background">
+      <Sidebar />
+
+      {/* Contenu principal */}
+      <div className="flex-1 ml-64 overflow-y-auto">
+        <div className="max-w-6xl mx-auto py-16 px-6 flex flex-col items-center gap-12">
+          {/* Header */}
+          <div className="text-center">
+            <h1 className="text-4xl font-semibold text-foreground mb-3">
+              Choisissez votre plan
+            </h1>
+            <p className="text-muted-foreground text-center max-w-xl mx-auto">
+              Des tarifs simples et transparents pour vos besoins IA
+            </p>
+          </div>
+
+          {/* Grille de plans */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full">
+            {plans.map((plan) => (
+              <div
+                key={plan.id}
+                className="relative bg-card border border-border rounded-2xl p-8 shadow-sm hover:shadow-md transition-all hover:-translate-y-1"
+              >
+                {/* Badge "Populaire" */}
+                {plan.popular && (
+                  <div className="absolute top-4 right-4 bg-primary/10 text-primary text-xs font-semibold px-2 py-0.5 rounded-full">
+                    Populaire
+                  </div>
+                )}
+
+                {/* Contenu */}
+                <div>
+                  {/* Nom du plan */}
+                  <h3 className="text-lg font-semibold text-foreground">
+                    {plan.name}
+                  </h3>
+
+                  {/* Prix */}
+                  <div className="mt-2">
+                    <span className="text-3xl font-bold text-primary">
+                      {plan.price}
+                    </span>
+                    <span className="text-sm text-muted-foreground ml-2">
+                      {plan.period}
+                    </span>
+                  </div>
+
+                  {/* Description */}
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {plan.description}
+                  </p>
+
+                  {/* Fonctionnalités */}
+                  <ul className="mt-6 space-y-2 text-sm text-muted-foreground">
+                    {plan.features.map((feature, index) => (
+                      <li key={index} className="flex items-start gap-2">
+                        <CheckCircle className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                        <span>{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  {/* Bouton CTA */}
+                  <button
+                    onClick={() => handleUpgrade(plan.id)}
+                    className={`w-full py-2 rounded-lg font-medium mt-6 transition-all ${
+                      plan.id === userPlan
+                        ? "bg-muted text-muted-foreground cursor-default"
+                        : "bg-primary text-primary-foreground hover:bg-primary/90"
+                    }`}
+                    disabled={plan.id === userPlan}
+                  >
+                    {plan.id === userPlan
+                      ? "Plan actuel"
+                      : plan.id === "gpt"
+                      ? "Acheter des tokens"
+                      : "Passer à Pro"}
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}

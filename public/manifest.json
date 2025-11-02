@@ -1,0 +1,22 @@
+{
+  "name": "Notlhy - Notes intelligentes avec IA",
+  "short_name": "Notlhy",
+  "description": "Créez, éditez et transformez vos notes en fiches de révision et quiz grâce à l'IA",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#3B82F6",
+  "icons": [
+    {
+      "src": "/logo-icon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/logo-icon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
+
