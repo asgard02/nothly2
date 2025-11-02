@@ -121,4 +121,3 @@ export async function mockLogin(email: string): Promise<User> {
   console.log('[mockLogin] Nouvel utilisateur créé:', normalizedEmail)
   return newUser as User
 }
-
