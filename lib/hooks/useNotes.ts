@@ -6,7 +6,7 @@ export interface Note {
   content: string
   user_id: string
   created_at?: string
-  updated_at?: string
+  updated_at: string
 }
 
 // Hook pour récupérer toutes les notes

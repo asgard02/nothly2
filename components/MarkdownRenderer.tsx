@@ -47,7 +47,7 @@ export default function MarkdownRenderer({ content }: { content: string }) {
         rehypePlugins={[rehypeHighlight]}
         components={{
           // Style personnalisé pour les blocs de code
-          code({ node, inline, className, children, ...props }) {
+          code({ node, inline, className, children, ...props }: any) {
             return !inline ? (
               <pre className="bg-muted text-foreground p-3 rounded-lg overflow-x-auto border border-border">
                 <code {...props}>{children}</code>

@@ -50,7 +50,7 @@ export default function MarkdownMessage({ content }: { content: string }) {
           ul: ({ children }) => <ul className="list-disc ml-5 my-2">{children}</ul>,
           li: ({ children }) => <li className="ml-2">{children}</li>,
           strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
-          code({ inline, children, className, ...props }) {
+          code({ node, inline, className, children, ...props }: any) {
             return !inline ? (
               <pre className="bg-muted text-foreground p-3 rounded-lg overflow-x-auto border border-border">
                 <code {...props}>{children}</code>

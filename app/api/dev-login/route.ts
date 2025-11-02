@@ -2,8 +2,15 @@ import { NextRequest, NextResponse } from "next/server"
 import { cookies } from "next/headers"
 import { mockLogin } from "@/lib/auth"
 
+// Force le runtime Node.js pour cette route (nécessaire pour Supabase)
+export const runtime = "nodejs"
+
+// Route de développement uniquement - désactivée en production
 // GET: Affiche un formulaire de login simple pour le dev
 export async function GET(request: NextRequest) {
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json({ error: 'Route de développement non disponible' }, { status: 404 })
+  }
   const redirect = request.nextUrl.searchParams.get("redirect") || "/dashboard"
   
   return new NextResponse(
@@ -111,6 +118,10 @@ export async function GET(request: NextRequest) {
 
 // POST: Crée/récupère un utilisateur et définit un cookie
 export async function POST(request: NextRequest) {
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json({ error: 'Route de développement non disponible' }, { status: 404 })
+  }
+  
   const formData = await request.formData()
   const email = formData.get("email") as string
   const redirect = request.nextUrl.searchParams.get("redirect") || "/dashboard"
@@ -125,9 +136,10 @@ export async function POST(request: NextRequest) {
     const cookieStore = await cookies()
     
     // Stocke l'ID, email et rôle dans les cookies
+    // Note: Cette route n'est jamais appelée en production (vérifié ligne 118)
     cookieStore.set("user-id", user.id, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: false, // Dev only
       sameSite: "lax",
       maxAge: 60 * 60 * 24 * 30, // 30 jours
       path: "/",
@@ -135,7 +147,7 @@ export async function POST(request: NextRequest) {
     
     cookieStore.set("user-email", user.email, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: false, // Dev only
       sameSite: "lax",
       maxAge: 60 * 60 * 24 * 30,
       path: "/",
@@ -143,7 +155,7 @@ export async function POST(request: NextRequest) {
     
     cookieStore.set("user-role", user.role, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: false, // Dev only
       sameSite: "lax",
       maxAge: 60 * 60 * 24 * 30,
       path: "/",
@@ -160,6 +172,10 @@ export async function POST(request: NextRequest) {
 
 // DELETE: Déconnexion
 export async function DELETE() {
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json({ error: 'Route de développement non disponible' }, { status: 404 })
+  }
+  
   const cookieStore = await cookies()
   cookieStore.delete("user-id")
   cookieStore.delete("user-email")
