@@ -1,6 +1,6 @@
 // Store Zustand pour le cache local des notes (Optimistic UI)
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
+import { persist, createJSONStorage } from 'zustand/middleware'
 import type { Note } from './db'
 
 interface NotesState {
@@ -10,6 +10,20 @@ interface NotesState {
   replaceOptimisticNote: (tempId: string, realNote: Note) => void
   removeNote: (id: string) => void
   updateNote: (id: string, updates: Partial<Note>) => void
+}
+
+// Storage sécurisé pour le SSR - ne s'exécute que côté client
+const getStorage = () => {
+  if (typeof window === 'undefined') {
+    // Côté serveur : retourne un storage mock qui ne fait rien
+    return {
+      getItem: () => null,
+      setItem: () => {},
+      removeItem: () => {},
+    }
+  }
+  // Côté client : utilise localStorage
+  return localStorage
 }
 
 export const useNotesStore = create<NotesState>()(
@@ -49,6 +63,7 @@ export const useNotesStore = create<NotesState>()(
     }),
     {
       name: 'notlhy-notes-cache', // Nom dans localStorage
+      storage: createJSONStorage(() => getStorage()), // Storage sécurisé pour SSR
       partialize: (state) => ({ notes: state.notes }), // Ne persiste que les notes
     }
   )
