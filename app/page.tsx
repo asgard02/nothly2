@@ -4,8 +4,32 @@ import Link from "next/link"
 import Navbar from "@/components/navbar"
 import { Button } from "@/components/ui/button"
 import { Brain, FolderTree, Zap, Sparkles, ArrowRight } from "lucide-react"
+import { useEffect } from "react"
+import { useSearchParams } from "next/navigation"
 
 export default function HomePage() {
+  const searchParams = useSearchParams()
+
+  useEffect(() => {
+    // Si on a une ancre dans l'URL, scroll vers la section
+    const hash = window.location.hash
+    if (hash === "#features") {
+      setTimeout(() => {
+        const featuresSection = document.getElementById("features")
+        if (featuresSection) {
+          const offset = 80
+          const elementPosition = featuresSection.getBoundingClientRect().top
+          const offsetPosition = elementPosition + window.pageYOffset - offset
+
+          window.scrollTo({
+            top: offsetPosition,
+            behavior: "smooth"
+          })
+        }
+      }, 100)
+    }
+  }, [])
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />

@@ -14,13 +14,12 @@ export default function DashboardPricingPage() {
       id: "free",
       name: "Free",
       price: "0€",
-      period: "Gratuit",
-      description: "Pour découvrir Notlhy",
+      tagline: "Pour découvrir Notlhy",
       features: [
         "Jusqu'à 100 notes",
         "10 000 tokens IA offerts",
-        "Export Markdown",
         "Synchronisation cloud",
+        "Export Markdown",
         "Accès mobile & desktop",
         "Support communautaire",
       ],
@@ -29,31 +28,27 @@ export default function DashboardPricingPage() {
       id: "gpt",
       name: "Plus",
       price: "9€",
-      period: "1 million de tokens",
-      description: "Pack de tokens à usage unique",
+      tagline: "1 000 000 tokens IA (non expirants)",
       popular: true,
       features: [
-        "1 million de tokens IA",
+        "Tout de Free",
         "Chat IA personnalisé",
-        "Résumé de PDF & images",
-        "Génération de quiz automatique",
-        "Historique de conversation IA",
-        "Pas d'expiration",
+        "Résumé / traduction / génération de quiz",
+        "Historique des conversations IA",
+        "Pas d'abonnement, tu rachètes quand tu veux",
       ],
     },
     {
       id: "pro",
       name: "Pro",
-      price: "29€",
-      period: "/mois",
-      description: "IA illimitée et support premium",
+      price: "29€/mois",
+      tagline: "IA illimitée et support premium",
       features: [
+        "Tout de Plus",
         "IA illimitée",
         "Support prioritaire",
+        "Collaboration multi-notes",
         "Accès anticipé aux nouvelles features",
-        "Tout de Plus inclus",
-        "Meilleures performances",
-        "API dédiée",
       ],
     },
   ]
@@ -106,20 +101,17 @@ export default function DashboardPricingPage() {
                     {plan.name}
                   </h3>
 
+                  {/* Tagline */}
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {plan.tagline}
+                  </p>
+
                   {/* Prix */}
                   <div className="mt-2">
                     <span className="text-3xl font-bold text-primary">
                       {plan.price}
                     </span>
-                    <span className="text-sm text-muted-foreground ml-2">
-                      {plan.period}
-                    </span>
                   </div>
-
-                  {/* Description */}
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {plan.description}
-                  </p>
 
                   {/* Fonctionnalités */}
                   <ul className="mt-6 space-y-2 text-sm text-muted-foreground">

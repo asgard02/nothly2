@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { FileText, Clock, Trash2, CheckSquare, Square } from "lucide-react"
+import { FileText, Clock, Trash2, CheckSquare, Square, Plus } from "lucide-react"
 import { useQueryClient } from "@tanstack/react-query"
 import { useDeleteNote } from "@/lib/hooks/useNotes"
 import DeleteNoteDialog from "./DeleteNoteDialog"
@@ -26,14 +26,30 @@ export default function NotesGrid({ notes }: NotesGridProps) {
 
   // Prefetch une note au hover
   const prefetchNote = async (noteId: string) => {
+    // Vérifier d'abord si la note est déjà dans le cache
+    const cachedNote = queryClient.getQueryData<Note>(["note", noteId])
+    if (cachedNote) {
+      // La note est déjà en cache, pas besoin de prefetch
+      return
+    }
+
+    // Utiliser la même clé que le reste de l'application
     await queryClient.prefetchQuery({
-      queryKey: ["notes", noteId],
+      queryKey: ["note", noteId], // Utiliser "note" au singulier, pas "notes"
       queryFn: async () => {
         const res = await fetch(`/api/notes/${noteId}`)
-        if (!res.ok) throw new Error("Erreur prefetch")
+        if (!res.ok) {
+          // Si 404, ne pas throw d'erreur mais retourner null
+          if (res.status === 404) {
+            return null
+          }
+          throw new Error("Erreur prefetch")
+        }
         return res.json()
       },
       staleTime: 5 * 60 * 1000, // 5 minutes
+      // Ne pas throw d'erreur si la note n'existe pas encore
+      retry: false,
     })
   }
 
@@ -109,11 +125,26 @@ export default function NotesGrid({ notes }: NotesGridProps) {
 
   if (notes.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-96">
-        <div className="bg-card/50 backdrop-blur-sm rounded-2xl p-12 border border-border">
-          <FileText className="h-16 w-16 mb-4 opacity-20 text-muted-foreground mx-auto" />
-          <p className="text-lg font-semibold mb-2 text-foreground">Aucune note pour le moment</p>
-          <p className="text-sm text-muted-foreground">Créez votre première note pour commencer</p>
+      <div className="flex flex-col items-center justify-center min-h-[60vh] py-20">
+        <div className="bg-card/80 backdrop-blur-sm rounded-3xl p-16 border border-border shadow-xl max-w-md w-full text-center">
+          <div className="mb-6">
+            <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-primary/10 mb-4">
+              <FileText className="h-10 w-10 text-primary/60" />
+            </div>
+          </div>
+          <h3 className="text-2xl font-bold text-foreground mb-3">
+            Aucune note pour le moment
+          </h3>
+          <p className="text-muted-foreground mb-8 text-base">
+            Créez votre première note pour commencer à noter vos idées
+          </p>
+          <button
+            onClick={() => router.push('/new')}
+            className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-primary text-primary-foreground rounded-xl font-semibold text-base hover:bg-primary/90 transition-all duration-200 hover:scale-105 hover:shadow-lg shadow-md"
+          >
+            <Plus className="h-5 w-5" />
+            Créer ma première note
+          </button>
         </div>
       </div>
     )

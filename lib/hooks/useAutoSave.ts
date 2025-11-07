@@ -50,8 +50,8 @@ export function useAutoSave({
       isSavingRef.current = true
       setSaveStatus("saving")
 
-      // Mise à jour optimiste du cache React Query
-      queryClient.setQueryData<Note>(["notes", noteId], (old) =>
+      // Mise à jour optimiste du cache React Query (clé corrigée : "note" au singulier)
+      queryClient.setQueryData<Note>(["note", noteId], (old) =>
         old
           ? {
               ...old,
@@ -59,7 +59,13 @@ export function useAutoSave({
               content: contentToSave,
               updated_at: new Date().toISOString(),
             }
-          : old
+          : {
+              id: noteId,
+              title: titleToSave,
+              content: contentToSave,
+              user_id: "",
+              updated_at: new Date().toISOString(),
+            }
       )
 
       const res = await fetch(`/api/notes/${noteId}`, {
@@ -69,6 +75,7 @@ export function useAutoSave({
           title: titleToSave,
           content: contentToSave,
         }),
+        keepalive: true, // ⚡ Optimisation : garder la connexion ouverte pour de meilleures perfs
       })
 
       if (!res.ok) {
@@ -107,10 +114,10 @@ export function useAutoSave({
       clearTimeout(saveTimeoutRef.current)
     }
 
-    // Déclencher la sauvegarde après 1s d'inactivité
+    // ⚡ Déclencher la sauvegarde après 300ms d'inactivité (optimisé pour réactivité)
     saveTimeoutRef.current = setTimeout(() => {
       saveToServer(title, content)
-    }, 1000)
+    }, 300)
 
     return () => {
       if (saveTimeoutRef.current) {

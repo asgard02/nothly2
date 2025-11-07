@@ -1,15 +1,16 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Sidebar from "@/components/Sidebar"
-import { Loader2, ArrowLeft, Wand2 } from "lucide-react"
-import AIContextMenu from "@/components/AIContextMenu"
+import { Loader2, ArrowLeft } from "lucide-react"
+import NotionStyleMenu from "@/components/NotionStyleMenu"
 import { transformText } from "@/lib/ai-client"
 import ChatButton from "@/components/ChatButton"
 import SaveStatusIndicator from "@/components/SaveStatusIndicator"
 import { useNote } from "@/lib/hooks/useNotes"
 import { useAutoSave } from "@/lib/hooks/useAutoSave"
+import { useRealtimeNote } from "@/lib/hooks/useRealtimeNote"
 
 export default function NoteEditorPage() {
   const { id } = useParams()
@@ -17,10 +18,18 @@ export default function NoteEditorPage() {
   
   const noteId = Array.isArray(id) ? id[0] : id
   
-  // Charger la note avec React Query
+  // Charger la note avec React Query (peut être null si la note n'existe pas encore)
   const { data: note, isLoading, error } = useNote(noteId || null)
 
+  // 🔄 Activer les mises à jour en temps réel (collaboration live)
+  useRealtimeNote(noteId || null)
+
   // Auto-save optimisé avec le nouveau hook
+  // ⚡ Activé même si la note n'existe pas encore (elle sera créée au premier edit)
+  // ⚡ Utiliser les valeurs de la note chargée si disponibles, sinon des chaînes vides
+  const noteTitle = note?.title ?? ""
+  const noteContent = note?.content ?? ""
+  
   const {
     title,
     setTitle,
@@ -29,40 +38,151 @@ export default function NoteEditorPage() {
     saveStatus,
   } = useAutoSave({
     noteId: noteId || "",
-    initialTitle: note?.title || "",
-    initialContent: note?.content || "",
-    enabled: !!note,
+    initialTitle: noteTitle,
+    initialContent: noteContent,
+    enabled: !!noteId, // Activé dès qu'on a un ID (même si la note n'existe pas encore)
   })
 
-  // États pour l'IA
-  const [isContextMenuOpen, setIsContextMenuOpen] = useState(false)
+  // États pour le menu style Notion
+  const [selectionMenu, setSelectionMenu] = useState<{
+    show: boolean
+    position: { top: number; left: number }
+    selectedText: string
+    startOffset: number
+    endOffset: number
+  }>({
+    show: false,
+    position: { top: 0, left: 0 },
+    selectedText: "",
+    startOffset: 0,
+    endOffset: 0,
+  })
   const [isTransforming, setIsTransforming] = useState(false)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
 
-  const handleTextActionFromMenu = async (action: string) => {
-    const selection = window.getSelection()
-    const selectedText = selection?.toString().trim()
-    
-    if (!selectedText) {
-      alert("Veuillez sélectionner du texte avant d'utiliser cette action")
-      return
+  // Détecter la sélection de texte dans le textarea
+  useEffect(() => {
+    const textarea = textareaRef.current
+    if (!textarea) return
+
+    const handleSelection = () => {
+      // Petit délai pour s'assurer que la sélection est bien définie
+      setTimeout(() => {
+        const start = textarea.selectionStart
+        const end = textarea.selectionEnd
+        const selectedText = content.substring(start, end).trim()
+
+        if (selectedText && selectedText.length > 0 && start !== end) {
+          const textareaRect = textarea.getBoundingClientRect()
+          
+          // Calculer approximativement la position basée sur le nombre de lignes
+          const textBeforeStart = content.substring(0, start)
+          const linesBefore = textBeforeStart.split('\n')
+          const lineHeight = parseFloat(window.getComputedStyle(textarea).lineHeight) || 24
+          const paddingTop = parseFloat(window.getComputedStyle(textarea).paddingTop) || 0
+          
+          // Position approximative : au-dessus de la ligne de sélection
+          const approximateTop = textareaRect.top + paddingTop + (linesBefore.length - 1) * lineHeight - 50
+          
+          // Centrer horizontalement sur le textarea (ou utiliser la position du curseur si possible)
+          const menuLeft = textareaRect.left + (textareaRect.width / 2)
+          
+          // Vérifier que le menu ne sort pas de l'écran
+          const menuWidth = 280
+          const adjustedLeft = Math.max(
+            menuWidth / 2 + 10,
+            Math.min(menuLeft, window.innerWidth - menuWidth / 2 - 10)
+          )
+          
+          const adjustedTop = Math.max(10, approximateTop)
+
+          setSelectionMenu({
+            show: true,
+            position: { top: adjustedTop, left: adjustedLeft },
+            selectedText,
+            startOffset: start,
+            endOffset: end,
+          })
+        } else {
+          setSelectionMenu({
+            show: false,
+            position: { top: 0, left: 0 },
+            selectedText: "",
+            startOffset: 0,
+            endOffset: 0,
+          })
+        }
+      }, 10)
     }
-    
+
+    textarea.addEventListener('mouseup', handleSelection)
+    textarea.addEventListener('keyup', handleSelection)
+    textarea.addEventListener('select', handleSelection)
+
+    return () => {
+      textarea.removeEventListener('mouseup', handleSelection)
+      textarea.removeEventListener('keyup', handleSelection)
+      textarea.removeEventListener('select', handleSelection)
+    }
+  }, [content])
+
+  // Fermer le menu si on clique ailleurs
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement
+      if (target && !target.closest('[data-notion-menu]')) {
+        setSelectionMenu(prev => ({ ...prev, show: false }))
+      }
+    }
+
+    if (selectionMenu.show) {
+      document.addEventListener('click', handleClickOutside)
+      return () => document.removeEventListener('click', handleClickOutside)
+    }
+  }, [selectionMenu.show])
+
+  const handleTextAction = async (action: string) => {
+    if (!selectionMenu.selectedText || isTransforming) return
+
     setIsTransforming(true)
-    
+
     try {
-      const transformed = await transformText(selectedText, action)
-      const newContent = content.replace(selectedText, transformed)
+      const transformed = await transformText(selectionMenu.selectedText, action)
+      
+      // Remplacer précisément le texte sélectionné
+      const newContent = 
+        content.substring(0, selectionMenu.startOffset) +
+        transformed +
+        content.substring(selectionMenu.endOffset)
+      
       setContent(newContent)
-      window.getSelection()?.removeAllRanges()
-    } catch (error) {
+      
+      // Fermer le menu et désélectionner
+      setSelectionMenu({
+        show: false,
+        position: { top: 0, left: 0 },
+        selectedText: "",
+        startOffset: 0,
+        endOffset: 0,
+      })
+      
+      // Repositionner le curseur après le texte transformé
+      if (textareaRef.current) {
+        const newCursorPos = selectionMenu.startOffset + transformed.length
+        textareaRef.current.focus()
+        textareaRef.current.setSelectionRange(newCursorPos, newCursorPos)
+      }
+    } catch (error: any) {
       console.error("Erreur transformation:", error)
+      alert(error.message || "Une erreur est survenue lors de la transformation")
     } finally {
       setIsTransforming(false)
     }
   }
 
   // États de chargement et d'erreur
-  if (isLoading) {
+  // ⚡ Ne pas bloquer si la note n'existe pas encore (création au premier edit)
+  if (isLoading && noteId) {
     return (
       <div className="flex h-screen bg-background items-center justify-center">
         <div className="text-center">
@@ -73,13 +193,12 @@ export default function NoteEditorPage() {
     )
   }
 
-  if (error || !note) {
+  // Si erreur (autre que 404 qui est géré par useNote), afficher l'erreur
+  if (error && !error.message?.includes("404")) {
     return (
       <div className="flex h-screen bg-background items-center justify-center">
         <div className="text-center">
-          <p className="text-destructive mb-4 font-medium">
-            {error ? "Erreur lors du chargement" : "Note introuvable"}
-          </p>
+          <p className="text-destructive mb-4 font-medium">Erreur lors du chargement</p>
           <button
             onClick={() => router.push("/dashboard")}
             className="text-primary hover:text-primary/80 font-medium transition-colors"
@@ -90,6 +209,9 @@ export default function NoteEditorPage() {
       </div>
     )
   }
+
+  // ⚡ Si pas de note, continuer quand même (création au premier edit)
+  // note peut être null ou une note vide pour les nouvelles notes
 
   return (
     <div className="flex h-screen bg-background">
@@ -122,40 +244,35 @@ export default function NoteEditorPage() {
             />
             
             <textarea
+              ref={textareaRef}
               value={content}
               onChange={(e) => setContent(e.target.value)}
               placeholder="Commencez à écrire..."
               className="w-full min-h-[600px] text-lg bg-transparent border-none outline-none resize-none text-foreground placeholder:text-muted-foreground leading-relaxed"
+              data-notion-menu
             />
           </div>
         </div>
       </div>
 
-      {/* Bouton flottant Outils IA - positionné au-dessus du chatbot */}
-      <button
-        onClick={() => {
-          setIsContextMenuOpen(!isContextMenuOpen)
-        }}
-        className={`group fixed bottom-28 right-6 z-30 flex items-center justify-center w-14 h-14 rounded-2xl backdrop-blur-md transition-all duration-300 hover:scale-110 ${
-          isContextMenuOpen
-            ? "bg-primary text-primary-foreground shadow-xl shadow-primary/30"
-            : "bg-card/80 text-muted-foreground hover:text-primary border border-border shadow-lg hover:shadow-xl"
-        }`}
-        title="Outils IA"
-      >
-        <Wand2 className="h-6 w-6 transition-transform duration-500 group-hover:rotate-[360deg]" />
-      </button>
+      {/* Menu contextuel style Notion */}
+      {selectionMenu.show && (
+        <div data-notion-menu>
+          <NotionStyleMenu
+            position={selectionMenu.position}
+            selectedText={selectionMenu.selectedText}
+            onAction={handleTextAction}
+            isLoading={isTransforming}
+          />
+        </div>
+      )}
 
-      {/* Menu contextuel IA */}
-      <AIContextMenu
-        isOpen={isContextMenuOpen}
-        onClose={() => setIsContextMenuOpen(false)}
-        position={{ bottom: 130, right: 24 }}
-        onTextAction={handleTextActionFromMenu}
+      {/* Chatbot flottant global avec contexte */}
+      <ChatButton 
+        noteId={noteId}
+        noteTitle={note?.title || title}  // Utiliser la note chargée en priorité
+        noteContent={note?.content || content}  // Utiliser la note chargée en priorité
       />
-
-      {/* Chatbot flottant global */}
-      <ChatButton />
     </div>
   )
 }

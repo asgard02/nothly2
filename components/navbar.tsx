@@ -4,9 +4,12 @@ import Link from "next/link"
 import Logo from "@/components/Logo"
 import { Button } from "@/components/ui/button"
 import { useState, useEffect } from "react"
+import { useRouter, usePathname } from "next/navigation"
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false)
+  const router = useRouter()
+  const pathname = usePathname()
 
   useEffect(() => {
     const handleScroll = () => {
@@ -15,6 +18,29 @@ export default function Navbar() {
     window.addEventListener("scroll", handleScroll)
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
+
+  const handleFeaturesClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault()
+    
+    if (pathname === "/") {
+      // Si on est déjà sur la page d'accueil, scroll smooth
+      const featuresSection = document.getElementById("features")
+      if (featuresSection) {
+        // Offset pour la navbar fixe
+        const offset = 80
+        const elementPosition = featuresSection.getBoundingClientRect().top
+        const offsetPosition = elementPosition + window.pageYOffset - offset
+
+        window.scrollTo({
+          top: offsetPosition,
+          behavior: "smooth"
+        })
+      }
+    } else {
+      // Si on est sur une autre page, rediriger
+      router.push("/#features")
+    }
+  }
 
   return (
     <nav
@@ -31,12 +57,13 @@ export default function Navbar() {
 
           {/* Navigation Links */}
           <div className="hidden md:flex items-center space-x-8">
-            <Link
+            <a
               href="#features"
-              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200"
+              onClick={handleFeaturesClick}
+              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200 cursor-pointer"
             >
               Fonctionnalités
-            </Link>
+            </a>
             <Link
               href="/pricing"
               className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200"

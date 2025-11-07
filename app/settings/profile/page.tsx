@@ -29,7 +29,7 @@ export default function ProfileSettingsPage() {
     const { createClient } = await import("@/lib/supabase-client")
     const supabase = createClient()
     await supabase.auth.signOut()
-    router.push("/login")
+    router.push("/")  // Changé de "/login" à "/"
   }
 
   const handleDeleteAccount = async () => {

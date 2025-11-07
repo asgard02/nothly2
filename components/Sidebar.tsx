@@ -16,12 +16,12 @@ export default function Sidebar() {
   const handleLogout = async () => {
     const supabase = createClient()
     await supabase.auth.signOut()
-    router.push("/login")
+    router.push("/")  // Changé de "/login" à "/"
   }
 
   // Charger les notes récentes
   const loadRecentNotes = async () => {
-    if (recentNotes.length > 0) return
+    if (loadingNotes) return // Déjà en cours de chargement
     
     setLoadingNotes(true)
     try {
@@ -58,7 +58,8 @@ export default function Sidebar() {
 
   const handleRecentNotesClick = () => {
     setIsRecentNotesOpen(!isRecentNotesOpen)
-    if (!isRecentNotesOpen) {
+    // Charger seulement à la première ouverture
+    if (!isRecentNotesOpen && recentNotes.length === 0) {
       loadRecentNotes()
     }
   }

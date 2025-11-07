@@ -121,3 +121,7 @@
   --tw-prose-code: hsl(var(--foreground));
 }
 
+html {
+  scroll-behavior: smooth;
+}
+

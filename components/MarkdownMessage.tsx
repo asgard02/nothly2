@@ -6,6 +6,13 @@ import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import rehypeHighlight from "rehype-highlight"
 
+// Fonction pour échapper les ### qui ne sont pas en début de ligne
+function escapeInlineHeadings(content: string): string {
+  // Échapper les ### qui ne sont pas en début de ligne (pas précédés par \n ou début de ligne)
+  // Mais seulement ceux qui sont au milieu d'une ligne de texte
+  return content.replace(/([^\n])###/g, '$1\\###')
+}
+
 export default function MarkdownMessage({ content }: { content: string }) {
   const { theme, resolvedTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
@@ -40,6 +47,9 @@ export default function MarkdownMessage({ content }: { content: string }) {
     }
   }, [theme, resolvedTheme])
 
+  // Échapper le contenu avant de le rendre
+  const escapedContent = escapeInlineHeadings(content)
+
   return (
     <div className="prose prose-sm dark:prose-invert max-w-none leading-relaxed">
       <ReactMarkdown
@@ -71,7 +81,7 @@ export default function MarkdownMessage({ content }: { content: string }) {
           ),
         }}
       >
-        {content}
+        {escapedContent}
       </ReactMarkdown>
     </div>
   )

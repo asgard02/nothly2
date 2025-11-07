@@ -49,7 +49,7 @@ export default function SecuritySettingsPage() {
       await supabase.auth.signOut()
       
       alert("Toutes les sessions ont été fermées")
-      window.location.href = "/login"
+      window.location.href = "/"  // Changé de "/login" à "/"
     } catch (error) {
       console.error("Erreur:", error)
       alert("Erreur lors de la déconnexion")

@@ -3,13 +3,29 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Navbar from "@/components/navbar"
-import { ChevronDown, ChevronUp } from "lucide-react"
+import { ChevronDown, ChevronUp, CheckCircle } from "lucide-react"
+
+type PlanButton = {
+  label: string
+  variant: "primary" | "secondary"
+}
+
+type Plan = {
+  name: string
+  price: string
+  tagline: string
+  features: string[]
+  button: PlanButton
+  popular: boolean
+  period?: string
+  description?: string
+}
 
 export default function PricingPage() {
   const router = useRouter()
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null)
 
-  const plans = [
+  const plans: Plan[] = [
     {
       name: "Free",
       price: "0€",
@@ -24,6 +40,7 @@ export default function PricingPage() {
       ],
       button: { label: "Commencer gratuitement", variant: "secondary" },
       popular: false,
+      period: "à vie",
     },
     {
       name: "Plus",
@@ -38,6 +55,7 @@ export default function PricingPage() {
       ],
       button: { label: "Acheter 1M tokens", variant: "primary" },
       popular: true,
+      period: "achat unique",
     },
     {
       name: "Pro",
@@ -52,6 +70,7 @@ export default function PricingPage() {
       ],
       button: { label: "Passer à Pro", variant: "primary" },
       popular: false,
+      period: "par mois",
     },
   ]
 
@@ -117,11 +136,24 @@ export default function PricingPage() {
                 <div className="space-y-4">
                   <h2 className="text-2xl font-semibold">{plan.name}</h2>
                   <p className="text-muted-foreground">{plan.tagline}</p>
-                  <p className="text-4xl font-bold">{plan.price}</p>
+                  <div className="flex items-baseline">
+                    <span className="text-4xl font-bold">{plan.price}</span>
+                    {plan.period && (
+                      <span className="text-sm text-muted-foreground ml-2">
+                        {plan.period}
+                      </span>
+                    )}
+                  </div>
+                  {plan.description && (
+                    <p className="text-sm text-muted-foreground">{plan.description}</p>
+                  )}
 
-                  <ul className="space-y-2 text-sm">
+                  <ul className="space-y-2 text-sm text-muted-foreground">
                     {plan.features.map((feature, idx) => (
-                      <li key={idx}>✅ {feature}</li>
+                      <li key={idx} className="flex items-start gap-2">
+                        <CheckCircle className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                        <span>{feature}</span>
+                      </li>
                     ))}
                   </ul>
                 </div>

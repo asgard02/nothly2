@@ -1,15 +1,28 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getUser } from "@/lib/auth"
-import { supabaseAdmin } from "@/lib/db"
+import { createServerClient } from "@/lib/supabase-server"
+import { createClient } from "@supabase/supabase-js"
+
+// Client admin Supabase (avec service_role pour contourner RLS)
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
+    }
+  }
+)
 
 // GET /api/notes/[id] - Récupère une note spécifique
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const user = await getUser()
+  const supabase = await createServerClient()
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
   
-  if (!user) {
+  if (authError || !user) {
     return NextResponse.json({ error: "Non authentifié" }, { status: 401 })
   }
 
@@ -27,38 +40,55 @@ export async function GET(
   return NextResponse.json(data)
 }
 
-// PATCH /api/notes/[id] - Met à jour une note
+// PATCH /api/notes/[id] - Crée ou met à jour une note (UPSERT idempotent)
 export async function PATCH(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const user = await getUser()
+  const supabase = await createServerClient()
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
   
-  if (!user) {
+  if (authError || !user) {
     return NextResponse.json({ error: "Non authentifié" }, { status: 401 })
   }
 
   const body = await request.json()
   const { title, content } = body
 
+  // ⚡ UPSERT idempotent : Crée si n'existe pas, met à jour sinon
+  // Cela permet de créer la note au premier edit (pas de note "vide" inutile)
+  // updated_at sera géré automatiquement par le trigger PostgreSQL
   const { data, error } = await supabaseAdmin
     .from("notes")
-    .update({
-      title,
-      content,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", params.id)
-    .eq("user_id", user.id)
-    .select()
+    .upsert(
+      {
+        id: params.id, // Utilise l'ID fourni (peut être un UUID local)
+        user_id: user.id,
+        title: title ?? "Nouvelle note",
+        content: content ?? "",
+        // updated_at sera mis à jour automatiquement par le trigger
+      },
+      {
+        onConflict: "id", // En cas de conflit sur l'ID, faire un UPDATE
+      }
+    )
+    .select("id, title, content, user_id, updated_at")
     .single()
 
-  if (error || !data) {
-    console.error("Erreur lors de la mise à jour:", error)
-    return NextResponse.json({ error: "Note non trouvée" }, { status: 404 })
+  if (error) {
+    return NextResponse.json(
+      { error: error.message || "Erreur lors de la sauvegarde" },
+      { status: 500 }
+    )
   }
 
-  return NextResponse.json(data)
+  // Retourner les données dans le format attendu
+  return NextResponse.json({
+    id: data.id,
+    title: data.title,
+    content: data.content,
+    updated_at: data.updated_at,
+  })
 }
 
 // DELETE /api/notes/[id] - Supprime une note
@@ -66,7 +96,8 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const user = await getUser()
+  const supabase = await createServerClient()
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
   
   if (!user) {
     return NextResponse.json({ error: "Non authentifié" }, { status: 401 })

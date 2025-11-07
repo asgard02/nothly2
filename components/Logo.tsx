@@ -1,9 +1,6 @@
 "use client"
 
-import NextImage from "next/image"
 import Link from "next/link"
-import { useTheme } from "next-themes"
-import { useEffect, useState } from "react"
 
 interface LogoProps {
   size?: number
@@ -18,33 +15,19 @@ export default function Logo({
   href = "/",
   className = "",
 }: LogoProps) {
-  const { theme, resolvedTheme } = useTheme()
-  const [mounted, setMounted] = useState(false)
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
-
-  // Détermine le thème actif
-  const isDark = mounted && (resolvedTheme === "dark" || theme === "dark")
-
-  // Utilise le logo approprié selon le thème
-  // Tu peux créer logo-light.png et logo-dark.png plus tard
-  const logoSrc = "/logo-nothly.png"
-  // const logoSrc = isDark ? "/logo-light.png" : "/logo-nothly.png"
-
   const logoElement = (
     <div className={`flex items-center gap-2 ${className}`}>
-      <NextImage
-        src={logoSrc}
-        alt="Notlhy logo"
-        width={size}
-        height={size}
-        className="rounded-xl transition-transform duration-300 hover:rotate-6 hover:scale-105 object-contain"
-        priority
+      {/* Petit badge coloré - style dashboard */}
+      <div
+        className="rounded-md bg-gradient-to-br from-nothly-blue to-nothly-violet shadow-sm"
+        style={{ width: size * 0.4, height: size * 0.4 }}
       />
+      
       {showText && (
-        <span className="text-lg font-semibold text-gray-800 dark:text-white tracking-tight">
+        <span 
+          className="text-lg font-bold tracking-tight bg-gradient-to-r from-nothly-blue to-nothly-violet bg-clip-text text-transparent"
+          style={{ fontSize: size * 0.65 }}
+        >
           Notlhy
         </span>
       )}
@@ -53,7 +36,7 @@ export default function Logo({
 
   if (href) {
     return (
-      <Link href={href} className="group transition-transform hover:scale-105">
+      <Link href={href} className="transition-transform hover:scale-[1.02] active:scale-95">
         {logoElement}
       </Link>
     )

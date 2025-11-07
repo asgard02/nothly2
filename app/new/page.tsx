@@ -1,85 +1,88 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
-import Sidebar from "@/components/Sidebar"
-import ChatButton from "@/components/ChatButton"
-import { Loader2 } from "lucide-react"
+import { useQueryClient } from "@tanstack/react-query"
+import type { Note } from "@/lib/hooks/useNotes"
 
 export default function NewNotePage() {
   const router = useRouter()
-  const [creating, setCreating] = useState(false)
-  const hasCreated = useRef(false) // 🔒 Flag anti-double appel
+  const queryClient = useQueryClient()
+  const once = useRef(false)
 
-  // Créer automatiquement au chargement (protection StrictMode + Optimistic UI)
   useEffect(() => {
-    const createNote = async () => {
-      // 🛡️ Empêche la double exécution en mode dev (StrictMode)
-      if (hasCreated.current) {
-        console.log("[NewNote] 🛡️ Double exécution bloquée (StrictMode)")
-        return
+    if (once.current) return
+    once.current = true
+
+    const createNoteOptimistic = async () => {
+      // 1️⃣ Générer un UUID local (navigation instantanée)
+      const tempId = crypto.randomUUID()
+      
+      // 2️⃣ Créer une note optimiste dans le cache React Query
+      const optimisticNote: Note = {
+        id: tempId,
+        title: "Nouvelle note",
+        content: "",
+        user_id: "", // Sera rempli par le serveur
+        updated_at: new Date().toISOString(),
       }
+
+      // Préparer le cache avec la note temporaire
+      queryClient.setQueryData<Note>(["note", tempId], optimisticNote)
       
-      hasCreated.current = true
-      setCreating(true)
-      
-      console.log("[NewNote] 🚀 Création de la note...")
-      
+      // Ajouter aussi à la liste des notes (optimistic)
+      queryClient.setQueryData<Note[]>(["notes"], (old = []) => [
+        optimisticNote,
+        ...old,
+      ])
+
+      // 3️⃣ Navigation INSTANTANÉE (0ms perçu par l'utilisateur)
+      router.replace(`/note/${tempId}`)
+
+      // 4️⃣ Création réelle en arrière-plan (l'utilisateur ne voit pas l'attente)
       try {
-        // ⚡ Appel API pour créer la note
         const res = await fetch("/api/notes", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: tempId }), // Envoyer l'ID pour utiliser le même côté serveur
         })
 
         if (!res.ok) {
-          const errorData = await res.json().catch(() => ({}))
-          console.error("[NewNote] ❌ Erreur API:", res.status, errorData)
-          
-          // Si non authentifié, rediriger vers login
-          if (res.status === 401) {
-            alert("Session expirée. Veuillez vous reconnecter.")
-            router.push("/login")
-            return
-          }
-          
-          throw new Error(errorData.error || `Erreur ${res.status}`)
+          throw new Error("Erreur lors de la création")
         }
 
-        const newNote = await res.json()
-        console.log("[NewNote] ✅ Note créée:", newNote.id)
+        const realNote = await res.json()
+
+        // 5️⃣ Mettre à jour le cache avec la vraie note (même ID grâce à l'optimistic UI)
+        queryClient.setQueryData<Note>(["note", tempId], realNote)
+
+        // Mettre à jour la liste des notes avec la vraie note
+        queryClient.setQueryData<Note[]>(["notes"], (old = []) => {
+          const filtered = old.filter((n) => n.id !== tempId)
+          return [realNote, ...filtered]
+        })
+
+        // Invalider pour s'assurer que tout est synchronisé
+        queryClient.invalidateQueries({ queryKey: ["notes"] })
+      } catch (error) {
+        console.error("Erreur création note:", error)
         
-        // 🚀 Navigation immédiate vers l'éditeur
-        router.push(`/note/${newNote.id}`)
+        // En cas d'erreur, retirer la note optimiste
+        queryClient.removeQueries({ queryKey: ["note", tempId] })
+        queryClient.setQueryData<Note[]>(["notes"], (old = []) =>
+          old.filter((n) => n.id !== tempId)
+        )
         
-      } catch (error: any) {
-        console.error("[NewNote] ❌ Exception:", error.message)
-        alert(`Erreur: ${error.message}`)
-        
-        // Reset et retour au dashboard
-        setCreating(false)
-        hasCreated.current = false
-        router.push("/dashboard")
+        // Rediriger vers le dashboard
+        router.replace("/dashboard")
       }
     }
 
-    createNote()
-  }, [router])
+    createNoteOptimistic()
+  }, [router, queryClient])
 
-  return (
-    <div className="flex h-screen bg-background">
-      <Sidebar />
-      
-      <div className="flex-1 ml-64 flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
-          <p className="text-muted-foreground font-medium">Création de votre note...</p>
-        </div>
-      </div>
-
-      {/* Chatbot flottant global */}
-      <ChatButton />
-    </div>
-  )
+  // Retourner null pour une navigation instantanée (pas de rendu UI)
+  // L'utilisateur verra directement l'éditeur de note
+  return null
 }
 

@@ -27,19 +27,23 @@ const nextConfig = {
     return config
   },
   
-  // Headers pour éviter les problèmes de cache
+  // Headers pour éviter les problèmes de cache (seulement en production)
   async headers() {
-    return [
-      {
-        source: '/:path*',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=0, must-revalidate',
-          },
-        ],
-      },
-    ]
+    // Ne pas ajouter de headers en développement pour éviter les problèmes avec HMR
+    if (process.env.NODE_ENV === 'production') {
+      return [
+        {
+          source: '/:path*',
+          headers: [
+            {
+              key: 'Cache-Control',
+              value: 'public, max-age=0, must-revalidate',
+            },
+          ],
+        },
+      ]
+    }
+    return []
   },
 }
 

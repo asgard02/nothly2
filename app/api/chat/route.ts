@@ -1,46 +1,10 @@
 import { NextResponse } from "next/server"
 import { getUser } from "@/lib/auth"
+import { readFileSync } from "fs"
+import { join } from "path"
 
 // Prompt système enrichi avec toutes les infos sur Notlhy
-const systemPrompt = `
-Tu es Notlhy, l'assistant intégré à une application de prise de notes intelligente avec IA.
-
-Tu dois :
-- Répondre comme un assistant officiel de Notlhy.
-- Aider l'utilisateur à comprendre l'app, ses fonctions et ses tarifs.
-- Rester simple, clair et professionnel.
-- Ne jamais dire que tu es une IA externe (tu fais partie de Notlhy).
-
-Voici ce que tu sais sur Notlhy :
-
-🏷️ Nom : Notlhy  
-💡 Fonction : Application de prise de notes avec intelligence artificielle intégrée.  
-
-🧩 Fonctionnalités principales :
-- Prise de notes rapide et synchronisée avec Supabase
-- Résumé, traduction, correction et amélioration du texte via IA
-- Génération de quiz à partir du contenu
-- Chat IA contextuel
-- Interface moderne et fluide
-- Accès web et mobile
-- Export en Markdown
-- Historique des discussions IA (plan payant)
-
-💰 Tarifs :
-- **Free** : 100 notes max, 10 000 tokens IA offerts, synchronisation cloud, export Markdown, support communautaire.
-- **GPT Plan** (9 €) : 1 000 000 tokens IA à utiliser librement (pas d'abonnement), chat IA personnalisé, génération de quiz, résumé de PDF, historique de chat.
-- **Pro** (29 €/mois) : IA illimitée, support prioritaire, tout inclus.
-
-⚙️ Stack technique :
-- Base de données : Supabase (PostgreSQL)
-- Authentification : Supabase Auth
-- Frontend : Next.js + React + TailwindCSS
-- IA : OpenAI GPT-4o-mini
-
-Ton rôle :
-👉 Répondre avec précision et empathie aux utilisateurs sur les fonctionnalités, les tokens, ou les différences entre les plans.  
-👉 Toujours adopter le ton de Notlhy : clair, simple, moderne et professionnel.
-`
+const systemPrompt = readFileSync(join(process.cwd(), "prompt_notlhy.md"), "utf-8")
 
 export async function POST(req: Request) {
   // Vérification de l'authentification
@@ -51,15 +15,28 @@ export async function POST(req: Request) {
   }
 
   try {
-    const { messages } = await req.json()
+    const { messages, context } = await req.json()
 
     if (!messages || !Array.isArray(messages)) {
       return NextResponse.json({ error: "Aucun message fourni." }, { status: 400 })
     }
 
+    // Ajouter le contexte au prompt système
+    let contextualPrompt = systemPrompt
+    if (context?.noteId) {
+      contextualPrompt += `\n\nCONTEXTE ACTUEL : L'utilisateur est sur la note "${context.noteTitle || 'sans titre'}" (ID: ${context.noteId}).`
+      if (context.noteContent) {
+        contextualPrompt += `\nContenu actuel de la note : ${context.noteContent.substring(0, 500)}...`
+      }
+      contextualPrompt += `\n\n⚠️ IMPORTANT : Si l'utilisateur demande à créer du contenu ou une note, tu dois générer du CONTENU RÉEL et le mettre dans action.content.`
+    } else {
+      contextualPrompt += `\n\nCONTEXTE ACTUEL : L'utilisateur n'est pas sur une note (page: ${context?.currentPage || 'inconnue'}).`
+      contextualPrompt += `\n\n⚠️ IMPORTANT : Si l'utilisateur demande à créer une note sur un sujet, tu dois générer un TITRE et un CONTENU RÉEL et les mettre dans action.title et action.content.`
+    }
+
     // Ajouter le prompt système avant les messages de l'utilisateur
     const fullMessages = [
-      { role: "system", content: systemPrompt },
+      { role: "system", content: contextualPrompt },
       ...messages,
     ]
 
@@ -72,8 +49,9 @@ export async function POST(req: Request) {
       body: JSON.stringify({
         model: "gpt-4o-mini",
         messages: fullMessages,
-        max_tokens: 1500,
+        max_tokens: 2000, // Augmenté pour permettre plus de contenu
         temperature: 0.7,
+        response_format: { type: "json_object" },
       }),
     })
 
@@ -87,8 +65,51 @@ export async function POST(req: Request) {
       )
     }
 
+    const aiResponse = data.choices?.[0]?.message?.content || "{}"
+    
+    // Parser la réponse JSON
+    let parsedResponse
+    try {
+      parsedResponse = JSON.parse(aiResponse)
+    } catch (e) {
+      console.error("Erreur parsing JSON:", e, "Réponse brute:", aiResponse)
+      // Si pas JSON valide, traiter comme texte simple
+      parsedResponse = {
+        message: aiResponse,
+        action: { type: "none" }
+      }
+    }
+
+    const lastUserMessage = Array.isArray(messages)
+      ? [...messages].reverse().find((m: any) => m?.role === "user")?.content || ""
+      : ""
+
+    const userAskedForPlans = typeof lastUserMessage === "string"
+      ? /(plan|tarif|offre|pricing)/i.test(lastUserMessage)
+      : false
+
+    if (userAskedForPlans) {
+      const planMessage = `Voici les différents plans disponibles sur Notlhy :
+
+- **Free** : 0 €. Idéal pour découvrir Notlhy. Avantages : jusqu'à 100 notes, 10 000 tokens IA offerts, synchronisation cloud, export Markdown, accès mobile et desktop, support communautaire.
+- **Plus** : 9 €. Achat ponctuel de 1 000 000 tokens IA non expirants. Avantages : tout Free, chat IA personnalisé, résumé / traduction / génération de quiz, historique des conversations IA, pas d'abonnement (tu rachètes quand tu veux).
+- **Pro** : 29 €/mois. Pensé pour un usage intensif. Avantages : tout Plus, IA illimitée, support prioritaire, collaboration multi-notes, accès anticipé aux nouvelles fonctionnalités.`
+
+      parsedResponse = {
+        message: planMessage,
+        action: { type: "none" }
+      }
+    }
+
+    // Log pour debug
+    console.log("[Chat API] Action détectée:", parsedResponse.action?.type)
+    if (parsedResponse.action?.content) {
+      console.log("[Chat API] Contenu généré:", parsedResponse.action.content.substring(0, 100) + "...")
+    }
+
     return NextResponse.json({
-      reply: data.choices?.[0]?.message?.content || "Aucune réponse générée.",
+      reply: parsedResponse.message || parsedResponse,
+      action: parsedResponse.action || { type: "none" }
     })
   } catch (err) {
     console.error("Erreur interne :", err)
