@@ -1,4 +1,4 @@
-import type { Metadata } from "next"
+import type { Metadata, Viewport } from "next"
 import { Inter } from "next/font/google"
 import "./globals.css"
 import ReactQueryProvider from "@/lib/react-query-provider"
@@ -18,10 +18,6 @@ export const metadata: Metadata = {
     ],
   },
   manifest: "/manifest.json",
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-    { media: "(prefers-color-scheme: dark)", color: "#0f172a" },
-  ],
   openGraph: {
     title: "Notlhy - Notes intelligentes avec IA",
     description: "Créez, éditez et transformez vos notes en fiches de révision et quiz grâce à l'IA",
@@ -34,6 +30,13 @@ export const metadata: Metadata = {
     description: "Créez, éditez et transformez vos notes en fiches de révision et quiz grâce à l'IA",
     images: ["/logo-icon.png"],
   },
+}
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#0f172a" },
+  ],
 }
 
 export default function RootLayout({
