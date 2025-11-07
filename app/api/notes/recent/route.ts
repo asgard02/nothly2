@@ -2,6 +2,8 @@ import { NextResponse } from "next/server"
 import { createServerClient } from "@/lib/supabase-server"
 import { getSupabaseAdmin } from "@/lib/db"
 
+export const dynamic = "force-dynamic"
+
 // GET /api/notes/recent - Récupère les 5 dernières notes
 export async function GET() {
   try {

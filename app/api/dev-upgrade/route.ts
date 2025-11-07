@@ -2,6 +2,9 @@ import { NextResponse } from "next/server"
 import { cookies } from "next/headers"
 import { getUser } from "@/lib/auth"
 
+export const dynamic = "force-dynamic"
+export const runtime = "nodejs"
+
 // GET: Passe l'utilisateur actuel en mode Pro (dev uniquement)
 export async function GET() {
   const user = await getUser()
