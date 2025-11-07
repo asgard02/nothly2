@@ -1,18 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createServerClient } from "@/lib/supabase-server"
-import { createClient } from "@supabase/supabase-js"
-
-// Client admin Supabase (avec service_role pour contourner RLS)
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    }
-  }
-)
+import { getSupabaseAdmin } from "@/lib/db"
 
 // GET /api/notes/[id] - Récupère une note spécifique
 export async function GET(
@@ -20,10 +8,27 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   const supabase = await createServerClient()
+  if (!supabase) {
+    console.error("[GET /api/notes/:id] ❌ Supabase public client not configured")
+    return NextResponse.json(
+      { error: "Configuration Supabase manquante" },
+      { status: 500 }
+    )
+  }
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   
   if (authError || !user) {
     return NextResponse.json({ error: "Non authentifié" }, { status: 401 })
+  }
+
+  const supabaseAdmin = getSupabaseAdmin()
+
+  if (!supabaseAdmin) {
+    console.error("[GET /api/notes/:id] ❌ Supabase admin client not configured")
+    return NextResponse.json(
+      { error: "Configuration Supabase manquante" },
+      { status: 500 }
+    )
   }
 
   const { data, error } = await supabaseAdmin
@@ -46,6 +51,13 @@ export async function PATCH(
   { params }: { params: { id: string } }
 ) {
   const supabase = await createServerClient()
+  if (!supabase) {
+    console.error("[PATCH /api/notes/:id] ❌ Supabase public client not configured")
+    return NextResponse.json(
+      { error: "Configuration Supabase manquante" },
+      { status: 500 }
+    )
+  }
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   
   if (authError || !user) {
@@ -58,6 +70,16 @@ export async function PATCH(
   // ⚡ UPSERT idempotent : Crée si n'existe pas, met à jour sinon
   // Cela permet de créer la note au premier edit (pas de note "vide" inutile)
   // updated_at sera géré automatiquement par le trigger PostgreSQL
+  const supabaseAdmin = getSupabaseAdmin()
+
+  if (!supabaseAdmin) {
+    console.error("[PATCH /api/notes/:id] ❌ Supabase admin client not configured")
+    return NextResponse.json(
+      { error: "Configuration Supabase manquante" },
+      { status: 500 }
+    )
+  }
+
   const { data, error } = await supabaseAdmin
     .from("notes")
     .upsert(
@@ -97,10 +119,27 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   const supabase = await createServerClient()
+  if (!supabase) {
+    console.error("[DELETE /api/notes/:id] ❌ Supabase public client not configured")
+    return NextResponse.json(
+      { error: "Configuration Supabase manquante" },
+      { status: 500 }
+    )
+  }
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   
   if (!user) {
     return NextResponse.json({ error: "Non authentifié" }, { status: 401 })
+  }
+
+  const supabaseAdmin = getSupabaseAdmin()
+
+  if (!supabaseAdmin) {
+    console.error("[DELETE /api/notes/:id] ❌ Supabase admin client not configured")
+    return NextResponse.json(
+      { error: "Configuration Supabase manquante" },
+      { status: 500 }
+    )
   }
 
   const { error } = await supabaseAdmin

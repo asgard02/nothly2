@@ -1,17 +1,5 @@
 import { createServerClient } from "@/lib/supabase-server"
-import { createClient } from "@supabase/supabase-js"
-
-// Client admin Supabase (avec service_role pour contourner RLS)
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    }
-  }
-)
+import { getSupabaseAdmin } from "@/lib/db"
 
 /**
  * Crée une nouvelle note côté serveur
@@ -20,10 +8,19 @@ const supabaseAdmin = createClient(
  */
 export async function createNote(): Promise<{ id: string }> {
   const supabase = await createServerClient()
+  if (!supabase) {
+    throw new Error("Configuration Supabase manquante")
+  }
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   
   if (authError || !user) {
     throw new Error("Non authentifié")
+  }
+
+  const supabaseAdmin = getSupabaseAdmin()
+
+  if (!supabaseAdmin) {
+    throw new Error("Configuration Supabase manquante")
   }
 
   const { data, error } = await supabaseAdmin

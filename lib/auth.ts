@@ -1,12 +1,16 @@
 import { randomUUID } from 'crypto'
 import { createServerClient } from './supabase-server'
-import { supabaseAdmin } from './db'
+import { getSupabaseAdmin } from './db'
 import type { User } from './db'
 
 // Récupère l'utilisateur connecté via Supabase Auth
 export async function getUser(): Promise<User | null> {
   try {
     const supabase = await createServerClient()
+    if (!supabase) {
+      console.error('[getUser] Supabase client is not configured. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY.')
+      return null
+    }
     
     const { data: { user: authUser }, error } = await supabase.auth.getUser()
     
@@ -23,6 +27,13 @@ export async function getUser(): Promise<User | null> {
     console.log('[getUser] Utilisateur authentifié:', authUser.email)
 
     // Vérifie si l'utilisateur existe dans notre table users
+    const supabaseAdmin = getSupabaseAdmin()
+
+    if (!supabaseAdmin) {
+      console.error('[getUser] Supabase admin client is not configured. Set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.')
+      return null
+    }
+
     const { data: userData, error: userError } = await supabaseAdmin
       .from('users')
       .select('*')
@@ -88,6 +99,12 @@ export async function mockLogin(email: string): Promise<User> {
   const normalizedEmail = email.toLowerCase().trim()
 
   // Vérifie si l'utilisateur existe déjà
+  const supabaseAdmin = getSupabaseAdmin()
+
+  if (!supabaseAdmin) {
+    throw new Error('Supabase admin client is not configured. Ensure NEXT_PUBLIC_SUPABASE_URL et SUPABASE_SERVICE_ROLE_KEY are set.')
+  }
+
   const { data: existingUser, error: fetchError } = await supabaseAdmin
     .from('users')
     .select('*')

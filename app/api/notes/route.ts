@@ -1,18 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createServerClient } from "@/lib/supabase-server"
-import { createClient } from "@supabase/supabase-js"
-
-// Client admin Supabase (avec service_role pour contourner RLS)
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    }
-  }
-)
+import { getSupabaseAdmin } from "@/lib/db"
 
 // GET /api/notes - Liste toutes les notes de l'utilisateur
 export async function GET() {
@@ -20,6 +8,20 @@ export async function GET() {
     console.log("[GET /api/notes] 📥 Début de la requête")
     
     const supabase = await createServerClient()
+    if (!supabase) {
+      console.error("[POST /api/notes] ❌ Supabase public client not configured")
+      return NextResponse.json(
+        { error: "Configuration Supabase manquante" },
+        { status: 500 }
+      )
+    }
+    if (!supabase) {
+      console.error("[GET /api/notes] ❌ Supabase public client not configured")
+      return NextResponse.json(
+        { error: "Configuration Supabase manquante" },
+        { status: 500 }
+      )
+    }
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     
     if (authError || !user) {
@@ -28,6 +30,16 @@ export async function GET() {
     }
 
     console.log("[GET /api/notes] ✅ User authentifié:", user.email)
+
+    const supabaseAdmin = getSupabaseAdmin()
+
+    if (!supabaseAdmin) {
+      console.error("[GET /api/notes] ❌ Supabase admin client not configured")
+      return NextResponse.json(
+        { error: "Configuration Supabase manquante" },
+        { status: 500 }
+      )
+    }
 
     const { data, error } = await supabaseAdmin
       .from("notes")
@@ -107,6 +119,16 @@ export async function POST(request: NextRequest) {
       title: noteData.title.substring(0, 50),
       contentLength: noteData.content.length
     })
+
+    const supabaseAdmin = getSupabaseAdmin()
+
+    if (!supabaseAdmin) {
+      console.error("[POST /api/notes] ❌ Supabase admin client not configured")
+      return NextResponse.json(
+        { error: "Configuration Supabase manquante" },
+        { status: 500 }
+      )
+    }
 
     const { data, error } = await supabaseAdmin
       .from("notes")

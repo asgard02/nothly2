@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { supabaseAdmin } from "@/lib/db"
+import { getSupabaseAdmin } from "@/lib/db"
 
 // POST /api/notes/[id]/beacon - Sauvegarde via sendBeacon (avant fermeture page)
 export async function POST(
@@ -12,6 +12,16 @@ export async function POST(
 
     // Utiliser supabaseAdmin pour contourner l'authentification
     // (car sendBeacon peut ne pas inclure les cookies correctement)
+    const supabaseAdmin = getSupabaseAdmin()
+
+    if (!supabaseAdmin) {
+      console.error("[POST /api/notes/:id/beacon] ❌ Supabase admin client not configured")
+      return NextResponse.json(
+        { error: "Configuration Supabase manquante" },
+        { status: 500 }
+      )
+    }
+
     const { error } = await supabaseAdmin
       .from("notes")
       .update({
