@@ -14,7 +14,7 @@ import { getStorageBucket } from "@/lib/storage"
 
 type ProgressCallback = (value: number) => Promise<void> | void
 
-export interface DocumentGenerationJobPayload {
+export interface DocumentGenerationJobPayload extends Record<string, unknown> {
   documentId: string
   userId: string
   userEmail?: string | null
@@ -26,7 +26,7 @@ export interface DocumentGenerationJobPayload {
   checksum?: string | null
 }
 
-export interface DocumentGenerationJobResult {
+export interface DocumentGenerationJobResult extends Record<string, unknown> {
   documentId: string
   versionId: string
   sectionsCount: number
