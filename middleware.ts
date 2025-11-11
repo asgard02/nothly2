@@ -20,10 +20,10 @@ export async function middleware(request: NextRequest) {
   }
   
   // Liste des routes publiques (toujours accessibles, même sans session)
-  const publicRoutes = ['/pricing', '/login', '/register']
+  const publicRoutes = ['/', '/pricing', '/login', '/register']
   
   // Liste des routes protégées (nécessitent une session)
-  const protectedRoutes = ['/', '/dashboard', '/note', '/new', '/chat', '/settings']
+  const protectedRoutes = ['/dashboard', '/note', '/new', '/chat', '/settings']
   
   // Vérifier si c'est une route publique
   const isPublicRoute = publicRoutes.some(route => pathname === route)
