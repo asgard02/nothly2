@@ -136,7 +136,7 @@ async function updateSourceMetrics(
   }
 }
 
-export interface CollectionGenerationResult {
+export interface CollectionGenerationResult extends Record<string, unknown> {
   collectionId: string
   flashcardsCount: number
   quizCount: number
