@@ -17,7 +17,7 @@ export interface CollectionGenerationSource {
   rawText?: string | null
 }
 
-export interface CollectionGenerationJobPayload {
+export interface CollectionGenerationJobPayload extends Record<string, unknown> {
   collectionId: string
   userId: string
   title: string
