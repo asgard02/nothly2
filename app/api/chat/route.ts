@@ -1,10 +1,31 @@
 import { NextResponse } from "next/server"
 import { getUser } from "@/lib/auth"
-import { readFileSync } from "fs"
+import { readFileSync, existsSync } from "fs"
 import { join } from "path"
 
 // Prompt système enrichi avec toutes les infos sur Notlhy
-const systemPrompt = readFileSync(join(process.cwd(), "prompt_notlhy.md"), "utf-8")
+function loadSystemPrompt(): string {
+  const cwd = process.cwd()
+  const candidates = [
+    join(cwd, "prompt_notlhy.md"),
+    join(cwd, "docs", "prompt_notlhy.md"),
+    join(cwd, "public", "prompt_notlhy.md"),
+  ]
+
+  for (const path of candidates) {
+    if (existsSync(path)) {
+      return readFileSync(path, "utf-8")
+    }
+  }
+
+  console.warn("[Chat API] prompt_notlhy.md introuvable, utilisation du prompt par défaut")
+  return [
+    "Tu es l'assistant de Notlhy.",
+    "Réponds en français et aide l'utilisateur à gérer ses notes.",
+  ].join("\n")
+}
+
+const systemPrompt = loadSystemPrompt()
 
 export async function POST(req: Request) {
   // Vérification de l'authentification
