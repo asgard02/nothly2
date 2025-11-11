@@ -81,6 +81,113 @@ USING (auth.uid() = user_id)
 WITH CHECK (auth.uid() = user_id);
 
 -- ========================================
+-- TABLE: study_collections
+-- ========================================
+
+ALTER TABLE study_collections ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Users manage own study collections" ON study_collections;
+CREATE POLICY "Users manage own study collections"
+ON study_collections
+FOR ALL
+USING (auth.uid() = user_id)
+WITH CHECK (auth.uid() = user_id);
+
+-- ========================================
+-- TABLE: study_collection_sources
+-- ========================================
+
+ALTER TABLE study_collection_sources ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Users manage own collection sources" ON study_collection_sources;
+CREATE POLICY "Users manage own collection sources"
+ON study_collection_sources
+FOR ALL
+USING (
+  EXISTS (
+    SELECT 1
+    FROM study_collections sc
+    WHERE sc.id = collection_id
+      AND sc.user_id = auth.uid()
+  )
+)
+WITH CHECK (
+  EXISTS (
+    SELECT 1
+    FROM study_collections sc
+    WHERE sc.id = collection_id
+      AND sc.user_id = auth.uid()
+  )
+);
+
+-- ========================================
+-- TABLE: study_collection_flashcards
+-- ========================================
+
+ALTER TABLE study_collection_flashcards ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Users manage own collection flashcards" ON study_collection_flashcards;
+CREATE POLICY "Users manage own collection flashcards"
+ON study_collection_flashcards
+FOR ALL
+USING (
+  EXISTS (
+    SELECT 1
+    FROM study_collections sc
+    WHERE sc.id = collection_id
+      AND sc.user_id = auth.uid()
+  )
+)
+WITH CHECK (
+  EXISTS (
+    SELECT 1
+    FROM study_collections sc
+    WHERE sc.id = collection_id
+      AND sc.user_id = auth.uid()
+  )
+);
+
+-- ========================================
+-- TABLE: study_collection_quiz_questions
+-- ========================================
+
+ALTER TABLE study_collection_quiz_questions ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Users manage own collection quiz questions" ON study_collection_quiz_questions;
+CREATE POLICY "Users manage own collection quiz questions"
+ON study_collection_quiz_questions
+FOR ALL
+USING (
+  EXISTS (
+    SELECT 1
+    FROM study_collections sc
+    WHERE sc.id = collection_id
+      AND sc.user_id = auth.uid()
+  )
+)
+WITH CHECK (
+  EXISTS (
+    SELECT 1
+    FROM study_collections sc
+    WHERE sc.id = collection_id
+      AND sc.user_id = auth.uid()
+  )
+);
+
+-- ========================================
+-- TABLE: async_jobs
+-- ========================================
+
+ALTER TABLE async_jobs ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Users manage own async jobs" ON async_jobs;
+CREATE POLICY "Users manage own async jobs"
+ON async_jobs
+FOR ALL
+USING (auth.uid() = user_id)
+WITH CHECK (auth.uid() = user_id);
+
+-- ========================================
 -- TABLE: user_credits
 -- ========================================
 

@@ -20,10 +20,10 @@ export async function middleware(request: NextRequest) {
   }
   
   // Liste des routes publiques (toujours accessibles, même sans session)
-  const publicRoutes = ['/', '/pricing', '/login', '/register']
+  const publicRoutes = ['/pricing', '/login', '/register']
   
   // Liste des routes protégées (nécessitent une session)
-  const protectedRoutes = ['/dashboard', '/note', '/new', '/chat', '/settings']
+  const protectedRoutes = ['/', '/dashboard', '/note', '/new', '/chat', '/settings']
   
   // Vérifier si c'est une route publique
   const isPublicRoute = publicRoutes.some(route => pathname === route)
@@ -48,14 +48,6 @@ export async function middleware(request: NextRequest) {
           },
         }
       )
-      
-      const { data: { session } } = await supabase.auth.getSession()
-      
-      // Si connecté ET sur une page publique, rediriger vers dashboard
-      // SAUF pour /pricing qu'on laisse accessible même si connecté
-      if (session && pathname !== '/pricing' && (pathname === '/' || pathname === '/login' || pathname === '/register')) {
-        return NextResponse.redirect(new URL('/dashboard', request.url))
-      }
       
       return NextResponse.next()
     } catch (error) {

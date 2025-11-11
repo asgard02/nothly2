@@ -50,11 +50,10 @@ export default function ReactQueryProvider({
         maxAge: 24 * 60 * 60 * 1000, // 24 heures
         dehydrateOptions: {
           shouldDehydrateQuery: (query) => {
-            // Ne persister que les queries réussies et les notes
-            return (
-              query.state.status === "success" &&
-              (query.queryKey[0] === "notes" || query.queryKey[0] === "note")
-            )
+            // Ne persister que les queries réussies principales
+            if (query.state.status !== "success") return false
+            const key = query.queryKey[0]
+            return key === "notes" || key === "note" || key === "documents" || key === "document"
           },
         },
       })

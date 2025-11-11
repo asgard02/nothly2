@@ -3,7 +3,7 @@
 import Link from "next/link"
 import Logo from "@/components/Logo"
 import { Button } from "@/components/ui/button"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useRouter, usePathname } from "next/navigation"
 
 export default function Navbar() {
@@ -19,28 +19,27 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
 
-  const handleFeaturesClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    e.preventDefault()
-    
-    if (pathname === "/") {
-      // Si on est déjà sur la page d'accueil, scroll smooth
-      const featuresSection = document.getElementById("features")
-      if (featuresSection) {
-        // Offset pour la navbar fixe
-        const offset = 80
-        const elementPosition = featuresSection.getBoundingClientRect().top
-        const offsetPosition = elementPosition + window.pageYOffset - offset
+  const handleAnchorNavigation = useCallback(
+    (event: React.MouseEvent<HTMLAnchorElement>, targetId: string) => {
+      event.preventDefault()
 
-        window.scrollTo({
-          top: offsetPosition,
-          behavior: "smooth"
-        })
+      const navigateToAnchor = (id: string) => {
+        const section = document.getElementById(id)
+        if (!section) return
+        const offset = 88
+        const elementPosition = section.getBoundingClientRect().top
+        const offsetPosition = elementPosition + window.pageYOffset - offset
+        window.scrollTo({ top: offsetPosition, behavior: "smooth" })
       }
-    } else {
-      // Si on est sur une autre page, rediriger
-      router.push("/#features")
-    }
-  }
+
+      if (pathname === "/") {
+        navigateToAnchor(targetId)
+      } else {
+        router.push(`/#${targetId}`)
+      }
+    },
+    [pathname, router]
+  )
 
   return (
     <nav
@@ -58,11 +57,25 @@ export default function Navbar() {
           {/* Navigation Links */}
           <div className="hidden md:flex items-center space-x-8">
             <a
-              href="#features"
-              onClick={handleFeaturesClick}
+              href="#flux"
+              onClick={(event) => handleAnchorNavigation(event, "flux")}
               className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200 cursor-pointer"
             >
-              Fonctionnalités
+              Flux
+            </a>
+            <a
+              href="#valeur"
+              onClick={(event) => handleAnchorNavigation(event, "valeur")}
+              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200 cursor-pointer"
+            >
+              Valeur
+            </a>
+            <a
+              href="#cibles"
+              onClick={(event) => handleAnchorNavigation(event, "cibles")}
+              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200 cursor-pointer"
+            >
+              Cibles
             </a>
             <Link
               href="/pricing"
