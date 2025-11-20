@@ -16,67 +16,67 @@ import {
 
 const flowSteps = [
   {
-    title: "Upload du PDF",
-    description: "Dépose ton document, on détecte automatiquement chapitres et sections.",
+    title: "PDF Upload",
+    description: "Drop your document, we automatically detect chapters and sections.",
     icon: FileUp
   },
   {
-    title: "Analyse intelligente",
-    description: "Extraction du texte, OCR si besoin, segmentation propre du contenu.",
+    title: "Smart Analysis",
+    description: "Text extraction, OCR when needed, clean content segmentation.",
     icon: Wrench
   },
   {
-    title: "Notes générées",
-    description: "Fiches hiérarchiques claires : titres, définitions, exemples clés.",
+    title: "Generated Notes",
+    description: "Clear hierarchical sheets: titles, definitions, key examples.",
     icon: Sparkles
   },
   {
-    title: "Quiz interactifs",
-    description: "QCM, vrai/faux et complétion pour mémoriser immédiatement.",
+    title: "Interactive Quizzes",
+    description: "Multiple choice, true/false, and completion questions for instant memorization.",
     icon: BookCheck
   },
   {
-    title: "Mises à jour ciblées",
-    description: "Importe une nouvelle version, seules les sections modifiées sont régénérées.",
+    title: "Targeted Updates",
+    description: "Import a new version, only modified sections are regenerated.",
     icon: RefreshCw
   }
 ]
 
 const benefits = [
   {
-    title: "Gain de temps massif",
+    title: "Massive Time Savings",
     description:
-      "Plus besoin de ficher manuellement chaque PDF. Nothly produit tes fiches prêtes à réviser.",
+      "No more manually filing each PDF. Nothly produces your ready-to-review study sheets.",
     metric: "x10",
-    metricLabel: "Plus rapide qu'un fichage manuel"
+    metricLabel: "Faster than manual filing"
   },
   {
-    title: "Compréhension profonde",
+    title: "Deep Understanding",
     description:
-      "Des résumés fidèles au texte d'origine et des quiz contextualisés pour ancrer tes connaissances.",
+      "Summaries faithful to the original text and contextualized quizzes to anchor your knowledge.",
     metric: "92%",
-    metricLabel: "Des étudiants déclarent mieux comprendre"
+    metricLabel: "Students report better understanding"
   },
   {
-    title: "Suivi personnalisé",
-    description: "Statistiques, rappels et historique pour savoir quoi réviser et quand.",
+    title: "Personalized Tracking",
+    description: "Statistics, reminders, and history to know what to review and when.",
     metric: "3 min",
-    metricLabel: "Pour relancer une session ciblée"
+    metricLabel: "To launch a targeted session"
   }
 ]
 
 const audience = [
   {
-    title: "Étudiants exigeants",
-    description: "Droit, médecine, sciences... des masses de PDF transformées en fiches digestes."
+    title: "Demanding Students",
+    description: "Law, medicine, sciences... masses of PDFs transformed into digestible study sheets."
   },
   {
-    title: "Professionnels en formation",
-    description: "Cours internes, MOOC, procédures : reste à jour sans retaper des résumés."
+    title: "Professionals in Training",
+    description: "Internal courses, MOOCs, procedures: stay up to date without retyping summaries."
   },
   {
-    title: "Créateurs pédagogiques",
-    description: "Transforme ton contenu en modules prêts à réviser pour ton audience."
+    title: "Educational Creators",
+    description: "Transform your content into ready-to-review modules for your audience."
   }
 ]
 
@@ -90,25 +90,25 @@ export default function HomePage() {
           <div className="max-w-5xl mx-auto text-center">
             <span className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2 text-sm text-muted-foreground">
               <Timer className="h-4 w-4" />
-              Gagne des heures de fichage chaque semaine
+              Save hours of filing every week
             </span>
             <h1 className="mt-8 text-5xl md:text-6xl lg:text-7xl font-bold leading-tight tracking-tight">
-              Pose ton PDF. Nothly te rend des fiches et des quiz prêts à réviser.
+              Drop your PDF. Nothly gives you study sheets and quizzes ready to review.
             </h1>
             <p className="mt-6 text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-              Un assistant d'étude qui lit tes documents, les simplifie sans trahir le sens,
-              et suit ta progression pour que tu maîtrises vraiment.
+              A study assistant that reads your documents, simplifies them without betraying meaning,
+              and tracks your progress so you truly master the content.
             </p>
             <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
               <Link href="/register">
                 <Button className="bg-gradient-to-r from-nothly-blue to-nothly-violet text-white px-8 py-6 rounded-full shadow-lg shadow-nothly-blue/20 hover:shadow-xl hover:shadow-nothly-blue/30 transition-all duration-200 hover:-translate-y-0.5">
-                  Commencer gratuitement
+                  Start for free
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
               <Link href="/new">
                 <Button variant="outline" className="px-8 py-6 rounded-full border-2">
-                  Voir le flux complet
+                  See the full flow
                 </Button>
               </Link>
             </div>
@@ -122,60 +122,72 @@ export default function HomePage() {
                       <Sparkles className="h-5 w-5" />
                     </div>
                     <span className="text-sm uppercase tracking-wider text-primary font-medium">
-                      Aperçu instantané
+                      Instant Preview
                     </span>
                   </div>
                   <h2 className="text-3xl md:text-4xl font-semibold leading-tight">
-                    Une fiche de révision structurée dès que ton PDF est importé.
+                    A structured study sheet as soon as your PDF is imported.
                   </h2>
                   <p className="text-muted-foreground leading-relaxed">
-                    Titres hiérarchiques, définitions, exemples et rappels critiques.
-                    Tout est généré automatiquement et reste synchronisé avec la dernière version du document.
+                    Hierarchical titles, definitions, examples, and critical reminders.
+                    Everything is automatically generated and stays synchronized with the latest version of the document.
                   </p>
                   <ul className="space-y-3 text-sm text-muted-foreground">
                     <li className="flex items-start gap-3">
                       <span className="mt-1 h-2 w-2 rounded-full bg-primary" />
-                      Résumés par section fidèles au contenu source.
+                      Section summaries faithful to the source content.
                     </li>
                     <li className="flex items-start gap-3">
                       <span className="mt-1 h-2 w-2 rounded-full bg-primary" />
-                      Cartes de quiz liées à chaque notion clé.
+                      Quiz cards linked to each key concept.
                     </li>
                     <li className="flex items-start gap-3">
                       <span className="mt-1 h-2 w-2 rounded-full bg-primary" />
-                      Passage instantané du mode lecture au mode entraînement.
+                      Instant switch from reading mode to practice mode.
                     </li>
                   </ul>
                 </div>
                 <div className="relative">
-                  <div className="rounded-2xl border border-border bg-card p-6 shadow-lg">
-                    <div className="space-y-4">
-                      <div>
-                        <p className="text-sm font-medium text-muted-foreground">Chapitre 3 · Physiologie</p>
-                        <h3 className="mt-2 text-xl font-semibold">La régulation hormonale</h3>
+                  {/* Quiz Preview - Style réel de l'application */}
+                  <div className="rounded-2xl border-2 border-slate-200 bg-white p-8 shadow-lg">
+                    <div className="mb-6">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-3">Question</p>
+                      <h3 className="text-xl font-semibold text-slate-900 leading-relaxed">
+                        What is the main role of the hypothalamus in hormonal regulation?
+                      </h3>
+                    </div>
+                    <div className="mt-6 grid gap-3">
+                      <div className="rounded-xl border border-slate-200 bg-white px-5 py-4 text-left text-base font-medium">
+                        Produces growth hormones
                       </div>
-                      <div className="space-y-3 text-sm text-muted-foreground leading-relaxed">
-                        <p>
-                          Les hormones sont sécrétées par les glandes endocrines et assurent la communication
-                          à distance entre organes. Nothly simplifie la cascade d'actions sans perdre la précision.
-                        </p>
-                        <div className="rounded-xl border border-primary/20 bg-primary/10 p-4 text-primary">
-                          Définition clé : l'axe hypothalamo-hypophysaire coordonne la réponse hormonale.
-                        </div>
+                      <div className="rounded-xl border-2 border-emerald-400 bg-emerald-50 px-5 py-4 text-left text-base font-medium text-emerald-700">
+                        Coordinates hormonal responses
                       </div>
-                      <div className="rounded-xl border border-border bg-muted/40 p-4">
-                        <p className="text-sm font-semibold text-foreground">Quiz lié</p>
-                        <p className="mt-1 text-sm text-muted-foreground">
-                          Quel est le rôle principal de l'hypothalamus dans la régulation hormonale ?
-                        </p>
+                      <div className="rounded-xl border border-slate-200 bg-white px-5 py-4 text-left text-base font-medium opacity-60">
+                        Stores insulin
+                      </div>
+                      <div className="rounded-xl border border-slate-200 bg-white px-5 py-4 text-left text-base font-medium opacity-60">
+                        Filters blood toxins
                       </div>
                     </div>
+                    <div className="mt-5 rounded-xl border-2 border-emerald-200 bg-emerald-50 px-4 py-3">
+                      <p className="text-sm font-medium text-emerald-700">
+                        The logarithm function is defined only for positive real numbers.
+                      </p>
+                    </div>
+                    <div className="mt-6 flex justify-end">
+                      <button className="inline-flex items-center justify-center rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-blue-700">
+                        Next
+                      </button>
+                    </div>
                   </div>
+                  
+                  {/* Stats card */}
                   <div className="absolute -bottom-8 -right-8 hidden md:block">
-                    <div className="rounded-2xl border border-border bg-background/90 backdrop-blur p-4 shadow-md">
-                      <p className="text-xs uppercase tracking-wider text-muted-foreground">Score progression</p>
-                      <p className="mt-2 text-2xl font-semibold text-foreground">82%</p>
-                      <p className="text-xs text-muted-foreground">Maîtrise du chapitre</p>
+                    <div className="rounded-2xl border-2 border-slate-200 bg-white p-5 shadow-sm">
+                      <p className="text-xs font-medium uppercase tracking-wide text-neutral-600">Progress</p>
+                      <p className="mt-2 text-2xl font-bold text-neutral-900">4%</p>
+                      <p className="text-xs text-neutral-600 mt-1">Question 1 / 13</p>
                     </div>
                   </div>
                 </div>
@@ -184,13 +196,13 @@ export default function HomePage() {
           </div>
         </section>
 
-        <section id="flux" className="py-24 px-6 lg:px-8 bg-muted/20">
+        <section id="flow" className="py-24 px-6 lg:px-8 bg-muted/20">
           <div className="max-w-6xl mx-auto">
             <h2 className="text-center text-3xl md:text-4xl font-semibold leading-tight">
-              Le flux Nothly : de l'upload à la révision, sans friction.
+              The Nothly flow: from upload to review, frictionless.
             </h2>
             <p className="mt-4 text-center text-muted-foreground max-w-2xl mx-auto">
-              Chaque étape est automatisée mais contrôlable. Tu suis l'avancement en temps réel et tu récupères un espace d'étude prêt à l'emploi.
+              Each step is automated but controllable. You track progress in real-time and get a ready-to-use study space.
             </p>
             <div className="mt-12 grid gap-6 md:grid-cols-5">
               {flowSteps.map((step, index) => {
@@ -204,7 +216,7 @@ export default function HomePage() {
                       <div className="rounded-full bg-primary/10 p-3 text-primary">
                         <Icon className="h-5 w-5" />
                       </div>
-                      <span className="text-xs text-muted-foreground font-medium">Étape {index + 1}</span>
+                      <span className="text-xs text-muted-foreground font-medium">Step {index + 1}</span>
                     </div>
                     <div>
                       <h3 className="text-lg font-semibold">{step.title}</h3>
@@ -217,16 +229,16 @@ export default function HomePage() {
           </div>
         </section>
 
-        <section id="valeur" className="py-24 px-6 lg:px-8">
+        <section id="value" className="py-24 px-6 lg:px-8">
           <div className="max-w-6xl mx-auto">
             <div className="grid gap-12 md:grid-cols-[1.1fr,0.9fr] items-center">
               <div>
                 <h2 className="text-3xl md:text-4xl font-semibold leading-tight">
-                  Pourquoi les étudiants et pros choisissent Nothly ?
+                  Why students and professionals choose Nothly?
                 </h2>
                 <p className="mt-4 text-muted-foreground leading-relaxed">
-                  On se concentre sur ta compréhension : des contenus fiables, des quiz adaptés, un suivi qui t'indique exactement
-                  quoi réviser. Sans distraction ni jargon.
+                  We focus on your understanding: reliable content, adapted quizzes, tracking that tells you exactly
+                  what to review. Without distraction or jargon.
                 </p>
                 <div className="mt-10 grid gap-6 md:grid-cols-3">
                   {benefits.map((benefit) => (
@@ -242,30 +254,30 @@ export default function HomePage() {
               <div className="rounded-3xl border border-border bg-background p-8 shadow-lg">
                 <div className="flex items-center gap-3">
                   <LineChart className="h-5 w-5 text-primary" />
-                  <span className="text-sm font-medium text-muted-foreground">Suivi de progression</span>
+                  <span className="text-sm font-medium text-muted-foreground">Progress Tracking</span>
                 </div>
                 <div className="mt-8 space-y-6">
                   <div>
-                    <p className="text-xs uppercase tracking-wider text-muted-foreground">Chapitres maîtrisés</p>
+                    <p className="text-xs uppercase tracking-wider text-muted-foreground">Mastered Chapters</p>
                     <div className="mt-2 h-12 rounded-2xl bg-muted/40 p-2">
                       <div
                         className="h-full rounded-2xl bg-gradient-to-r from-nothly-blue to-nothly-violet"
                         style={{ width: "78%" }}
                       />
                     </div>
-                    <p className="mt-2 text-sm text-muted-foreground">Chapitre 3 à revoir dans 5 jours</p>
+                    <p className="mt-2 text-sm text-muted-foreground">Chapter 3 to review in 5 days</p>
                   </div>
                   <div className="rounded-2xl border border-border bg-muted/30 p-6">
-                    <p className="text-sm font-semibold text-foreground">Rappel automatique</p>
+                    <p className="text-sm font-semibold text-foreground">Automatic Reminder</p>
                     <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-                      “Tu n'as pas révisé la section Immunologie depuis 6 jours. Relance un quiz de 5 questions ?”
+                      "You haven't reviewed the Immunology section for 6 days. Launch a 5-question quiz?"
                     </p>
                     <div className="mt-4 flex items-center gap-3">
                       <Button size="sm" className="rounded-full px-5 py-2 text-sm">
-                        Lancer le quiz
+                        Launch Quiz
                       </Button>
                       <Button size="sm" variant="ghost" className="text-muted-foreground">
-                        Me rappeler demain
+                        Remind me tomorrow
                       </Button>
                     </div>
                   </div>
@@ -275,13 +287,13 @@ export default function HomePage() {
           </div>
         </section>
 
-        <section id="cibles" className="py-24 px-6 lg:px-8 bg-muted/20">
+        <section id="audience" className="py-24 px-6 lg:px-8 bg-muted/20">
           <div className="max-w-5xl mx-auto text-center">
             <h2 className="text-3xl md:text-4xl font-semibold">
-              Conçu pour celles et ceux qui apprennent vite et bien.
+              Designed for those who learn fast and well.
             </h2>
             <p className="mt-4 text-muted-foreground max-w-3xl mx-auto">
-              Nothly n'est pas un éditeur généraliste. C'est ton assistant d'étude personnel, focus sur l'assimilation rapide.
+              Nothly is not a general-purpose editor. It's your personal study assistant, focused on rapid assimilation.
             </p>
             <div className="mt-12 grid gap-6 md:grid-cols-3">
               {audience.map((item) => (
@@ -298,24 +310,19 @@ export default function HomePage() {
           <div className="max-w-4xl mx-auto text-center">
             <span className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2 text-sm text-muted-foreground">
               <Sparkles className="h-4 w-4 text-primary" />
-              Mise à jour intelligente incluse
+              Smart updates included
             </span>
             <h2 className="mt-6 text-3xl md:text-4xl font-semibold leading-tight">
-              Tu importes une nouvelle version du PDF ? Nothly détecte ce qui a changé et met uniquement à jour les sections impactées.
+              Importing a new PDF version? Nothly detects what changed and updates only the impacted sections.
             </h2>
             <p className="mt-4 text-muted-foreground">
-              Les annotations, les quiz réussis et ton historique de révision sont conservés. Tu reprends exactement là où tu t'étais arrêté.
+              Annotations, completed quizzes, and your review history are preserved. You pick up exactly where you left off.
             </p>
             <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
               <Link href="/register">
                 <Button className="px-8 py-6 rounded-full bg-gradient-to-r from-nothly-blue to-nothly-violet text-white shadow-lg shadow-nothly-blue/20 hover:shadow-xl hover:-translate-y-0.5 transition-all">
-                  Essayer maintenant
+                  Try it now
                   <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-              </Link>
-              <Link href="/pricing">
-                <Button variant="outline" className="px-8 py-6 rounded-full border-2">
-                  Consulter les offres
                 </Button>
               </Link>
             </div>
@@ -325,7 +332,7 @@ export default function HomePage() {
 
       <footer className="border-t border-border py-12 px-6 lg:px-8">
         <div className="max-w-6xl mx-auto text-center text-sm text-muted-foreground">
-          © 2025 Nothly — Ton assistant de compréhension.
+          © 2025 Nothly — Your understanding assistant.
         </div>
       </footer>
     </div>

@@ -80,12 +80,6 @@ export default function Navbar() {
               {t("links.targets")}
             </a>
             <Link
-              href="/pricing"
-              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200"
-            >
-              {t("links.pricing")}
-            </Link>
-            <Link
               href="/login"
               className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200"
             >

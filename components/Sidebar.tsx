@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { useRouter, usePathname } from "next/navigation"
 import Logo from "@/components/Logo"
-import { Settings, LogOut, CreditCard, HardDrive, Sparkles } from "lucide-react"
+import { Settings, LogOut, HardDrive, Sparkles } from "lucide-react"
 import { createClient } from "@/lib/supabase-client"
 import { useTranslations } from "next-intl"
 import SettingsModal from "@/components/SettingsModal"
@@ -74,18 +74,6 @@ export default function Sidebar() {
 
         {/* Actions du bas */}
         <div className="flex flex-col gap-2 mt-4 pt-4 border-t border-border">
-          {/* Bouton Tarifs */}
-          <button
-            onClick={() => router.push("/dashboard/pricing")}
-            className={`flex items-center gap-3 px-4 py-2 rounded-md transition-all ${isActive("/dashboard/pricing") || isActive("/pricing") || isActive("/settings/plan")
-                ? "bg-primary/10 text-primary font-medium"
-                : "text-muted-foreground hover:bg-muted"
-              }`}
-          >
-            <CreditCard className="h-5 w-5" />
-            <span className="text-sm">{t("pricing")}</span>
-          </button>
-
           {/* Bouton Paramètres - Ouvre le modal */}
           <button
             onClick={() => setIsSettingsOpen(true)}
