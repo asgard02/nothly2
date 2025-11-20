@@ -41,7 +41,11 @@ export async function GET(req: NextRequest) {
   }
 
   const admin = getSupabaseAdmin()
-  const db = admin ?? supabase
+  if (!admin) {
+    console.error("[GET /api/collections] Admin client is null - SUPABASE_SERVICE_ROLE_KEY not configured")
+    return NextResponse.json({ error: "Configuration serveur invalide" }, { status: 500 })
+  }
+  const db = admin
 
   const { data, error } = await db
     .from("study_collections")
@@ -88,7 +92,11 @@ export async function POST(req: NextRequest) {
   }
 
   const admin = getSupabaseAdmin()
-  const db = admin ?? supabase
+  if (!admin) {
+    console.error("[POST /api/collections] Admin client is null - SUPABASE_SERVICE_ROLE_KEY not configured")
+    return NextResponse.json({ error: "Configuration serveur invalide" }, { status: 500 })
+  }
+  const db = admin
 
   let body: any = null
   try {
@@ -134,9 +142,18 @@ export async function POST(req: NextRequest) {
     .overlaps("tags", rawTags)
 
   if (documentsError) {
-    console.error("[POST /api/collections] documents", documentsError)
+    console.error("[POST /api/collections] documents ERROR:", {
+      error: documentsError,
+      code: documentsError.code,
+      message: documentsError.message,
+      details: documentsError.details,
+      hint: documentsError.hint,
+      tags: rawTags,
+    })
     return NextResponse.json({ error: "Impossible de récupérer les supports" }, { status: 500 })
   }
+
+  console.log("[POST /api/collections] documents found:", documents?.length || 0)
 
   const sources: Array<{ document: any; version: any }> = []
 

@@ -18,7 +18,7 @@ export default function ChatPage() {
               💬 Chat IA
             </h1>
             <p className="text-gray-400">
-              Discutez avec l'assistant intelligent de Notlhy
+              Discutez avec l'assistant intelligent de Nothly
             </p>
           </div>
 

@@ -2,12 +2,18 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { LogOut, Trash2, Mail } from "lucide-react"
+import { LogOut, Trash2, Mail, User as UserIcon, Calendar, TrendingUp, FileText, Zap } from "lucide-react"
 
 export default function ProfileSettingsPage() {
   const router = useRouter()
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [stats, setStats] = useState({
+    notesCount: 0,
+    flashcardsCount: 0,
+    quizzesCount: 0,
+    tokensUsed: 2500,
+  })
 
   useEffect(() => {
     const loadUser = async () => {
@@ -16,6 +22,13 @@ export default function ProfileSettingsPage() {
         const supabase = createClient()
         const { data: { user } } = await supabase.auth.getUser()
         setUser(user)
+
+        // Charger les stats
+        if (user) {
+          const notesRes = await fetch("/api/notes")
+          const notes = await notesRes.json()
+          setStats(prev => ({ ...prev, notesCount: notes.length || 0 }))
+        }
       } catch (error) {
         console.error("Erreur chargement utilisateur:", error)
       } finally {
@@ -26,10 +39,14 @@ export default function ProfileSettingsPage() {
   }, [])
 
   const handleLogout = async () => {
-    const { createClient } = await import("@/lib/supabase-client")
-    const supabase = createClient()
-    await supabase.auth.signOut()
-    router.push("/")  // Changé de "/login" à "/"
+    try {
+      await fetch("/auth/signout", { method: "POST", credentials: "include", cache: "no-store" })
+    } catch (error) {
+      console.error("Erreur lors de la déconnexion:", error)
+    } finally {
+      router.push("/login")
+      router.refresh()
+    }
   }
 
   const handleDeleteAccount = async () => {
@@ -42,7 +59,6 @@ export default function ProfileSettingsPage() {
     }
 
     try {
-      // Supprimer toutes les notes
       const response = await fetch("/api/notes", {
         method: "GET",
       })
@@ -55,13 +71,21 @@ export default function ProfileSettingsPage() {
         await Promise.all(deletePromises)
       }
 
-      // Supprimer le compte
-      alert("Compte supprimé avec succès")
+      alert("✅ Compte supprimé avec succès")
       handleLogout()
     } catch (error) {
       console.error("Erreur:", error)
-      alert("Erreur lors de la suppression du compte")
+      alert("❌ Erreur lors de la suppression du compte")
     }
+  }
+
+  const getInitials = (email: string) => {
+    return email.substring(0, 2).toUpperCase()
+  }
+
+  const getJoinDate = (createdAt: string) => {
+    const date = new Date(createdAt)
+    return date.toLocaleDateString("fr-FR", { year: "numeric", month: "long" })
   }
 
   if (loading) {
@@ -85,47 +109,126 @@ export default function ProfileSettingsPage() {
         </p>
       </div>
 
-      {/* Informations utilisateur */}
+      {/* Carte profil */}
+      <div className="bg-card rounded-xl border border-border shadow-sm p-6 mb-6 transition-colors">
+        <div className="flex items-start gap-6 mb-6">
+          {/* Avatar */}
+          <div className="w-20 h-20 bg-gradient-to-br from-primary to-primary/60 rounded-2xl flex items-center justify-center flex-shrink-0">
+            <span className="text-2xl font-bold text-white">
+              {user?.email ? getInitials(user.email) : "??"}
+            </span>
+          </div>
+
+          {/* Infos */}
+          <div className="flex-1">
+            <h2 className="text-2xl font-bold text-foreground mb-1">
+              {user?.email?.split("@")[0] || "Utilisateur"}
+            </h2>
+            <p className="text-sm text-muted-foreground mb-3">
+              {user?.email || "Non disponible"}
+            </p>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Calendar className="h-3 w-3" />
+              <span>Membre depuis {user?.created_at ? getJoinDate(user.created_at) : "..."}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Statistiques */}
+        <div className="grid grid-cols-4 gap-3 pt-6 border-t border-border">
+          <div className="text-center p-3 bg-muted/50 rounded-lg">
+            <FileText className="h-5 w-5 text-primary mx-auto mb-1" />
+            <p className="text-2xl font-bold text-foreground">{stats.notesCount}</p>
+            <p className="text-xs text-muted-foreground">Notes</p>
+          </div>
+          <div className="text-center p-3 bg-muted/50 rounded-lg">
+            <TrendingUp className="h-5 w-5 text-primary mx-auto mb-1" />
+            <p className="text-2xl font-bold text-foreground">{stats.flashcardsCount}</p>
+            <p className="text-xs text-muted-foreground">Flashcards</p>
+          </div>
+          <div className="text-center p-3 bg-muted/50 rounded-lg">
+            <UserIcon className="h-5 w-5 text-primary mx-auto mb-1" />
+            <p className="text-2xl font-bold text-foreground">{stats.quizzesCount}</p>
+            <p className="text-xs text-muted-foreground">Quiz</p>
+          </div>
+          <div className="text-center p-3 bg-muted/50 rounded-lg">
+            <Zap className="h-5 w-5 text-primary mx-auto mb-1" />
+            <p className="text-2xl font-bold text-foreground">{stats.tokensUsed}</p>
+            <p className="text-xs text-muted-foreground">Tokens</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Informations du compte */}
       <div className="bg-card rounded-xl border border-border shadow-sm p-6 mb-6 transition-colors">
         <h2 className="text-lg font-semibold text-foreground mb-4">
-          Informations
+          Informations du compte
         </h2>
 
         <div className="space-y-4">
           {/* Email */}
-          <div className="flex items-center gap-4 pb-4 border-b border-border">
-            <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
-              <Mail className="h-5 w-5 text-primary" />
+          <div className="flex items-center justify-between py-3 border-b border-border">
+            <div className="flex items-center gap-3">
+              <Mail className="h-5 w-5 text-muted-foreground" />
+              <div>
+                <p className="text-sm font-medium text-foreground">Email</p>
+                <p className="text-xs text-muted-foreground">
+                  {user?.email || "Non disponible"}
+                </p>
+              </div>
             </div>
-            <div className="flex-1">
-              <p className="text-sm text-muted-foreground mb-1">Email</p>
-              <p className="text-base text-foreground font-medium">
-                {user?.email || "Non disponible"}
-              </p>
+            <span className="px-3 py-1 bg-green-500/10 text-green-500 text-xs font-medium rounded-full">
+              Vérifié
+            </span>
+          </div>
+
+          {/* ID utilisateur */}
+          <div className="flex items-center justify-between py-3">
+            <div className="flex items-center gap-3">
+              <UserIcon className="h-5 w-5 text-muted-foreground" />
+              <div>
+                <p className="text-sm font-medium text-foreground">ID utilisateur</p>
+                <p className="text-xs text-muted-foreground font-mono">
+                  {user?.id?.substring(0, 20)}...
+                </p>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
       {/* Actions */}
-      <div className="bg-card rounded-xl border border-border shadow-sm p-6 space-y-4 transition-colors">
+      <div className="bg-card rounded-xl border border-border shadow-sm p-6 mb-6 transition-colors">
         <h2 className="text-lg font-semibold text-foreground mb-4">
           Actions
         </h2>
 
-        {/* Déconnexion */}
-        <button
-          onClick={handleLogout}
-          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg border border-border text-foreground hover:bg-muted transition-all duration-200 font-medium"
-        >
-          <LogOut className="h-5 w-5" />
-          Se déconnecter
-        </button>
+        <div className="space-y-3">
+          {/* Déconnexion */}
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg border border-border text-foreground hover:bg-muted transition-all duration-200 font-medium"
+          >
+            <LogOut className="h-5 w-5" />
+            Se déconnecter
+          </button>
+        </div>
+      </div>
 
-        {/* Supprimer le compte */}
+      {/* Zone dangereuse */}
+      <div className="bg-destructive/10 border border-destructive/20 rounded-xl p-6 transition-colors">
+        <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+          <Trash2 className="h-5 w-5 text-destructive" />
+          Zone dangereuse
+        </h2>
+
+        <p className="text-sm text-muted-foreground mb-4">
+          Cette action est irréversible et supprimera définitivement toutes vos données.
+        </p>
+
         <button
           onClick={handleDeleteAccount}
-          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg border border-destructive bg-destructive/10 text-destructive hover:bg-destructive/20 transition-all duration-200 font-medium"
+          className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-lg bg-destructive/20 border border-destructive text-destructive hover:bg-destructive/30 transition-all duration-200 font-medium"
         >
           <Trash2 className="h-5 w-5" />
           Supprimer mon compte

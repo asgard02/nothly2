@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { Eye, EyeOff } from "lucide-react"
 
 type LoginMode = "password" | "magic-link"
 
@@ -19,6 +20,7 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [message, setMessage] = useState("")
   const [isSuccess, setIsSuccess] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
 
   const supabase = createClient()
   const router = useRouter()
@@ -27,7 +29,7 @@ export default function LoginPage() {
     e.preventDefault()
     
     if (!email || !password) {
-      setMessage("Veuillez remplir tous les champs")
+      setMessage("Please fill in all fields")
       setIsSuccess(false)
       return
     }
@@ -42,18 +44,15 @@ export default function LoginPage() {
       })
 
       if (error) {
-        setMessage(`Erreur : ${error.message}`)
+        setMessage(`Error: ${error.message}`)
         setIsSuccess(false)
       } else if (data.session) {
-        setMessage("✅ Connexion réussie ! Redirection...")
+        setMessage("✅ Logged in! Redirecting...")
         setIsSuccess(true)
-        // Supabase gère automatiquement la session via cookies
-        setTimeout(() => {
-          router.push("/dashboard")
-        }, 1000)
+        router.replace("/stack")
       }
     } catch (error) {
-      setMessage("Une erreur est survenue")
+        setMessage("An error occurred")
       setIsSuccess(false)
     } finally {
       setIsLoading(false)
@@ -64,7 +63,7 @@ export default function LoginPage() {
     e.preventDefault()
     
     if (!email) {
-      setMessage("Veuillez entrer votre email")
+      setMessage("Please enter your email")
       setIsSuccess(false)
       return
     }
@@ -81,14 +80,14 @@ export default function LoginPage() {
       })
 
       if (error) {
-        setMessage(`Erreur : ${error.message}`)
+        setMessage(`Error: ${error.message}`)
         setIsSuccess(false)
       } else {
-        setMessage("✉️ Vérifiez votre email pour vous connecter !")
+        setMessage("✉️ Check your mailbox to complete login!")
         setIsSuccess(true)
       }
     } catch (error) {
-      setMessage("Une erreur est survenue")
+      setMessage("An error occurred")
       setIsSuccess(false)
     } finally {
       setIsLoading(false)
@@ -103,12 +102,12 @@ export default function LoginPage() {
             <Logo size={40} showText={true} href={null} className="justify-center" />
           </div>
           <CardDescription className="text-base">
-            Connectez-vous pour accéder à vos notes
+            Log in to access your notes
           </CardDescription>
         </CardHeader>
         
         <CardContent>
-          {/* Onglets pour choisir le mode de connexion */}
+          {/* Tabs to choose login method */}
           <div className="flex gap-2 mb-6">
             <button
               type="button"
@@ -119,7 +118,7 @@ export default function LoginPage() {
                   : "bg-muted text-muted-foreground hover:bg-muted/80"
               }`}
             >
-              Mot de passe
+              Password
             </button>
             <button
               type="button"
@@ -130,21 +129,21 @@ export default function LoginPage() {
                   : "bg-muted text-muted-foreground hover:bg-muted/80"
               }`}
             >
-              Lien magique
+              Magic link
             </button>
           </div>
 
-          {/* Formulaire mot de passe */}
+          {/* Password form */}
           {mode === "password" ? (
             <form onSubmit={handlePasswordLogin} className="space-y-4">
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-foreground mb-2">
-                  Adresse email
+                  Email address
                 </label>
                 <Input
                   id="email"
                   type="email"
-                  placeholder="votre@email.com"
+                  placeholder="you@email.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   disabled={isLoading}
@@ -155,18 +154,28 @@ export default function LoginPage() {
 
               <div>
                 <label htmlFor="password" className="block text-sm font-medium text-foreground mb-2">
-                  Mot de passe
+                  Password
                 </label>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  disabled={isLoading}
-                  required
-                  className="w-full"
-                />
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    disabled={isLoading}
+                    required
+                    className="w-full pr-12"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((value) => !value)}
+                    className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground transition hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-r-md"
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
               </div>
 
               <div className="flex items-center">
@@ -178,7 +187,7 @@ export default function LoginPage() {
                   className="h-4 w-4 text-primary focus:ring-primary border-border rounded"
                 />
                 <label htmlFor="remember" className="ml-2 block text-sm text-foreground">
-                  Rester connecté
+                  Stay signed in
                 </label>
               </div>
 
@@ -203,32 +212,32 @@ export default function LoginPage() {
                 {isLoading ? (
                   <span className="flex items-center gap-2">
                     <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    Connexion en cours...
+                    Signing in...
                   </span>
                 ) : (
-                  "Se connecter"
+                  "Sign in"
                 )}
               </Button>
 
               <div className="text-center mt-4">
                 <p className="text-sm text-muted-foreground">
-                  Pas encore de compte ?{" "}
+                  Don't have an account yet?{" "}
                   <Link href="/register" className="text-primary hover:text-primary/80 font-medium">
-                    Créer un compte
+                    Create an account
                   </Link>
                 </p>
               </div>
             </form>
           ) : (
-            /* Formulaire magic link */
+            /* Magic link form */
             isSuccess ? (
               <div className="text-center space-y-4">
                 <div className="text-6xl">📧</div>
                 <p className="text-lg font-medium text-primary">
-                  Email envoyé !
+                  Email sent!
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  Vérifiez votre boîte de réception et cliquez sur le lien magique pour vous connecter.
+                  Check your inbox and click the magic link to sign in.
                 </p>
                 <Button
                   variant="outline"
@@ -239,19 +248,19 @@ export default function LoginPage() {
                   }}
                   className="mt-4"
                 >
-                  Renvoyer un email
+                  Resend email
                 </Button>
               </div>
             ) : (
               <form onSubmit={handleMagicLinkLogin} className="space-y-4">
                 <div>
                   <label htmlFor="email-magic" className="block text-sm font-medium text-foreground mb-2">
-                    Adresse email
+                    Email address
                   </label>
                   <Input
                     id="email-magic"
                     type="email"
-                    placeholder="votre@email.com"
+                    placeholder="you@email.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     disabled={isLoading}
@@ -281,15 +290,15 @@ export default function LoginPage() {
                   {isLoading ? (
                     <span className="flex items-center gap-2">
                       <div className="h-4 w-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
-                      Envoi en cours...
+                      Sending link...
                     </span>
                   ) : (
-                    "Recevoir un lien magique"
+                    "Send magic link"
                   )}
                 </Button>
 
                 <p className="text-xs text-center text-muted-foreground mt-4">
-                  Un email avec un lien de connexion vous sera envoyé. Pas de mot de passe requis !
+                  We'll send you a login link by email. No password needed!
                 </p>
               </form>
             )

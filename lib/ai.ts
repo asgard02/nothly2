@@ -29,7 +29,7 @@ export async function improveNote(content: string) {
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini", // rapide et peu coûteux
       messages: [{ role: "user", content: prompt }],
-      max_tokens: 1000,
+      max_tokens: 2000, // Augmenté pour permettre des réponses plus longues
       temperature: 0.7,
     })
 

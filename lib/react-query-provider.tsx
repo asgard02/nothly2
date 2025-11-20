@@ -1,7 +1,7 @@
 "use client"
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
-import { useState, useEffect } from "react"
+import { useState } from "react"
 
 export default function ReactQueryProvider({
   children,
@@ -13,9 +13,11 @@ export default function ReactQueryProvider({
       new QueryClient({
         defaultOptions: {
           queries: {
-            staleTime: 1 * 60 * 1000, // 1 minute
+            staleTime: 60_000, // 60 secondes - harmonisé avec useCollections
             gcTime: 5 * 60 * 1000, // 5 minutes (anciennement cacheTime)
             refetchOnWindowFocus: false,
+            refetchOnReconnect: false,
+            refetchOnMount: false, // Laisser chaque hook décider individuellement
             retry: 1,
           },
         },
@@ -23,42 +25,43 @@ export default function ReactQueryProvider({
   )
 
   // ⚡ Persistance React Query dans localStorage pour permettre l'ouverture offline
-  useEffect(() => {
-    if (typeof window === "undefined") return
+  // Désactivée temporairement pour éviter les problèmes de vendor-chunks
+  // useEffect(() => {
+  //   if (typeof window === "undefined") return
 
-    // Import dynamique pour éviter les erreurs si les packages ne sont pas installés
-    Promise.all([
-      import("@tanstack/react-query-persist-client").catch(() => null),
-      import("@tanstack/query-sync-storage-persister").catch(() => null),
-    ]).then(([persistClientModule, persisterModule]) => {
-      if (!persistClientModule || !persisterModule) {
-        // Packages non installés - continuer sans persistance
-        return
-      }
+  //   // Import dynamique pour éviter les erreurs si les packages ne sont pas installés
+  //   Promise.all([
+  //     import("@tanstack/react-query-persist-client").catch(() => null),
+  //     import("@tanstack/query-sync-storage-persister").catch(() => null),
+  //   ]).then(([persistClientModule, persisterModule]) => {
+  //     if (!persistClientModule || !persisterModule) {
+  //       // Packages non installés - continuer sans persistance
+  //       return
+  //     }
 
-      const { persistQueryClient } = persistClientModule
-      const { createSyncStoragePersister } = persisterModule
+  //     const { persistQueryClient } = persistClientModule
+  //     const { createSyncStoragePersister } = persisterModule
 
-      const persister = createSyncStoragePersister({
-        storage: window.localStorage,
-        key: "NOTLHY_QUERY_CACHE",
-      })
+  //     const persister = createSyncStoragePersister({
+  //       storage: window.localStorage,
+  //       key: "NOTLHY_QUERY_CACHE",
+  //     })
 
-      persistQueryClient({
-        queryClient,
-        persister,
-        maxAge: 24 * 60 * 60 * 1000, // 24 heures
-        dehydrateOptions: {
-          shouldDehydrateQuery: (query) => {
-            // Ne persister que les queries réussies principales
-            if (query.state.status !== "success") return false
-            const key = query.queryKey[0]
-            return key === "notes" || key === "note" || key === "documents" || key === "document"
-          },
-        },
-      })
-    })
-  }, [queryClient])
+  //     persistQueryClient({
+  //       queryClient,
+  //       persister,
+  //       maxAge: 24 * 60 * 60 * 1000, // 24 heures
+  //       dehydrateOptions: {
+  //         shouldDehydrateQuery: (query) => {
+  //           // Ne persister que les queries réussies principales
+  //           if (query.state.status !== "success") return false
+  //           const key = query.queryKey[0]
+  //           return key === "notes" || key === "note" || key === "documents" || key === "document"
+  //         },
+  //       },
+  //     })
+  //   })
+  // }, [queryClient])
 
   return (
     <QueryClientProvider client={queryClient}>

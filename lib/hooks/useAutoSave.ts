@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { useQueryClient } from "@tanstack/react-query"
 import type { Note } from "./useNotes"
 
@@ -20,7 +20,7 @@ export function useAutoSave({
   const [title, setTitle] = useState(initialTitle)
   const [content, setContent] = useState(initialContent)
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle")
-  
+
   const queryClient = useQueryClient()
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const lastSavedRef = useRef({ title: initialTitle, content: initialContent })
@@ -34,7 +34,7 @@ export function useAutoSave({
   }, [initialTitle, initialContent])
 
   // Fonction de sauvegarde optimisée
-  const saveToServer = async (titleToSave: string, contentToSave: string) => {
+  const saveToServer = useCallback(async (titleToSave: string, contentToSave: string) => {
     if (isSavingRef.current) return
     if (!enabled || !noteId) return
 
@@ -54,18 +54,18 @@ export function useAutoSave({
       queryClient.setQueryData<Note>(["note", noteId], (old) =>
         old
           ? {
-              ...old,
-              title: titleToSave,
-              content: contentToSave,
-              updated_at: new Date().toISOString(),
-            }
+            ...old,
+            title: titleToSave,
+            content: contentToSave,
+            updated_at: new Date().toISOString(),
+          }
           : {
-              id: noteId,
-              title: titleToSave,
-              content: contentToSave,
-              user_id: "",
-              updated_at: new Date().toISOString(),
-            }
+            id: noteId,
+            title: titleToSave,
+            content: contentToSave,
+            user_id: "",
+            updated_at: new Date().toISOString(),
+          }
       )
 
       const res = await fetch(`/api/notes/${noteId}`, {
@@ -103,7 +103,7 @@ export function useAutoSave({
     } finally {
       isSavingRef.current = false
     }
-  }
+  }, [enabled, noteId, queryClient])
 
   // Auto-save avec debounce
   useEffect(() => {
@@ -124,7 +124,7 @@ export function useAutoSave({
         clearTimeout(saveTimeoutRef.current)
       }
     }
-  }, [title, content, noteId, enabled])
+  }, [title, content, noteId, enabled, saveToServer])
 
   // Sauvegarde avant fermeture de page (avec sendBeacon)
   useEffect(() => {

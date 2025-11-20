@@ -31,9 +31,61 @@ interface ExtractedSource {
   textLength: number
 }
 
-const CONTEXT_CHAR_LIMIT = Number(process.env.COLLECTION_CONTEXT_LIMIT_CHARS || 120_000)
+// Force la limite à 300k caractères (ignore la variable d'env pour être sûr)
+const CONTEXT_CHAR_LIMIT = 300_000
 const MAX_FLASHCARDS = Number(process.env.COLLECTION_FLASHCARDS_TARGET || 16)
 const MAX_QUIZ_QUESTIONS = Number(process.env.COLLECTION_QUIZ_TARGET || 9)
+
+/**
+ * Calcule le nombre optimal de flashcards et quiz en fonction de la taille du contenu
+ * @param totalChars Nombre total de caractères dans le corpus
+ * @returns Object avec flashcardsCount et quizCount
+ */
+function calculateOptimalCounts(totalChars: number): { flashcardsCount: number; quizCount: number } {
+  // Seuils en caractères
+  const SMALL_THRESHOLD = 5_000 // Petit document
+  const MEDIUM_THRESHOLD = 30_000 // Document moyen
+  const LARGE_THRESHOLD = 100_000 // Grand document
+
+  let flashcardsCount: number
+  let quizCount: number
+
+  if (totalChars < SMALL_THRESHOLD) {
+    // Petit document : peu de contenu, donc peu de flashcards/quiz
+    // Minimum : 3 flashcards, 2 quiz pour avoir quelque chose d'utilisable
+    flashcardsCount = Math.max(3, Math.floor(totalChars / 500))
+    quizCount = Math.max(2, Math.floor(totalChars / 1000))
+  } else if (totalChars < MEDIUM_THRESHOLD) {
+    // Document moyen (ex: slides de cours, 15k-30k chars)
+    // Souvent dense en concepts par page malgré peu de texte.
+    // On booste le ratio : 1 flashcard pour 600 caractères (au lieu de 1500)
+    flashcardsCount = Math.floor(totalChars / 600)
+    quizCount = Math.floor(totalChars / 1200)
+
+    // Augmenter les minimums/maximums pour cette tranche
+    flashcardsCount = Math.min(Math.max(flashcardsCount, 10), 50)
+    quizCount = Math.min(Math.max(quizCount, 5), 25)
+  } else if (totalChars < LARGE_THRESHOLD) {
+    // Grand document : nombre généreux mais raisonnable
+    flashcardsCount = Math.floor(totalChars / 2000) // Plus généreux : 1 flashcard pour 2000 chars
+    quizCount = Math.floor(totalChars / 4000) // Plus généreux : 1 quiz pour 4000 chars
+    // Limiter pour éviter trop de contenu
+    flashcardsCount = Math.min(Math.max(flashcardsCount, 15), 60)
+    quizCount = Math.min(Math.max(quizCount, 8), 30)
+  } else {
+    // Très grand document (> 100k) : être généreux avec les maximums
+    // Pour 100k chars : ~50 flashcards, ~25 quiz
+    // Pour 200k chars : ~100 flashcards, ~50 quiz
+    flashcardsCount = Math.min(Math.floor(totalChars / 1500), 100) // Plus généreux : 1 flashcard pour 1500 chars
+    quizCount = Math.min(Math.floor(totalChars / 3000), 50) // Plus généreux : 1 quiz pour 3000 chars
+  }
+
+  // S'assurer d'avoir au moins un minimum utilisable
+  flashcardsCount = Math.max(flashcardsCount, 3)
+  quizCount = Math.max(quizCount, 2)
+
+  return { flashcardsCount, quizCount }
+}
 
 function normaliseText(value: string): string {
   return value
@@ -109,7 +161,12 @@ async function downloadAndExtract(source: CollectionGenerationSource): Promise<E
   const [buffer] = await remoteFile.download()
 
   const pdfInfo = await pdfParse(buffer)
+  console.log(`[downloadAndExtract] PDF parsed: ${pdfInfo.numpages} pages, info:`, pdfInfo.info)
+  console.log(`[downloadAndExtract] Buffer size: ${buffer.length} bytes`)
+
   const text = normaliseText(pdfInfo.text || "")
+  console.log(`[downloadAndExtract] Extracted text length: ${text.length} chars`)
+  console.log(`[downloadAndExtract] Text snippet (first 200 chars): ${text.slice(0, 200)}`)
 
   return {
     source,
@@ -158,6 +215,9 @@ export async function processCollectionGenerationJob(
 
   onProgress?.(0.05)
 
+  console.log(`[processCollectionGenerationJob] Démarrage job ${payload.collectionId}`)
+  console.log(`[processCollectionGenerationJob] Config: CONTEXT_CHAR_LIMIT=${CONTEXT_CHAR_LIMIT}`)
+
   const extracted: ExtractedSource[] = []
 
   for (const source of payload.sources) {
@@ -183,19 +243,36 @@ export async function processCollectionGenerationJob(
 
   onProgress?.(0.2)
 
+  // Calculer la taille RÉELLE du document AVANT de tronquer le corpus
+  const totalDocumentChars = extracted.reduce((sum, e) => sum + e.textLength, 0)
+
+  // Calculer le nombre optimal basé sur la taille RÉELLE du document
+  const { flashcardsCount: targetFlashcards, quizCount: targetQuiz } = calculateOptimalCounts(totalDocumentChars)
+
+  console.log(`[processCollectionGenerationJob] Taille réelle du document: ${totalDocumentChars} caractères`)
+
+  // Ensuite tronquer le corpus pour l'IA (limite de contexte)
   const { corpus, included, totalChars } = buildCorpus(extracted)
 
   if (!corpus) {
     throw new Error("Corpus vide après normalisation")
   }
 
+  console.log(`[processCollectionGenerationJob] Corpus envoyé à l'IA: ${totalChars} caractères (limite: ${CONTEXT_CHAR_LIMIT})`)
+
+  console.log(`[processCollectionGenerationJob] Calcul dynamique pour ${totalChars} caractères:`, {
+    flashcards: targetFlashcards,
+    quiz: targetQuiz,
+  })
+
   const metadata = {
     collectionTitle: payload.title,
     tags: payload.tags,
     totalSources: included.length,
-    totalCharacters: totalChars,
-    flashcardsTarget: MAX_FLASHCARDS,
-    quizTarget: MAX_QUIZ_QUESTIONS,
+    totalDocumentCharacters: totalDocumentChars, // Taille RÉELLE du document
+    corpusCharacters: totalChars, // Taille du corpus envoyé (peut être tronqué)
+    flashcardsTarget: targetFlashcards,
+    quizTarget: targetQuiz,
     sources: included.map((entry) => ({
       title: entry.source.title,
       tags: entry.source.tags,
@@ -205,14 +282,74 @@ export async function processCollectionGenerationJob(
 
   const aiResult = await generateCollectionStudySet({
     text: corpus,
-    metadata,
+    metadata: {
+      ...metadata,
+      // Passer explicitement les nombres dans le message pour être sûr
+      flashcardsTarget: targetFlashcards,
+      quizTarget: targetQuiz,
+    },
   })
 
   const flashcards = aiResult.data.flashcards ?? []
   const quizQuestions = aiResult.data.quiz ?? []
 
+  console.log(`[processCollectionGenerationJob] IA a généré:`, {
+    flashcardsDemandees: targetFlashcards,
+    flashcardsGenerees: flashcards.length,
+    quizDemandes: targetQuiz,
+    quizGeneres: quizQuestions.length,
+  })
+
+  // Fonction de validation pour les quiz
+  const validateQuizQuestion = (question: any): boolean => {
+    // Vérifier que la réponse existe
+    if (!question.answer || question.answer.trim() === '') {
+      console.warn(`[processCollectionGenerationJob] ⚠️ Question invalide: réponse manquante`, question)
+      return false
+    }
+
+    // Pour les QCM, vérifier que la réponse correspond à une option
+    if (question.type === 'multiple_choice' && question.options && Array.isArray(question.options)) {
+      const normalizedAnswer = question.answer.trim().toLowerCase()
+      const answerInOptions = question.options.some((opt: string) => 
+        opt.trim().toLowerCase() === normalizedAnswer
+      )
+      if (!answerInOptions) {
+        console.warn(`[processCollectionGenerationJob] ⚠️ Question QCM invalide: la réponse "${question.answer}" ne correspond à aucune option`, {
+          answer: question.answer,
+          options: question.options
+        })
+        return false
+      }
+    }
+
+    // Vérifier que le prompt existe
+    if (!question.prompt || question.prompt.trim() === '') {
+      console.warn(`[processCollectionGenerationJob] ⚠️ Question invalide: prompt manquant`, question)
+      return false
+    }
+
+    return true
+  }
+
+  // Filtrer et valider les questions de quiz
+  const validQuizQuestions = quizQuestions.filter(validateQuizQuestion)
+  const invalidCount = quizQuestions.length - validQuizQuestions.length
+  
+  if (invalidCount > 0) {
+    console.warn(`[processCollectionGenerationJob] ⚠️ ${invalidCount} question(s) de quiz invalide(s) ont été filtrées`)
+  }
+
+  // Avertir si l'IA n'a pas généré assez
+  if (flashcards.length < targetFlashcards) {
+    console.warn(`[processCollectionGenerationJob] ⚠️ L'IA n'a généré que ${flashcards.length} flashcards sur ${targetFlashcards} demandées`)
+  }
+  if (quizQuestions.length < targetQuiz) {
+    console.warn(`[processCollectionGenerationJob] ⚠️ L'IA n'a généré que ${quizQuestions.length} quiz sur ${targetQuiz} demandés`)
+  }
+
   const batchSize = 25
-  const flashcardRows = flashcards.slice(0, MAX_FLASHCARDS).map((card, index) => ({
+  const flashcardRows = flashcards.slice(0, targetFlashcards).map((card, index) => ({
     collection_id: payload.collectionId,
     question: card.question,
     answer: card.answer,
@@ -221,7 +358,7 @@ export async function processCollectionGenerationJob(
     order_index: index,
   }))
 
-  const quizRows = quizQuestions.slice(0, MAX_QUIZ_QUESTIONS).map((question, index) => ({
+  const quizRows = validQuizQuestions.slice(0, targetQuiz).map((question, index) => ({
     collection_id: payload.collectionId,
     question_type: question.type,
     prompt: question.prompt,

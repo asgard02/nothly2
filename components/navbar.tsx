@@ -5,11 +5,13 @@ import Logo from "@/components/Logo"
 import { Button } from "@/components/ui/button"
 import { useState, useEffect, useCallback } from "react"
 import { useRouter, usePathname } from "next/navigation"
+import { useTranslations } from "next-intl"
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false)
   const router = useRouter()
   const pathname = usePathname()
+  const t = useTranslations("Navbar")
 
   useEffect(() => {
     const handleScroll = () => {
@@ -57,44 +59,44 @@ export default function Navbar() {
           {/* Navigation Links */}
           <div className="hidden md:flex items-center space-x-8">
             <a
-              href="#flux"
-              onClick={(event) => handleAnchorNavigation(event, "flux")}
+              href="#flow"
+              onClick={(event) => handleAnchorNavigation(event, "flow")}
               className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200 cursor-pointer"
             >
-              Flux
+              {t("links.flow")}
             </a>
             <a
-              href="#valeur"
-              onClick={(event) => handleAnchorNavigation(event, "valeur")}
+              href="#value"
+              onClick={(event) => handleAnchorNavigation(event, "value")}
               className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200 cursor-pointer"
             >
-              Valeur
+              {t("links.value")}
             </a>
             <a
-              href="#cibles"
-              onClick={(event) => handleAnchorNavigation(event, "cibles")}
+              href="#audience"
+              onClick={(event) => handleAnchorNavigation(event, "audience")}
               className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200 cursor-pointer"
             >
-              Cibles
+              {t("links.targets")}
             </a>
             <Link
               href="/pricing"
               className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200"
             >
-              Tarifs
+              {t("links.pricing")}
             </Link>
             <Link
               href="/login"
               className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200"
             >
-              Connexion
+              {t("links.login")}
             </Link>
             <Link href="/register">
               <Button
                 size="sm"
                 className="bg-gradient-to-r from-nothly-blue to-nothly-violet text-white rounded-full px-6 transition-all duration-200 hover:scale-105 shadow-sm hover:shadow-md"
               >
-                Commencer gratuitement
+                {t("cta.primary")}
               </Button>
             </Link>
           </div>
@@ -106,7 +108,7 @@ export default function Navbar() {
                 size="sm"
                 className="bg-gradient-to-r from-nothly-blue to-nothly-violet text-white rounded-full px-4 text-xs"
               >
-                Commencer
+                {t("cta.mobile")}
               </Button>
             </Link>
           </div>

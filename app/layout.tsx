@@ -3,11 +3,14 @@ import { Inter } from "next/font/google"
 import "./globals.css"
 import ReactQueryProvider from "@/lib/react-query-provider"
 import { ThemeProvider } from "@/components/ThemeProvider"
+import { NextIntlClientProvider } from "next-intl"
+import { getLocale, getMessages } from "next-intl/server"
+import { notFound } from "next/navigation"
 
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Notlhy - Notes intelligentes avec IA",
+  title: "Nothly - Notes intelligentes avec IA",
   description: "Créez, éditez et transformez vos notes en fiches de révision et quiz grâce à l'IA",
   icons: {
     icon: [
@@ -19,14 +22,14 @@ export const metadata: Metadata = {
   },
   manifest: "/manifest.json",
   openGraph: {
-    title: "Notlhy - Notes intelligentes avec IA",
+    title: "Nothly - Notes intelligentes avec IA",
     description: "Créez, éditez et transformez vos notes en fiches de révision et quiz grâce à l'IA",
     images: ["/logo-icon.png"],
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Notlhy - Notes intelligentes avec IA",
+    title: "Nothly - Notes intelligentes avec IA",
     description: "Créez, éditez et transformez vos notes en fiches de révision et quiz grâce à l'IA",
     images: ["/logo-icon.png"],
   },
@@ -39,17 +42,26 @@ export const viewport: Viewport = {
   ],
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  const locale = await getLocale()
+
+  const messages = await getMessages().catch(() => null)
+  if (!messages) {
+    notFound()
+  }
+
   return (
-    <html lang="fr" suppressHydrationWarning>
+    <html lang={locale} suppressHydrationWarning>
       <body className={`${inter.className} min-h-screen bg-background text-foreground transition-colors`}>
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <ReactQueryProvider>{children}</ReactQueryProvider>
-        </ThemeProvider>
+        <NextIntlClientProvider locale={locale} messages={messages}>
+          <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+            <ReactQueryProvider>{children}</ReactQueryProvider>
+          </ThemeProvider>
+        </NextIntlClientProvider>
       </body>
     </html>
   )

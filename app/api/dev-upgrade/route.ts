@@ -29,7 +29,7 @@ export async function GET() {
     <!DOCTYPE html>
     <html>
       <head>
-        <title>Upgrade Pro - Notlhy</title>
+        <title>Upgrade Pro - Nothly</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <style>
           * { margin: 0; padding: 0; box-sizing: border-box; }

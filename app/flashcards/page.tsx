@@ -1,25 +1,22 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useMemo, useState } from "react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import type { LucideIcon } from "lucide-react"
-
+import { useRouter } from "next/navigation"
 import {
   AlertCircle,
-  BookOpen,
-  CheckCircle2,
   Clock,
   Layers,
-  ListChecks,
   Loader2,
   PlusCircle,
-  Sparkles,
   Tag,
+  Trash2,
   X,
 } from "lucide-react"
 
 import ChatButton from "@/components/ChatButton"
 import Sidebar from "@/components/Sidebar"
+import DeleteCollectionDialog from "@/components/DeleteCollectionDialog"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -30,35 +27,34 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { useCollections, useCollectionDetail } from "@/lib/hooks/useCollections"
-import { useDocuments } from "@/lib/hooks/useDocuments"
+import { useCollections, useDeleteCollection } from "@/lib/hooks/useCollections"
+import { useDocuments, type DocumentSummary } from "@/lib/hooks/useDocuments"
 import { cn } from "@/lib/utils"
-import FlashcardViewer from "@/components/collections/FlashcardViewer"
-import QuizViewer from "@/components/collections/QuizViewer"
-import MarkdownRenderer from "@/components/MarkdownRenderer"
 
 const CONTEXT_CHAR_LIMIT = Number(process.env.NEXT_PUBLIC_COLLECTION_CONTEXT_LIMIT_CHARS || 120_000)
 const AVG_CHARS_PER_PAGE = Number(process.env.NEXT_PUBLIC_COLLECTION_AVG_CHARS_PER_PAGE || 2400)
+const TOKENS_PER_CHAR = 0.25 // Approximation: 1 token ≈ 4 caractères
+const POLLING_INTERVAL_MS = 5000 // 5 secondes pour le polling des collections en traitement
+const STALE_TIME_MS = 60_000 // 60 secondes
 
-function computeEstimatedCharacters(documents: any[] | undefined, selectedTags: string[]) {
+function computeEstimatedCharacters(
+  documents: DocumentSummary[] | undefined,
+  selectedTags: string[]
+): { total: number; matched: DocumentSummary[] } {
   if (!documents || selectedTags.length === 0) {
-    return { total: 0, matched: [] as any[] }
+    return { total: 0, matched: [] }
   }
-
   const matched = documents.filter((document) =>
     Array.isArray(document.tags) ? document.tags.some((tag: string) => selectedTags.includes(tag)) : false
   )
-
   const total = matched.reduce((sum, document) => {
     const latestVersion =
       document.current_version ??
       document.document_versions?.[document.document_versions.length - 1]
-
     if (!latestVersion) return sum
     const pageCount = latestVersion.page_count ?? 0
     return sum + pageCount * AVG_CHARS_PER_PAGE
   }, 0)
-
   return { total, matched }
 }
 
@@ -69,12 +65,12 @@ const statusStyles: Record<string, { badge: string; dot: string; label: string }
     label: "Génération en cours",
   },
   ready: {
-    badge: "bg-emerald-100 text-emerald-800 border border-emerald-200",
+    badge: "bg-emerald-100 text-emerald-800 border-emerald-200",
     dot: "bg-emerald-500",
     label: "Prête",
   },
   failed: {
-    badge: "bg-rose-100 text-rose-700 border border-rose-200",
+    badge: "bg-rose-100 text-rose-700 border-rose-200",
     dot: "bg-rose-500",
     label: "Échec",
   },
@@ -82,17 +78,17 @@ const statusStyles: Record<string, { badge: string; dot: string; label: string }
 
 export default function CollectionsPage() {
   const queryClient = useQueryClient()
+  const router = useRouter()
+
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [collectionTitle, setCollectionTitle] = useState("")
-  const [selectedCollectionId, setSelectedCollectionId] = useState<string | null>(null)
   const [creationError, setCreationError] = useState<string | null>(null)
-  const [activeSection, setActiveSection] = useState<"overview" | "flashcards" | "quiz">("overview")
+  const [collectionToDelete, setCollectionToDelete] = useState<{ id: string; title: string } | null>(null)
 
   const { data: collections, isLoading: isLoadingCollections } = useCollections()
   const { data: documents } = useDocuments()
-  const { data: collectionDetail, isLoading: isLoadingDetail, refetch: refetchDetail } =
-    useCollectionDetail(selectedCollectionId)
+  const deleteCollection = useDeleteCollection()
 
   const availableTags = useMemo(() => {
     if (!documents?.length) return []
@@ -105,89 +101,12 @@ export default function CollectionsPage() {
     return Array.from(all).sort((a, b) => a.localeCompare(b))
   }, [documents])
 
-  const { total: estimatedCharacters, matched } = useMemo(
+  const { total: estimatedCharacters, matched: matchedDocuments } = useMemo(
     () => computeEstimatedCharacters(documents, selectedTags),
     [documents, selectedTags]
   )
 
-  useEffect(() => {
-    if (collections?.length && !selectedCollectionId) {
-      setSelectedCollectionId(collections[0].id)
-    }
-  }, [collections, selectedCollectionId])
-
-  useEffect(() => {
-    if (!collectionDetail) {
-      return
-    }
-    setActiveSection((current) => {
-      if (current !== "overview") {
-        return current
-      }
-      if (collectionDetail.flashcards.length > 0) {
-        return "flashcards"
-      }
-      if (collectionDetail.quiz.length > 0) {
-        return "quiz"
-      }
-      return "overview"
-    })
-  }, [collectionDetail])
-
-  const orderedFlashcards = useMemo(() => {
-    if (!collectionDetail?.flashcards) return []
-    return [...collectionDetail.flashcards].sort((a, b) => a.order_index - b.order_index)
-  }, [collectionDetail?.flashcards])
-
-  const orderedQuiz = useMemo(() => {
-    if (!collectionDetail?.quiz) return []
-    return [...collectionDetail.quiz].sort((a, b) => a.order_index - b.order_index)
-  }, [collectionDetail?.quiz])
-
-  const collectionSummary =
-    typeof collectionDetail?.metadata === "object" &&
-    collectionDetail?.metadata !== null &&
-    typeof (collectionDetail.metadata as Record<string, unknown>).summary === "string"
-      ? ((collectionDetail.metadata as Record<string, unknown>).summary as string)
-      : null
-
-  const collectionNotes =
-    typeof collectionDetail?.metadata === "object" &&
-    collectionDetail?.metadata !== null &&
-    Array.isArray((collectionDetail.metadata as Record<string, unknown>).notes)
-      ? ((collectionDetail.metadata as Record<string, unknown>).notes as unknown[])
-          .filter((entry): entry is string => typeof entry === "string")
-      : []
-
-  const hasOverviewContent =
-    Boolean(collectionSummary) || collectionNotes.length > 0 || Boolean(collectionDetail?.sources?.length)
-
-  const detailTabs: Array<{
-    id: "overview" | "flashcards" | "quiz"
-    label: string
-    icon: LucideIcon
-    disabled: boolean
-  }> = [
-    {
-      id: "overview",
-      label: "Synthèse",
-      icon: BookOpen,
-      disabled: !hasOverviewContent,
-    },
-    {
-      id: "flashcards",
-      label: `Flashcards (${orderedFlashcards.length})`,
-      icon: Sparkles,
-      disabled: orderedFlashcards.length === 0,
-    },
-    {
-      id: "quiz",
-      label: `Quiz (${orderedQuiz.length})`,
-      icon: ListChecks,
-      disabled: orderedQuiz.length === 0,
-    },
-  ]
-
+  const estimatedTokens = Math.round(estimatedCharacters * TOKENS_PER_CHAR)
   const contextRatio = CONTEXT_CHAR_LIMIT
     ? Math.min(estimatedCharacters / CONTEXT_CHAR_LIMIT, 1)
     : 0
@@ -206,12 +125,10 @@ export default function CollectionsPage() {
           tags: selectedTags,
         }),
       })
-
       if (!res.ok) {
         const payload = await res.json().catch(() => ({}))
         throw new Error(payload.error || "Impossible de lancer la génération")
       }
-
       return res.json() as Promise<{ collectionId: string; jobId: string; status: string }>
     },
     onSuccess: async (result) => {
@@ -220,29 +137,12 @@ export default function CollectionsPage() {
       setCollectionTitle("")
       setSelectedTags([])
       setCreationError(null)
-      setSelectedCollectionId(result.collectionId)
-      setActiveSection("overview")
-      await refetchDetail()
+      router.push(`/flashcards/${result.collectionId}`)
     },
     onError: (error: unknown) => {
       setCreationError(error instanceof Error ? error.message : "Impossible de créer la collection")
     },
   })
-
-  useEffect(() => {
-    if (!collections?.length) return
-    const hasProcessing = collections.some((item) => item.status === "processing")
-    if (!hasProcessing) return
-
-    const interval = setInterval(() => {
-      queryClient.invalidateQueries({ queryKey: ["collections"] })
-      if (selectedCollectionId) {
-        queryClient.invalidateQueries({ queryKey: ["collection", selectedCollectionId] })
-      }
-    }, 5000)
-
-    return () => clearInterval(interval)
-  }, [collections, queryClient, selectedCollectionId])
 
   const handleToggleTag = (tag: string) => {
     setSelectedTags((current) =>
@@ -267,6 +167,25 @@ export default function CollectionsPage() {
     createCollection.mutate()
   }
 
+  const handleDeleteClick = (e: React.MouseEvent, collection: { id: string; title: string }) => {
+    e.stopPropagation() // Empêcher la navigation vers la collection
+    setCollectionToDelete(collection)
+  }
+
+  const handleConfirmDelete = () => {
+    if (!collectionToDelete) return
+
+    deleteCollection.mutate(collectionToDelete.id, {
+      onSuccess: () => {
+        setCollectionToDelete(null)
+      },
+      onError: (error) => {
+        console.error("Erreur lors de la suppression:", error)
+        alert("Erreur lors de la suppression de la collection")
+      },
+    })
+  }
+
   return (
     <div className="flex h-screen bg-background">
       <Sidebar />
@@ -279,6 +198,7 @@ export default function CollectionsPage() {
                 Combine tes supports taggés pour générer automatiquement flashcards et quiz.
               </p>
             </div>
+
             <Dialog open={isDialogOpen} onOpenChange={handleOpenDialog}>
               <DialogTrigger asChild>
                 <Button className="inline-flex items-center gap-2 rounded-full px-4 py-2">
@@ -345,7 +265,7 @@ export default function CollectionsPage() {
                       <div>
                         <p className="text-sm font-medium text-foreground">Fenêtre de contexte estimée</p>
                         <p className="text-xs text-muted-foreground">
-                          {Math.round(estimatedCharacters / 4)} tokens (~{estimatedCharacters.toLocaleString("fr-FR")} caractères)
+                          {estimatedTokens} tokens (~{estimatedCharacters.toLocaleString("fr-FR")} caractères)
                         </p>
                       </div>
                       <span
@@ -380,10 +300,10 @@ export default function CollectionsPage() {
                         Tu peux quand même lancer la génération, mais certaines informations pourraient être tronquées.
                       </p>
                     )}
-                    {matched.length > 0 && (
+                    {matchedDocuments.length > 0 && (
                       <div className="mt-4 space-y-1 text-xs text-muted-foreground">
                         <p className="font-medium text-foreground">Supports concernés</p>
-                        {matched.map((document) => (
+                        {matchedDocuments.map((document) => (
                           <div key={document.id} className="flex items-center justify-between">
                             <span>{document.title}</span>
                             <span className="text-muted-foreground/70">
@@ -433,47 +353,61 @@ export default function CollectionsPage() {
               ))
             ) : collections?.length ? (
               collections.map((collection) => {
-                const status = statusStyles[collection.status] ?? statusStyles.processing
+                const statusConfig = statusStyles[collection.status] ?? statusStyles.processing
                 return (
-                  <button
+                  <div
                     key={collection.id}
-                    onClick={() => setSelectedCollectionId(collection.id)}
-                    className={cn(
-                      "flex h-full flex-col rounded-3xl border border-border/60 bg-card/70 p-5 text-left shadow-sm transition hover:-translate-y-1 hover:shadow-lg",
-                      selectedCollectionId === collection.id && "border-primary shadow-primary/20"
-                    )}
+                    className="relative flex h-full flex-col rounded-3xl border border-border/60 bg-card/70 p-5 text-left shadow-sm transition hover:-translate-y-1 hover:shadow-lg group"
                   >
-                    <div className="flex items-center gap-2">
-                      <span className={cn("inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium", status.badge)}>
-                        <span className={cn("h-2 w-2 rounded-full", status.dot)} />
-                        {status.label}
-                      </span>
-                      <span className="text-xs text-muted-foreground flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
-                        {new Date(collection.created_at).toLocaleString("fr-FR")}
-                      </span>
-                    </div>
-                    <h3 className="mt-3 text-lg font-semibold text-foreground">{collection.title}</h3>
-                    <div className="mt-4 flex flex-wrap gap-2">
-                      {collection.tags?.length ? (
-                        collection.tags.map((tag) => (
-                          <span
-                            key={`${collection.id}-${tag}`}
-                            className="inline-flex items-center gap-1 rounded-full bg-muted px-3 py-1 text-xs text-muted-foreground"
-                          >
-                            <Tag className="h-3 w-3 text-primary" />
-                            {tag}
-                          </span>
-                        ))
-                      ) : (
-                        <span className="text-xs text-muted-foreground/70">Aucun tag</span>
-                      )}
-                    </div>
-                    <div className="mt-auto flex items-center justify-between pt-6 text-xs text-muted-foreground/80">
-                      <span>{collection.total_flashcards} flashcards</span>
-                      <span>{collection.total_quiz} questions</span>
-                    </div>
-                  </button>
+                    {/* Bouton de suppression */}
+                    <button
+                      onClick={(e) => handleDeleteClick(e, { id: collection.id, title: collection.title })}
+                      className="absolute top-4 right-4 p-2 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-100 dark:hover:bg-red-900/30 z-10"
+                      title="Supprimer la collection"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+
+                    {/* Contenu cliquable */}
+                    <button
+                      onClick={() => router.push(`/flashcards/${collection.id}`)}
+                      className="flex h-full flex-col text-left w-full"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className={cn("inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium", statusConfig.badge)}>
+                          <span className={cn("h-2 w-2 rounded-full", statusConfig.dot)} />
+                          {statusConfig.label}
+                        </span>
+                        <span className="text-xs text-muted-foreground flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          {new Date(collection.created_at).toLocaleString("fr-FR")}
+                        </span>
+                      </div>
+
+                      <h3 className="mt-3 text-lg font-semibold text-foreground">{collection.title}</h3>
+
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        {collection.tags?.length ? (
+                          collection.tags.map((tag) => (
+                            <span
+                              key={`${collection.id}-${tag}`}
+                              className="inline-flex items-center gap-1 rounded-full bg-muted px-3 py-1 text-xs text-muted-foreground"
+                            >
+                              <Tag className="h-3 w-3 text-primary" />
+                              {tag}
+                            </span>
+                          ))
+                        ) : (
+                          <span className="text-xs text-muted-foreground/70">Aucun tag</span>
+                        )}
+                      </div>
+
+                      <div className="mt-auto flex items-center justify-between pt-6 text-xs text-muted-foreground/80">
+                        <span>{collection.total_flashcards} flashcards</span>
+                        <span>{collection.total_quiz} questions</span>
+                      </div>
+                    </button>
+                  </div>
                 )
               })
             ) : (
@@ -492,218 +426,22 @@ export default function CollectionsPage() {
           </section>
 
           <section className="rounded-3xl border border-border/60 bg-card/70 p-6 shadow-sm">
-            {selectedCollectionId ? (
-              isLoadingDetail ? (
-                <div className="flex h-40 items-center justify-center">
-                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                </div>
-              ) : collectionDetail ? (
-                <div className="space-y-8">
-                  <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                    <div className="space-y-1">
-                      <h2 className="text-2xl font-semibold text-foreground">{collectionDetail.title}</h2>
-                      <p className="text-sm text-muted-foreground">
-                        Créée le {new Date(collectionDetail.created_at).toLocaleDateString("fr-FR")} • Dernière mise à jour{" "}
-                        {new Date(collectionDetail.updated_at).toLocaleDateString("fr-FR")}
-                      </p>
-                    </div>
-                    <div>
-                      {collectionDetail.status === "ready" ? (
-                        <span className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs text-emerald-700">
-                          <CheckCircle2 className="h-3 w-3" />
-                          Collection prête
-                        </span>
-                      ) : collectionDetail.status === "processing" ? (
-                        <span className="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs text-amber-700">
-                          <Loader2 className="h-3 w-3 animate-spin" />
-                          Génération en cours
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-2 rounded-full border border-rose-200 bg-rose-50 px-3 py-1 text-xs text-rose-700">
-                          <AlertCircle className="h-3 w-3" />
-                          Génération en échec
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="grid gap-3 sm:grid-cols-3">
-                    <div className="rounded-2xl border border-border/50 bg-muted/30 p-4">
-                      <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground/70">
-                        <Layers className="h-4 w-4 text-primary" />
-                        Supports
-                      </div>
-                      <p className="mt-2 text-2xl font-semibold text-foreground">{collectionDetail.total_sources}</p>
-                    </div>
-                    <div className="rounded-2xl border border-border/50 bg-muted/30 p-4">
-                      <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground/70">
-                        <Sparkles className="h-4 w-4 text-primary" />
-                        Flashcards
-                      </div>
-                      <p className="mt-2 text-2xl font-semibold text-foreground">{collectionDetail.total_flashcards}</p>
-                    </div>
-                    <div className="rounded-2xl border border-border/50 bg-muted/30 p-4">
-                      <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground/70">
-                        <ListChecks className="h-4 w-4 text-primary" />
-                        Questions
-                      </div>
-                      <p className="mt-2 text-2xl font-semibold text-foreground">{collectionDetail.total_quiz}</p>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-wrap gap-2">
-                    {detailTabs.map((tab) => (
-                      <button
-                        key={tab.id}
-                        type="button"
-                        onClick={() => setActiveSection(tab.id)}
-                        disabled={tab.disabled}
-                        className={cn(
-                          "inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-primary",
-                          activeSection === tab.id
-                            ? "border-primary bg-primary/10 text-primary"
-                            : "border-border bg-muted/40 text-muted-foreground hover:border-primary/40",
-                          tab.disabled && "cursor-not-allowed opacity-60"
-                        )}
-                      >
-                        <tab.icon className="h-4 w-4" />
-                        {tab.label}
-                      </button>
-                    ))}
-                  </div>
-
-                  {activeSection === "overview" && (
-                    <div className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-                      <div className="space-y-6">
-                        {collectionSummary ? (
-                          <div className="rounded-3xl border border-border/50 bg-background/80 p-6">
-                            <h3 className="text-lg font-semibold text-foreground">Synthèse générale</h3>
-                            <div className="mt-3 text-sm text-muted-foreground">
-                              <MarkdownRenderer content={collectionSummary} />
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="rounded-3xl border border-dashed border-border/50 bg-background/30 p-6 text-sm text-muted-foreground">
-                            Aucune synthèse fournie pour cette collection.
-                          </div>
-                        )}
-
-                        {collectionNotes.length ? (
-                          <div className="rounded-3xl border border-border/50 bg-background/80 p-6">
-                            <h3 className="text-lg font-semibold text-foreground">Points clés</h3>
-                            <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
-                              {collectionNotes.map((note, index) => (
-                                <li key={`${collectionDetail.id}-note-${index}`} className="flex items-start gap-2">
-                                  <span className="mt-1 h-2 w-2 rounded-full bg-primary/60" />
-                                  <span>{note}</span>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        ) : null}
-                      </div>
-
-                      <div className="space-y-6">
-                        <div className="rounded-3xl border border-border/50 bg-background/60 p-6">
-                          <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground/70">
-                            Informations complémentaires
-                          </h3>
-                          <dl className="mt-4 space-y-3 text-sm text-muted-foreground">
-                            <div className="flex items-center justify-between gap-4">
-                              <dt>Statut</dt>
-                              <dd className="font-medium text-foreground capitalize">{statusStyles[collectionDetail.status]?.label ?? collectionDetail.status}</dd>
-                            </div>
-                            <div className="flex items-center justify-between gap-4">
-                              <dt>Prompt tokens</dt>
-                              <dd className="font-medium text-foreground">
-                                {collectionDetail.prompt_tokens ?? "—"}
-                              </dd>
-                            </div>
-                            <div className="flex items-center justify-between gap-4">
-                              <dt>Completion tokens</dt>
-                              <dd className="font-medium text-foreground">
-                                {collectionDetail.completion_tokens ?? "—"}
-                              </dd>
-                            </div>
-                          </dl>
-                        </div>
-
-                        <div className="rounded-3xl border border-border/50 bg-background/60 p-6">
-                          <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground/70">
-                            Sources utilisées
-                          </h3>
-                          {collectionDetail.sources?.length ? (
-                            <ul className="mt-3 space-y-3 text-sm text-muted-foreground">
-                              {collectionDetail.sources.map((source) => (
-                                <li key={source.id} className="rounded-2xl border border-border/40 bg-muted/30 px-4 py-3">
-                                  <p className="font-medium text-foreground">{source.title}</p>
-                                  <p className="mt-1 text-xs text-muted-foreground/70">
-                                    Version {source.document_version_id.slice(0, 8)} •{" "}
-                                    {new Date(source.created_at).toLocaleDateString("fr-FR")}
-                                  </p>
-                                  {source.tags?.length ? (
-                                    <div className="mt-2 flex flex-wrap gap-2">
-                                      {source.tags.map((tag) => (
-                                        <span
-                                          key={`${source.id}-${tag}`}
-                                          className="inline-flex items-center gap-1 rounded-full bg-muted px-3 py-1 text-xs text-muted-foreground"
-                                        >
-                                          #{tag}
-                                        </span>
-                                      ))}
-                                    </div>
-                                  ) : null}
-                                </li>
-                              ))}
-                            </ul>
-                          ) : (
-                            <p className="mt-3 text-sm text-muted-foreground">
-                              Aucune source enregistrée pour cette collection.
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {activeSection === "flashcards" && (
-                    <div>
-                      {orderedFlashcards.length ? (
-                        <FlashcardViewer cards={orderedFlashcards} />
-                      ) : (
-                        <div className="rounded-3xl border border-dashed border-border/50 bg-background/40 p-6 text-sm text-muted-foreground">
-                          Encore aucune flashcard générée. Reviens plus tard une fois la génération terminée.
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {activeSection === "quiz" && (
-                    <div>
-                      {orderedQuiz.length ? (
-                        <QuizViewer questions={orderedQuiz} />
-                      ) : (
-                        <div className="rounded-3xl border border-dashed border-border/50 bg-background/40 p-6 text-sm text-muted-foreground">
-                          Aucune question disponible pour l’instant.
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="flex h-40 items-center justify-center text-sm text-muted-foreground">
-                  Impossible de charger la collection sélectionnée.
-                </div>
-              )
-            ) : (
-              <div className="flex h-40 items-center justify-center text-sm text-muted-foreground">
-                Sélectionne une collection pour afficher les flashcards et quiz générés.
-              </div>
-            )}
+            <div className="flex h-40 items-center justify-center text-sm text-muted-foreground text-center">
+              Clique sur une collection pour ouvrir la vue d’étude détaillée avec flashcards et quiz.
+            </div>
           </section>
         </div>
       </main>
       <ChatButton />
+
+      {/* Dialog de confirmation de suppression */}
+      <DeleteCollectionDialog
+        isOpen={collectionToDelete !== null}
+        onClose={() => setCollectionToDelete(null)}
+        onConfirm={handleConfirmDelete}
+        collectionTitle={collectionToDelete?.title || ""}
+        isDeleting={deleteCollection.isPending}
+      />
     </div>
   )
 }

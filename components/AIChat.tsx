@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
+import { memo, useMemo, useState, useRef, useEffect } from "react"
 import { X, Send, Bot, Loader2, Mic, MicOff } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useQueryClient } from "@tanstack/react-query"
@@ -31,6 +31,9 @@ interface AIChatProps {
 export default function AIChat({ isOpen, onClose, context }: AIChatProps) {
   const router = useRouter()
   const queryClient = useQueryClient()
+  const [isVisible, setIsVisible] = useState(isOpen)
+  const [isAnimatingOut, setIsAnimatingOut] = useState(false)
+  const panelRef = useRef<HTMLDivElement>(null)
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "welcome",
@@ -49,6 +52,7 @@ export default function AIChat({ isOpen, onClose, context }: AIChatProps) {
   const [speechSupported, setSpeechSupported] = useState(false)
   const [speechError, setSpeechError] = useState<string | null>(null)
   const recognitionRef = useRef<SpeechRecognition | null>(null)
+  const speechInitializedRef = useRef(false)
   const userStoppedRef = useRef(false)
   const retryCountRef = useRef(0)
 
@@ -72,9 +76,38 @@ export default function AIChat({ isOpen, onClose, context }: AIChatProps) {
   // Focus sur l'input quand le chat s'ouvre
   useEffect(() => {
     if (isOpen) {
+      setIsVisible(true)
+      setIsAnimatingOut(false)
       inputRef.current?.focus()
+    } else if (isVisible) {
+      setIsAnimatingOut(true)
+      const timeout = setTimeout(() => {
+        setIsVisible(false)
+        setIsAnimatingOut(false)
+      }, 220)
+      return () => clearTimeout(timeout)
     }
-  }, [isOpen])
+  }, [isOpen, isVisible])
+
+  useEffect(() => {
+    if (!isOpen || !isVisible) return
+
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
+      if (!panelRef.current) return
+      const target = event.target as Node
+      if (!panelRef.current.contains(target)) {
+        onClose()
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside)
+    document.addEventListener("touchstart", handleClickOutside)
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside)
+      document.removeEventListener("touchstart", handleClickOutside)
+    }
+  }, [isOpen, isVisible, onClose])
 
   // Fermer avec la touche Échap
   useEffect(() => {
@@ -87,150 +120,132 @@ export default function AIChat({ isOpen, onClose, context }: AIChatProps) {
     return () => window.removeEventListener("keydown", handleEscape)
   }, [isOpen, onClose])
 
-  // 3. Vérifier le support de la reconnaissance vocale au montage
-  useEffect(() => {
-    // Vérifier si l'API est supportée
-    const SpeechRecognition = window.SpeechRecognition || (window as any).webkitSpeechRecognition
-    
-    if (SpeechRecognition) {
-      setSpeechSupported(true)
-      const recognition = new SpeechRecognition()
-      recognition.continuous = true // Continuer après une pause
-      recognition.interimResults = true // Afficher les résultats en temps réel
-      recognition.lang = 'fr-FR' // Langue française
-      ;(recognition as any).maxAlternatives = 1
-      
-      recognition.onstart = () => {
-        setIsListening(true)
-        userStoppedRef.current = false
-        console.log("[Speech] 🎤 Enregistrement démarré")
-      }
-      
-      recognition.onresult = (event: SpeechRecognitionEvent) => {
-        let interimTranscript = ''
-        let finalTranscript = ''
-        
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-          const transcript = event.results[i][0].transcript
-          if (event.results[i].isFinal) {
-            finalTranscript += transcript + ' '
-          } else {
-            interimTranscript += transcript
-          }
-        }
-        
-        // Mettre à jour le champ de saisie avec la transcription
-        if (finalTranscript) {
-          setInputValue(prev => {
-            const trimmedPrev = prev.trimEnd()
-            return (trimmedPrev ? trimmedPrev + " " : "") + finalTranscript.trim()
-          })
-        } else if (interimTranscript) {
-          // Afficher la transcription temporaire (optionnel)
-          // setInputValue(prev => prev + interimTranscript)
-        }
-      }
-      
-      recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
-        console.error("[Speech] ❌ Erreur:", event.error)
-        
-        let errorMessage = ''
-        let shouldRetry = false
-        let shouldStop = true
-        
-        switch (event.error) {
-          case 'no-speech':
-            // Pas de parole détectée, c'est normal - ne pas afficher d'erreur
-            setSpeechError(null)
-            return
-          case 'not-allowed':
-            errorMessage = 'Permission microphone refusée. Activez-la dans les paramètres du navigateur.'
-            break
-          case 'network':
-            // Erreur réseau - essayer de réessayer automatiquement (max 2 fois)
-            if (retryCountRef.current < 2) {
-              retryCountRef.current++
-              console.log(`[Speech] 🔄 Nouvelle tentative ${retryCountRef.current}/2...`)
-              shouldRetry = true
-              setTimeout(() => {
-                if (recognitionRef.current) {
-                  try {
-                    recognitionRef.current.start()
-                  } catch (e) {
-                    console.error("[Speech] Erreur retry:", e)
-                  }
-                }
-              }, 2000) // Augmenter le délai à 2 secondes
-              return
-            } else {
-              errorMessage = 'Erreur réseau : Impossible de se connecter aux serveurs de reconnaissance vocale. Vérifiez votre connexion Internet et réessayez. Si le problème persiste, les serveurs Google peuvent être temporairement indisponibles.'
-              retryCountRef.current = 0
-            }
-            break
-          case 'aborted':
-            // L'utilisateur a arrêté manuellement, c'est normal
-            setSpeechError(null)
-            shouldStop = false
-            return
-          case 'audio-capture':
-            errorMessage = 'Aucun microphone détecté. Vérifiez que votre microphone est connecté.'
-            break
-          case 'service-not-allowed':
-            errorMessage = 'Service de reconnaissance vocale non autorisé. Vérifiez les paramètres du navigateur.'
-            break
-          default:
-            errorMessage = `Erreur de reconnaissance vocale: ${event.error}`
-            shouldStop = false
-            break
-        }
-        
-        if (shouldStop) {
-          setIsListening(false)
-        }
-        
-        // Afficher l'erreur dans l'UI
-        if (errorMessage) {
-          console.error("[Speech]", errorMessage)
-          setSpeechError(errorMessage)
-          // Effacer l'erreur après 5 secondes
-          setTimeout(() => {
-            setSpeechError(null)
-          }, 5000)
-        }
-      }
-      
-      recognition.onend = () => {
-        setIsListening(false)
-        console.log("[Speech] 🎤 Enregistrement terminé")
-        if (!userStoppedRef.current && recognitionRef.current) {
-          setTimeout(() => {
-            try {
-              recognitionRef.current?.start()
-            } catch (error) {
-              console.error("[Speech] Erreur redémarrage:", error)
-            }
-          }, 300)
-        }
-      }
-      
-      recognitionRef.current = recognition
-    } else {
-      setSpeechSupported(false)
-      console.warn("[Speech] ⚠️ Reconnaissance vocale non supportée par ce navigateur")
+  const initializeSpeechRecognition = () => {
+    if (speechInitializedRef.current) {
+      return recognitionRef.current
     }
-    
-    return () => {
-      if (recognitionRef.current) {
-        recognitionRef.current.stop()
+    const SpeechRecognition = window.SpeechRecognition || (window as any).webkitSpeechRecognition
+    if (!SpeechRecognition) {
+      setSpeechSupported(false)
+      return null
+    }
+
+    const recognition = new SpeechRecognition()
+    recognition.continuous = true
+    recognition.interimResults = true
+    recognition.lang = "fr-FR"
+    ;(recognition as any).maxAlternatives = 1
+
+    recognition.onstart = () => {
+      setIsListening(true)
+      userStoppedRef.current = false
+    }
+
+    recognition.onresult = (event: SpeechRecognitionEvent) => {
+      let finalTranscript = ""
+
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const transcript = event.results[i][0].transcript
+        if (event.results[i].isFinal) {
+          finalTranscript += transcript + " "
+        }
       }
+
+      if (finalTranscript) {
+        setInputValue((prev) => {
+          const trimmedPrev = prev.trimEnd()
+          return (trimmedPrev ? trimmedPrev + " " : "") + finalTranscript.trim()
+        })
+      }
+    }
+
+    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+      let errorMessage = ""
+      let shouldStop = true
+
+      switch (event.error) {
+        case "no-speech":
+          setSpeechError(null)
+          return
+        case "not-allowed":
+          errorMessage = "Permission microphone refusée. Activez-la dans les paramètres du navigateur."
+          break
+        case "network":
+          if (retryCountRef.current < 2) {
+            retryCountRef.current++
+            shouldStop = false
+            setTimeout(() => {
+              recognitionRef.current?.start()
+            }, 2000)
+            return
+          } else {
+            errorMessage =
+              "Erreur réseau : Impossible de se connecter aux serveurs de reconnaissance vocale. Vérifiez votre connexion Internet et réessayez."
+            retryCountRef.current = 0
+          }
+          break
+        case "aborted":
+          setSpeechError(null)
+          shouldStop = false
+          return
+        case "audio-capture":
+          errorMessage = "Aucun microphone détecté. Vérifiez que votre microphone est connecté."
+          break
+        case "service-not-allowed":
+          errorMessage = "Service de reconnaissance vocale non autorisé. Vérifiez les paramètres du navigateur."
+          break
+        default:
+          errorMessage = `Erreur de reconnaissance vocale: ${event.error}`
+          shouldStop = false
+          break
+      }
+
+      if (shouldStop) {
+        setIsListening(false)
+      }
+
+      if (errorMessage) {
+        setSpeechError(errorMessage)
+        setTimeout(() => {
+          setSpeechError(null)
+        }, 5000)
+      }
+    }
+
+    recognition.onend = () => {
+      setIsListening(false)
+      if (!userStoppedRef.current) {
+        setTimeout(() => {
+          try {
+            recognitionRef.current?.start()
+          } catch {
+            // ignore
+          }
+        }, 300)
+      }
+    }
+
+    recognitionRef.current = recognition
+    speechInitializedRef.current = true
+    setSpeechSupported(true)
+    return recognition
+  }
+
+  useEffect(() => {
+    return () => {
+      recognitionRef.current?.stop()
     }
   }, [])
 
   // 4. Fonction pour démarrer/arrêter l'enregistrement
   const toggleListening = () => {
     if (!recognitionRef.current) {
-      setSpeechError('Reconnaissance vocale non disponible sur ce navigateur.')
-      return
+      const recognition = initializeSpeechRecognition()
+      if (!recognition) {
+        setSpeechError("Reconnaissance vocale non disponible sur ce navigateur.")
+        return
+      }
+      recognitionRef.current = recognition
     }
     
     if (isListening) {
@@ -243,38 +258,38 @@ export default function AIChat({ isOpen, onClose, context }: AIChatProps) {
       try {
         // Vérifier la connexion Internet
         if (!navigator.onLine) {
-          setSpeechError('Pas de connexion Internet. La reconnaissance vocale nécessite une connexion active.')
+          setSpeechError("Pas de connexion Internet. La reconnaissance vocale nécessite une connexion active.")
           return
         }
         
         // Vérifier si on est en HTTPS ou localhost (requis pour l'API)
-        const isSecure = window.location.protocol === 'https:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+        const isSecure =
+          window.location.protocol === "https:" ||
+          window.location.hostname === "localhost" ||
+          window.location.hostname === "127.0.0.1"
         if (!isSecure) {
-          setSpeechError('La reconnaissance vocale nécessite HTTPS ou localhost.')
+          setSpeechError("La reconnaissance vocale nécessite HTTPS ou localhost.")
           return
         }
         
         // Vérifier que le navigateur supporte l'API
-        if (!('SpeechRecognition' in window) && !('webkitSpeechRecognition' in window)) {
-          setSpeechError('Votre navigateur ne supporte pas la reconnaissance vocale. Utilisez Chrome, Edge ou Safari.')
+        if (!("SpeechRecognition" in window) && !("webkitSpeechRecognition" in window)) {
+          setSpeechError("Votre navigateur ne supporte pas la reconnaissance vocale. Utilisez Chrome, Edge ou Safari.")
           return
         }
         
         retryCountRef.current = 0
         setSpeechError(null)
         userStoppedRef.current = false
-        console.log("[Speech] 🎤 Démarrage de la reconnaissance vocale...")
         recognitionRef.current.start()
       } catch (error: any) {
-        console.error("[Speech] Erreur démarrage:", error)
         setIsListening(false)
         
         // Gérer les erreurs spécifiques
-        if (error.name === 'InvalidStateError') {
+        if (error.name === "InvalidStateError") {
           // La reconnaissance est déjà en cours
-          console.log("[Speech] Reconnaissance déjà en cours")
         } else {
-          setSpeechError(`Impossible de démarrer l'enregistrement: ${error.message || 'Erreur inconnue'}`)
+          setSpeechError(`Impossible de démarrer l'enregistrement: ${error.message || "Erreur inconnue"}`)
         }
       }
     }
@@ -306,10 +321,6 @@ export default function AIChat({ isOpen, onClose, context }: AIChatProps) {
       // Passer le contexte à sendChatMessage
       const response = await sendChatMessage(apiMessages, context || undefined)
       
-      console.log("[AIChat] Réponse reçue:", response)
-      console.log("[AIChat] Action:", response.action)
-      console.log("[AIChat] Contexte:", context)
-      
       // response peut être soit un string (ancien format) soit un objet (nouveau format)
       let aiReply: string
       let action: { type: string; route?: string; content?: string; title?: string; noteId?: string } = { type: "none" }
@@ -320,8 +331,6 @@ export default function AIChat({ isOpen, onClose, context }: AIChatProps) {
         aiReply = response.reply || String(response)
         action = response.action || { type: "none" }
       }
-
-      console.log("[AIChat] Action après traitement:", action)
 
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
@@ -341,11 +350,6 @@ export default function AIChat({ isOpen, onClose, context }: AIChatProps) {
         }, 500)
       } else if (action.type === "add_to_note" && action.content && context?.noteId) {
         // Ajouter du contenu à la note actuelle
-        console.log("[AIChat] ✅ Action: add_to_note détectée")
-        console.log("[AIChat] �� Note ID:", context.noteId)
-        console.log("[AIChat] 📄 Contenu actuel:", noteState.content?.substring(0, 100) || "(vide)")
-        console.log("[AIChat] ➕ Nouveau contenu à ajouter:", action.content.substring(0, 100))
-        
         try {
           let updatedTitle = action.title?.trim()
           const trimmedActionContent = action.content?.trim()
@@ -427,7 +431,6 @@ export default function AIChat({ isOpen, onClose, context }: AIChatProps) {
         }
       } else if (action.type === "create_note_with_content" && action.title && action.content) {
         // Créer une nouvelle note avec contenu
-        console.log("[AIChat] Action: create_note_with_content", action.title, action.content.substring(0, 100))
         try {
           const res = await fetch("/api/notes", {
             method: "POST",
@@ -440,8 +443,6 @@ export default function AIChat({ isOpen, onClose, context }: AIChatProps) {
 
           if (res.ok) {
             const newNote = await res.json()
-            
-            console.log("[AIChat] Note créée:", newNote.id, newNote.title)
             
             // 🔥 METTRE LA NOTE DANS LE CACHE AVANT DE NAVIGUER
             queryClient.setQueryData<Note>(["note", newNote.id], newNote)
@@ -466,7 +467,6 @@ export default function AIChat({ isOpen, onClose, context }: AIChatProps) {
             
             // Naviguer vers la note (le cache est prêt, donc elle s'affichera immédiatement)
             setTimeout(() => {
-              console.log("[AIChat] Navigation vers:", `/note/${newNote.id}`)
               router.push(`/note/${newNote.id}`)
               onClose()
             }, 500)
@@ -477,8 +477,6 @@ export default function AIChat({ isOpen, onClose, context }: AIChatProps) {
         } catch (error) {
           console.error("[AIChat] Erreur création note:", error)
         }
-      } else {
-        console.log("[AIChat] Aucune action à exécuter, type:", action.type)
       }
     } catch (error: any) {
       console.error("Erreur chat IA:", error)
@@ -503,25 +501,66 @@ export default function AIChat({ isOpen, onClose, context }: AIChatProps) {
     }
   }
 
-  const formatTime = (date: Date) => {
-    return date.toLocaleTimeString("fr-FR", {
+  const formatTime = (date: Date) =>
+    date.toLocaleTimeString("fr-FR", {
       hour: "2-digit",
       minute: "2-digit",
     })
-  }
 
-  if (!isOpen) return null
+  const renderedMessages = useMemo(
+    () =>
+      messages.map((message) => (
+        <div
+          key={message.id}
+          className={`flex ${message.sender === "user" ? "justify-end" : "justify-start"}`}
+        >
+          <div
+            className={`max-w-[80%] rounded-2xl px-4 py-2.5 ${
+              message.sender === "user"
+                ? "bg-gradient-to-r from-nothly-blue to-nothly-violet text-white rounded-br-sm"
+                : "bg-white text-gray-800 shadow-sm border border-gray-100 rounded-bl-sm dark:bg-card dark:text-foreground dark:border-border"
+            }`}
+          >
+            {message.sender === "ai" ? (
+              <MemoMarkdownMessage content={message.text} />
+            ) : (
+              <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">{message.text}</p>
+            )}
+            <p
+              className={`text-xs mt-1.5 ${
+                message.sender === "user"
+                  ? "text-purple-100"
+                  : "text-gray-400 dark:text-muted-foreground"
+              }`}
+            >
+              {formatTime(message.timestamp)}
+            </p>
+          </div>
+        </div>
+      )),
+    [messages]
+  )
+
+  if (!isVisible) return null
 
   return (
     <>
       {/* Overlay semi-transparent */}
       <div
-        className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 transition-opacity"
-        onClick={onClose}
+        className={`fixed inset-0 z-40 bg-black/40 transition-opacity duration-150 ease-out ${
+          isOpen && !isAnimatingOut ? "opacity-100" : "opacity-0"
+        }`}
       />
 
       {/* Panneau de chat */}
-      <div className="fixed bottom-20 right-6 w-96 h-[600px] bg-white dark:bg-background rounded-2xl shadow-2xl z-50 flex flex-col overflow-hidden border border-gray-200 dark:border-border animate-in slide-in-from-bottom-5 duration-300">
+      <div
+        ref={panelRef}
+        className={`fixed bottom-20 right-6 z-50 flex h-[600px] w-96 flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl will-change-transform transition-all duration-200 ease-out dark:border-border dark:bg-background ${
+          isOpen && !isAnimatingOut
+            ? "translate-y-0 opacity-100 drop-shadow-xl"
+            : "translate-y-2 opacity-0 drop-shadow-md pointer-events-none"
+        }`}
+      >
         {/* Header */}
         <div className="bg-gradient-to-r from-nothly-blue to-nothly-violet text-white p-4 flex items-center justify-between flex-shrink-0">
           <div className="flex items-center gap-3">
@@ -544,39 +583,7 @@ export default function AIChat({ isOpen, onClose, context }: AIChatProps) {
 
         {/* Messages */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50 dark:bg-background">
-          {messages.map((message) => (
-            <div
-              key={message.id}
-              className={`flex ${
-                message.sender === "user" ? "justify-end" : "justify-start"
-              }`}
-            >
-              <div
-                className={`max-w-[80%] rounded-2xl px-4 py-2.5 ${
-                  message.sender === "user"
-                    ? "bg-gradient-to-r from-nothly-blue to-nothly-violet text-white rounded-br-sm"
-                    : "bg-white text-gray-800 shadow-sm border border-gray-100 rounded-bl-sm dark:bg-card dark:text-foreground dark:border-border"
-                }`}
-              >
-                {message.sender === "ai" ? (
-                  <MarkdownMessage content={message.text} />
-                ) : (
-                  <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
-                    {message.text}
-                  </p>
-                )}
-                <p
-                  className={`text-xs mt-1.5 ${
-                    message.sender === "user"
-                      ? "text-purple-100"
-                      : "text-gray-400 dark:text-muted-foreground"
-                  }`}
-                >
-                  {formatTime(message.timestamp)}
-                </p>
-              </div>
-            </div>
-          ))}
+          {renderedMessages}
 
           {isLoading && (
             <div className="flex justify-start">
@@ -756,4 +763,12 @@ export default function AIChat({ isOpen, onClose, context }: AIChatProps) {
     </>
   )
 }
+
+interface MarkdownProps {
+  content: string
+}
+
+const MemoMarkdownMessage = memo(function MemoMarkdownMessage({ content }: MarkdownProps) {
+  return <MarkdownMessage content={content} />
+})
 

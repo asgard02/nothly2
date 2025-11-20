@@ -1,0 +1,76 @@
+{
+  "Sidebar": {
+    "tagline": "Organize and transform your study materials into smart resources",
+    "library": "Library",
+    "collectionsBadge": "AI Collections",
+    "collectionsHint": "Generate flashcards and quizzes from your documents",
+    "pricing": "Pricing",
+    "settings": "Settings",
+    "logout": "Log out",
+    "footer": "Nothly © 2025"
+  },
+  "DocumentStack": {
+    "loading": "Loading your documents...",
+    "title": "Document hub",
+    "addButton": "Add a document",
+    "messages": {
+      "pdfOnly": "Only PDF files are supported.",
+      "selectFileFirst": "Please pick a PDF file first.",
+      "uploadFailed": "We couldn't upload this document. Please try again shortly.",
+      "uploadSuccess": "Document uploaded successfully!"
+    },
+    "dialog": {
+      "title": "New document",
+      "description": "Drop a PDF or pick a file to add it to your library.",
+      "dropPlaceholder": "Drop your PDF here",
+      "dropInfo": "Accepted format: PDF • Max size 20 MB",
+      "titleLabel": "Title",
+      "titlePlaceholder": "e.g. Probability course - chapter 1",
+      "tagsLabel": "Tags (comma separated)",
+      "tagsPlaceholder": "probability, revision, semester 2",
+      "cancel": "Cancel",
+      "submit": "Import"
+    },
+    "stats": {
+      "totalDocuments": "Imported documents",
+      "totalPages": "Analyzed pages",
+      "lastAdded": "Last added"
+    },
+    "empty": {
+      "title": "Add your first document",
+      "description": "Import a PDF to unlock note-taking, flashcard generation and AI quizzes.",
+      "cta": "Create a new note"
+    },
+    "table": {
+      "document": "Document",
+      "tags": "Tags",
+      "pages": "Pages",
+      "created": "Created",
+      "updated": "Updated",
+      "actions": "Actions",
+      "noTags": "No tags",
+      "open": "Open",
+      "delete": "Delete"
+    },
+    "deleteDialog": {
+      "title": "Delete this document",
+      "description": "Are you sure you want to delete <bold>{title}</bold>? This action cannot be undone.",
+      "cancel": "Cancel",
+      "confirm": "Delete permanently",
+      "error": "We couldn't delete this document. Please retry in a moment."
+    }
+  },
+  "Navbar": {
+    "links": {
+      "flow": "How it works",
+      "value": "Value",
+      "targets": "Who is it for?",
+      "pricing": "Pricing",
+      "login": "Log in"
+    },
+    "cta": {
+      "primary": "Start for free",
+      "mobile": "Sign up"
+    }
+  }
+}

@@ -5,6 +5,24 @@ import type { NextRequest } from 'next/server'
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname
   
+  // Ignorer les fichiers statiques et manifest.json
+  if (pathname.startsWith('/_next') || 
+      pathname.startsWith('/api') || 
+      pathname === '/manifest.json' ||
+      pathname.match(/\.(svg|png|jpg|jpeg|gif|webp|ico|woff|woff2|ttf|eot|json)$/)) {
+    return NextResponse.next()
+  }
+  
+  // Gérer la locale manuellement en lisant le cookie
+  const localeCookie = request.cookies.get('NEXT_LOCALE')?.value || 'en'
+  const locale = ['en', 'fr'].includes(localeCookie) ? localeCookie : 'en'
+  
+  // Créer la réponse de base
+  const baseResponse = NextResponse.next()
+  
+  // Définir le header pour next-intl (utilisé par getRequestConfig)
+  baseResponse.headers.set('x-next-intl-locale', locale)
+  
   // Vérifier que les variables d'environnement sont définies
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -23,7 +41,7 @@ export async function middleware(request: NextRequest) {
   const publicRoutes = ['/', '/pricing', '/login', '/register']
   
   // Liste des routes protégées (nécessitent une session)
-  const protectedRoutes = ['/dashboard', '/note', '/new', '/chat', '/settings']
+  const protectedRoutes = ['/dashboard', '/note', '/new', '/chat', '/settings', '/stack', '/flashcards']
   
   // Vérifier si c'est une route publique
   const isPublicRoute = publicRoutes.some(route => pathname === route)
@@ -42,29 +60,31 @@ export async function middleware(request: NextRequest) {
             getAll() {
               return request.cookies.getAll()
             },
-            setAll() {
-              // Pas besoin de set cookies pour les routes publiques
+            setAll(cookiesToSet) {
+              cookiesToSet.forEach(({ name, value, options }) =>
+                baseResponse.cookies.set(name, value, options)
+              )
             },
           },
         }
       )
       
-      return NextResponse.next()
+      const { data: { session } } = await supabase.auth.getSession()
+
+      if (session && (pathname === '/' || pathname === '/login' || pathname === '/register')) {
+        return NextResponse.redirect(new URL('/stack', request.url))
+      }
+
+      return baseResponse
     } catch (error) {
       // Si erreur Supabase, on laisse quand même passer (route publique)
       console.error('[Middleware] Erreur Supabase sur route publique:', error)
-      return NextResponse.next()
+      return baseResponse
     }
   }
   
   // Pour les routes protégées, vérifier la session
   if (isProtectedRoute) {
-    let response = NextResponse.next({
-      request: {
-        headers: request.headers,
-      },
-    })
-    
     try {
       const supabase = createServerClient(
         supabaseUrl,
@@ -76,13 +96,7 @@ export async function middleware(request: NextRequest) {
             },
             setAll(cookiesToSet) {
               cookiesToSet.forEach(({ name, value, options }) =>
-                request.cookies.set(name, value)
-              )
-              response = NextResponse.next({
-                request,
-              })
-              cookiesToSet.forEach(({ name, value, options }) =>
-                response.cookies.set(name, value, options)
+                baseResponse.cookies.set(name, value, options)
               )
             },
           },
@@ -95,7 +109,7 @@ export async function middleware(request: NextRequest) {
         return NextResponse.redirect(new URL('/login', request.url))
       }
       
-      return response
+      return baseResponse
     } catch (error) {
       // Si erreur Supabase sur route protégée, rediriger vers login
       console.error('[Middleware] Erreur Supabase sur route protégée:', error)
@@ -140,8 +154,8 @@ export async function middleware(request: NextRequest) {
     }
   }
   
-  // Par défaut, autoriser la requête
-  return NextResponse.next()
+  // Par défaut, retourner la réponse de next-intl
+  return baseResponse
 }
 
 export const config = {
@@ -152,10 +166,11 @@ export const config = {
      * - _next/image (image optimization files)
      * - _next/webpack-hmr (HMR files)
      * - favicon.ico (favicon file)
+     * - manifest.json (PWA manifest)
      * - public files (public folder with extensions)
      * - error handling routes (_error, etc.)
      */
-    '/((?!_next/static|_next/image|_next/webpack-hmr|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|woff|woff2|ttf|eot)$).*)',
+    '/((?!_next/static|_next/image|_next/webpack-hmr|favicon.ico|manifest.json|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|woff|woff2|ttf|eot|json)$).*)',
   ],
 }
 

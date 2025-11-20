@@ -1,0 +1,76 @@
+{
+  "Sidebar": {
+    "tagline": "Organise et transforme tes supports en ressources intelligentes",
+    "library": "Bibliothèque",
+    "collectionsBadge": "Collections IA",
+    "collectionsHint": "Génère flashcards et quiz à partir de tes documents",
+    "pricing": "Tarifs",
+    "settings": "Paramètres",
+    "logout": "Se déconnecter",
+    "footer": "Nothly © 2025"
+  },
+  "DocumentStack": {
+    "loading": "Chargement de tes supports...",
+    "title": "Recueil de supports",
+    "addButton": "Ajouter un support",
+    "messages": {
+      "pdfOnly": "Seuls les fichiers PDF sont acceptés.",
+      "selectFileFirst": "Sélectionne d'abord un fichier PDF.",
+      "uploadFailed": "Échec de l'import du support. Réessaie dans quelques instants.",
+      "uploadSuccess": "Support importé avec succès !"
+    },
+    "dialog": {
+      "title": "Nouveau support",
+      "description": "Glisse un PDF ou sélectionne un fichier pour l'ajouter à ta bibliothèque.",
+      "dropPlaceholder": "Dépose ton fichier PDF ici",
+      "dropInfo": "Formats acceptés : PDF • Taille max 20 Mo",
+      "titleLabel": "Titre",
+      "titlePlaceholder": "Ex. Cours de probabilités - chapitre 1",
+      "tagsLabel": "Tags (séparés par des virgules)",
+      "tagsPlaceholder": "probabilités, révision, semestre 2",
+      "cancel": "Annuler",
+      "submit": "Importer"
+    },
+    "stats": {
+      "totalDocuments": "Supports importés",
+      "totalPages": "Pages analysées",
+      "lastAdded": "Dernier ajout"
+    },
+    "empty": {
+      "title": "Ajoute ton premier support",
+      "description": "Importe un PDF pour activer la génération de notes, flashcards et quiz personnalisés.",
+      "cta": "Créer une nouvelle note"
+    },
+    "table": {
+      "document": "Document",
+      "tags": "Tags",
+      "pages": "Pages",
+      "created": "Ajouté le",
+      "updated": "Mis à jour le",
+      "actions": "Actions",
+      "noTags": "Aucun tag",
+      "open": "Ouvrir",
+      "delete": "Supprimer"
+    },
+    "deleteDialog": {
+      "title": "Supprimer ce support",
+      "description": "Es-tu sûr de vouloir supprimer <bold>{title}</bold> ? Cette action est irréversible.",
+      "cancel": "Annuler",
+      "confirm": "Supprimer définitivement",
+      "error": "Impossible de supprimer ce support. Réessaie dans quelques secondes."
+    }
+  },
+  "Navbar": {
+    "links": {
+      "flow": "Comment ça marche",
+      "value": "Valeur ajoutée",
+      "targets": "Pour qui ?",
+      "pricing": "Tarifs",
+      "login": "Connexion"
+    },
+    "cta": {
+      "primary": "Commencer gratuitement",
+      "mobile": "S'inscrire"
+    }
+  }
+}

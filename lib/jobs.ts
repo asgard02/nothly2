@@ -126,10 +126,14 @@ export async function updateJob(jobId: string, updates: UpdateJobOptions): Promi
     .update(payload)
     .eq("id", jobId)
     .select()
-    .single()
+    .maybeSingle()
 
-  if (error || !data) {
-    throw new Error(error?.message || "Unable to update async job")
+  if (error) {
+    throw new Error(error.message || "Unable to update async job")
+  }
+
+  if (!data) {
+    throw new Error(`Job ${jobId} not found`)
   }
 
   return data as AsyncJob

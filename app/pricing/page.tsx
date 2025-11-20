@@ -29,7 +29,7 @@ export default function PricingPage() {
     {
       name: "Free",
       price: "0€",
-      tagline: "Pour découvrir Notlhy",
+      tagline: "Pour découvrir Nothly",
       features: [
         "Jusqu'à 100 notes",
         "10 000 tokens IA offerts",
@@ -113,7 +113,7 @@ export default function PricingPage() {
           <div className="text-center space-y-4">
             <h1 className="text-4xl font-bold">Des tarifs simples et transparents</h1>
             <p className="text-muted-foreground text-lg">
-              Choisissez votre formule et utilisez Notlhy comme vous le souhaitez
+              Choisissez votre formule et utilisez Nothly comme vous le souhaitez
             </p>
           </div>
 
@@ -217,7 +217,7 @@ export default function PricingPage() {
               Prêt à transformer vos notes ?
             </h2>
             <p className="text-muted-foreground">
-              Rejoignez des milliers d'utilisateurs qui optimisent leur apprentissage avec Notlhy
+              Rejoignez des milliers d'utilisateurs qui optimisent leur apprentissage avec Nothly
             </p>
             <button
               onClick={() => router.push("/register")}

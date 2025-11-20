@@ -7,7 +7,9 @@ import {
   type CollectionGenerationJobPayload,
 } from "@/lib/collections/processor"
 
-const POLL_INTERVAL_MS = Number(process.env.JOB_POLL_INTERVAL_MS || 2000)
+const BASE_POLL_INTERVAL_MS = Number(process.env.JOB_POLL_INTERVAL_MS || 2000)
+const MAX_POLL_INTERVAL_MS = 30000 // 30 secondes max
+const BACKOFF_MULTIPLIER = 1.5
 
 async function fetchNextPendingJob(): Promise<AsyncJob | null> {
   const admin = getSupabaseAdmin()
@@ -71,35 +73,52 @@ async function runJob(job: AsyncJob) {
       error,
     })
 
-    const admin = getSupabaseAdmin()
-    if (admin && payload.collectionId) {
-      await admin
-        .from("study_collections")
-        .update({
-          status: "failed",
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", payload.collectionId)
-    }
+    try {
+      const admin = getSupabaseAdmin()
+      if (admin && payload.collectionId) {
+        await admin
+          .from("study_collections")
+          .update({
+            status: "failed",
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", payload.collectionId)
+      }
 
-    await updateJob(job.id, {
-      status: "failed",
-      error: error?.message || String(error),
-      finishedAt: new Date(),
-    })
+      await updateJob(job.id, {
+        status: "failed",
+        error: error?.message || String(error),
+        finishedAt: new Date(),
+      })
+    } catch (updateError: any) {
+      console.error("[process-collection-jobs] failed to update job status", {
+        jobId: job.id,
+        error: updateError,
+      })
+      // Continue execution even if update fails
+    }
   }
 }
 
 async function main() {
   console.log("[process-collection-jobs] Worker started")
+  let pollInterval = BASE_POLL_INTERVAL_MS
+  let consecutiveEmptyPolls = 0
 
   while (true) {
     const pendingJob = await fetchNextPendingJob()
 
     if (!pendingJob) {
-      await sleep(POLL_INTERVAL_MS)
+      consecutiveEmptyPolls++
+      // Backoff exponentiel jusqu'à MAX_POLL_INTERVAL_MS
+      pollInterval = Math.min(Math.floor(pollInterval * BACKOFF_MULTIPLIER), MAX_POLL_INTERVAL_MS)
+      await sleep(pollInterval)
       continue
     }
+
+    // Réinitialiser l'intervalle si un job est trouvé
+    consecutiveEmptyPolls = 0
+    pollInterval = BASE_POLL_INTERVAL_MS
 
     const freshJob = await getJob(pendingJob.id)
     if (!freshJob || freshJob.status !== "pending") {

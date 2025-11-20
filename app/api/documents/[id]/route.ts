@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createServerClient } from "@/lib/supabase-server"
 import { getSupabaseAdmin } from "@/lib/db"
+import { getStorageBucket } from "@/lib/storage"
 
 const DOCUMENTS_BUCKET = process.env.SUPABASE_DOCUMENTS_BUCKET || "documents"
 
@@ -193,17 +194,49 @@ export async function DELETE(
     storagePathsByBucket.get(normalizedBucket)!.add(objectPath)
   }
 
+  const gcpProjectId = process.env.GCP_PROJECT_ID
+
   for (const [bucket, pathsSet] of storagePathsByBucket.entries()) {
     const paths = Array.from(pathsSet)
     if (paths.length === 0) continue
 
-    const { error: removeError } = await admin.storage.from(bucket).remove(paths)
-    if (removeError) {
-      console.error("[DELETE /api/documents/:id] ❌ Erreur suppression storage", removeError)
-      return NextResponse.json(
-        { error: "Impossible de supprimer les fichiers associés au document" },
-        { status: 500 }
-      )
+    let gcsHandled = false
+    if (gcpProjectId) {
+      try {
+        const gcsBucket = getStorageBucket(bucket)
+        await Promise.all(
+          paths.map(async (objectPath) => {
+            try {
+              await gcsBucket.file(objectPath).delete({ ignoreNotFound: true })
+            } catch (error) {
+              console.warn("[DELETE /api/documents/:id] ⚠️ GCS suppression partielle", {
+                bucket,
+                objectPath,
+                error,
+              })
+              throw error
+            }
+          })
+        )
+        gcsHandled = true
+      } catch (error) {
+        console.warn("[DELETE /api/documents/:id] ⚠️ Échec suppression GCS, tentative Supabase", {
+          bucket,
+          paths,
+          error,
+        })
+      }
+    }
+
+    if (!gcsHandled) {
+      const { error: removeError } = await admin.storage.from(bucket).remove(paths)
+      if (removeError) {
+        console.error("[DELETE /api/documents/:id] ❌ Erreur suppression storage", removeError)
+        return NextResponse.json(
+          { error: "Impossible de supprimer les fichiers associés au document" },
+          { status: 500 }
+        )
+      }
     }
   }
 

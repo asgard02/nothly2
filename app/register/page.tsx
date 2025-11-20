@@ -25,13 +25,13 @@ export default function RegisterPage() {
     
     if (!email || !password) {
       setIsError(true)
-      setMessage("Veuillez remplir tous les champs")
+      setMessage("Please fill in all fields")
       return
     }
 
     if (password.length < 6) {
       setIsError(true)
-      setMessage("Le mot de passe doit contenir au moins 6 caractères")
+      setMessage("Password must be at least 6 characters long")
       return
     }
 
@@ -51,18 +51,18 @@ export default function RegisterPage() {
 
       if (error) {
         setIsError(true)
-        setMessage(`Erreur : ${error.message}`)
+        setMessage(`Error: ${error.message}`)
       } else if (data.user) {
         setIsSuccess(true)
-        setMessage("✉️ Un email de confirmation vous a été envoyé. Vérifiez votre boîte de réception.")
-        // Rediriger après 3 secondes
+        setMessage("✉️ A confirmation email has been sent. Please check your inbox.")
+        // Redirect after 3 seconds
         setTimeout(() => {
           router.push("/login")
         }, 3000)
       }
     } catch (error: any) {
       setIsError(true)
-      setMessage(`Erreur inattendue : ${error.message || "Une erreur est survenue"}`)
+      setMessage(`Unexpected error: ${error.message || "Something went wrong"}`)
     } finally {
       setIsLoading(false)
     }
@@ -75,7 +75,7 @@ export default function RegisterPage() {
           <div className="flex items-center justify-center mb-2">
             <Logo size={40} showText={true} href={null} className="justify-center" />
           </div>
-          <CardDescription>Créer un nouveau compte</CardDescription>
+          <CardDescription>Create a new account</CardDescription>
         </CardHeader>
 
         <CardContent>
@@ -84,16 +84,16 @@ export default function RegisterPage() {
               <div className="text-6xl">📧</div>
               <p className="text-primary font-medium">{message}</p>
               <Link href="/login">
-                <Button variant="outline" className="mt-4">Aller à la connexion</Button>
+                <Button variant="outline" className="mt-4">Go to login</Button>
               </Link>
             </div>
           ) : (
             <form onSubmit={handleRegister} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-foreground mb-2">Adresse email</label>
+                <label className="block text-sm font-medium text-foreground mb-2">Email address</label>
                 <Input
                   type="email"
-                  placeholder="votre@email.com"
+                  placeholder="you@email.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -101,7 +101,7 @@ export default function RegisterPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-foreground mb-2">Mot de passe</label>
+                <label className="block text-sm font-medium text-foreground mb-2">Password</label>
                 <Input
                   type="password"
                   placeholder="••••••••"
@@ -113,22 +113,26 @@ export default function RegisterPage() {
               </div>
 
               {message && (
-                <div className={`p-3 rounded-lg text-sm ${
-                  isError ? "bg-destructive/10 text-destructive border border-destructive/20" : "bg-primary/10 text-primary border border-primary/20"
-                }`}>
+                <div
+                  className={`p-3 rounded-lg text-sm ${
+                    isError
+                      ? "bg-destructive/10 text-destructive border border-destructive/20"
+                      : "bg-primary/10 text-primary border border-primary/20"
+                  }`}
+                >
                   {message}
                 </div>
               )}
 
               <Button type="submit" disabled={isLoading} className="w-full" size="lg">
-                {isLoading ? "Création..." : "Créer mon compte"}
+                {isLoading ? "Creating..." : "Create my account"}
               </Button>
 
               <div className="text-center mt-4">
                 <p className="text-sm text-muted-foreground">
-                  Vous avez déjà un compte ?{" "}
+                  Already have an account?{" "}
                   <Link href="/login" className="text-primary hover:text-primary/80 font-medium">
-                    Se connecter
+                    Log in
                   </Link>
                 </p>
               </div>

@@ -28,7 +28,7 @@ export default function Logo({
           className="text-lg font-bold tracking-tight bg-gradient-to-r from-nothly-blue to-nothly-violet bg-clip-text text-transparent"
           style={{ fontSize: size * 0.65 }}
         >
-          Notlhy
+          Nothly
         </span>
       )}
     </div>

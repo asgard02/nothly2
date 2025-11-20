@@ -1,3 +1,5 @@
+const withNextIntl = require("next-intl/plugin")("./i18n/request.ts")
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Strict mode activé (peut causer des doubles renders en dev, mais c'est normal)
@@ -5,25 +7,35 @@ const nextConfig = {
   
   // Optimisations pour la stabilité en développement
   experimental: {
-    // Améliore la stabilité du HMR (Hot Module Replacement)
-    optimizePackageImports: ['lucide-react', '@radix-ui/react-dialog'],
+    // Désactivé temporairement pour éviter les problèmes de vendor-chunks
+    // optimizePackageImports: ['lucide-react', '@radix-ui/react-dialog'],
   },
   
   // Désactiver le cache Turbopack si problématique (décommentez si nécessaire)
   // turbo: {},
   
-  // Webpack config pour la stabilité
+  // Webpack config simplifiée pour éviter les problèmes de chunks récurrents
   webpack: (config, { dev, isServer }) => {
     // En développement, améliorer la stabilité du HMR
-    // Le polling est désactivé par défaut (utilise les événements système)
-    // Si vous avez des problèmes de hot reload, décommentez les lignes ci-dessous
     if (dev && !isServer) {
       config.watchOptions = {
-        // poll: 1000, // Décommenter si le hot reload ne fonctionne pas
-        aggregateTimeout: 300, // Attendre 300ms après le dernier changement
+        aggregateTimeout: 300,
         ignored: ['**/node_modules', '**/.git', '**/.next'],
       }
     }
+    
+    // Fallback pour les modules Node.js (nécessaire pour certains packages)
+    config.resolve = config.resolve || {}
+    config.resolve.fallback = {
+      ...config.resolve.fallback,
+      fs: false,
+      net: false,
+      tls: false,
+    }
+    
+    // Laisser Next.js gérer les chunks par défaut pour éviter les problèmes
+    // Ne pas modifier splitChunks en développement - Next.js le gère mieux
+    
     return config
   },
   
@@ -47,5 +59,5 @@ const nextConfig = {
   },
 }
 
-module.exports = nextConfig
+module.exports = withNextIntl(nextConfig)
 

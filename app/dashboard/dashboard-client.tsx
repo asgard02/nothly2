@@ -19,10 +19,10 @@ export default function DashboardClient({ user }: DashboardClientProps) {
   const [content, setContent] = useState("")
   const [saveStatus, setSaveStatus] = useState<"saved" | "saving" | "">("")
   const [improvingAI, setImprovingAI] = useState(false)
-  
+
   // États pour le chat IA
   const [isChatOpen, setIsChatOpen] = useState(false)
-  
+
   // États pour le menu de sélection contextuelle
   const [isContextualMode, setIsContextualMode] = useState(false)
   const [selectionMenu, setSelectionMenu] = useState<{
@@ -33,21 +33,20 @@ export default function DashboardClient({ user }: DashboardClientProps) {
   const [isTransforming, setIsTransforming] = useState(false)
 
   // Charge les notes au montage
+  // Charge les notes au montage
   useEffect(() => {
+    const loadNotes = async () => {
+      const res = await fetch("/api/notes")
+      if (res.ok) {
+        const data = await res.json()
+        setNotes(data)
+      }
+    }
     loadNotes()
   }, [])
 
   // Auto-save avec debounce de 500ms
-  useEffect(() => {
-    if (!selectedNote) return
 
-    setSaveStatus("saving")
-    const timer = setTimeout(() => {
-      saveNote()
-    }, 500)
-
-    return () => clearTimeout(timer)
-  }, [content, title, selectedNote?.id])
 
   // Gestion de la sélection de texte pour le menu contextuel
   useEffect(() => {
@@ -88,19 +87,13 @@ export default function DashboardClient({ user }: DashboardClientProps) {
     }
   }, [isContextualMode])
 
-  const loadNotes = async () => {
-    const res = await fetch("/api/notes")
-    if (res.ok) {
-      const data = await res.json()
-      setNotes(data)
-    }
-  }
+
 
   const createNote = async () => {
     const res = await fetch("/api/notes", {
       method: "POST",
     })
-    
+
     if (res.ok) {
       const newNote = await res.json()
       setNotes([newNote, ...notes])
@@ -115,9 +108,9 @@ export default function DashboardClient({ user }: DashboardClientProps) {
     setSaveStatus("")
   }
 
-  const saveNote = async () => {
+  const saveNote = useCallback(async () => {
     if (!selectedNote) return
-    
+
     const res = await fetch(`/api/notes/${selectedNote.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -126,28 +119,40 @@ export default function DashboardClient({ user }: DashboardClientProps) {
 
     if (res.ok) {
       const updatedNote = await res.json()
-      
+
       // Met à jour la liste des notes
-      setNotes(notes.map(n => 
+      setNotes(prevNotes => prevNotes.map(n =>
         n.id === updatedNote.id ? updatedNote : n
       ))
-      
+
       setSaveStatus("saved")
     }
-  }
+  }, [selectedNote, title, content])
+
+  // Auto-save avec debounce de 500ms
+  useEffect(() => {
+    if (!selectedNote) return
+
+    setSaveStatus("saving")
+    const timer = setTimeout(() => {
+      saveNote()
+    }, 500)
+
+    return () => clearTimeout(timer)
+  }, [content, title, selectedNote, saveNote])
 
   const deleteNote = async () => {
     if (!selectedNote) return
     if (!confirm("Supprimer cette note ?")) return
-    
+
     const res = await fetch(`/api/notes/${selectedNote.id}`, {
       method: "DELETE"
     })
-    
+
     if (res.ok) {
       const newNotes = notes.filter(n => n.id !== selectedNote.id)
       setNotes(newNotes)
-      
+
       // Sélectionne la première note restante ou vide
       if (newNotes.length > 0) {
         selectNote(newNotes[0])
@@ -161,31 +166,18 @@ export default function DashboardClient({ user }: DashboardClientProps) {
 
   const improveWithAI = async () => {
     if (!selectedNote || !content.trim()) return
-    
+
     setImprovingAI(true)
-    
+
     try {
-      const res = await fetch("/api/ai", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: content, mode: "improve" }),
-      })
-      
-      if (res.ok) {
-        // La réponse est maintenant du texte brut, pas du JSON
-        const improved = await res.text()
-        
-        // Met à jour le contenu avec la version améliorée
-        setContent(improved.trim())
-        
-        // L'auto-save se déclenchera automatiquement via useEffect
-      } else {
-        const error = await res.json().catch(() => ({ error: "Erreur inconnue" }))
-        alert(error.error || "Erreur lors de l'amélioration")
-      }
-    } catch (error) {
-      console.error("Erreur amélioration:", error)
-      alert("Erreur lors de l'amélioration")
+      // On utilise maintenant transformText, qui gère le job + polling
+      const improved = await transformText(content, "improve")
+
+      setContent(improved)
+      // l'auto-save se déclenche avec le useEffect [content, title, selectedNote?.id]
+    } catch (error: any) {
+      console.error("Erreur amélioration IA:", error)
+      alert(error.message || "Erreur lors de l'amélioration")
     } finally {
       setImprovingAI(false)
     }
@@ -193,19 +185,19 @@ export default function DashboardClient({ user }: DashboardClientProps) {
 
   const handleSelectionAction = async (action: string) => {
     if (!selectionMenu.selectedText) return
-    
+
     setIsTransforming(true)
-    
+
     try {
       const transformed = await transformText(selectionMenu.selectedText, action)
-      
+
       // Remplace le texte sélectionné par le texte transformé
       const newContent = content.replace(selectionMenu.selectedText, transformed)
       setContent(newContent)
-      
+
       // Ferme le menu
       setSelectionMenu({ show: false, position: { top: 0, left: 0 }, selectedText: "" })
-      
+
       // Désélectionne le texte
       window.getSelection()?.removeAllRanges()
     } catch (error) {
@@ -217,10 +209,13 @@ export default function DashboardClient({ user }: DashboardClientProps) {
   }
 
   const logout = async () => {
-    const { createClient } = await import("@/lib/supabase-client")
-    const supabase = createClient()
-    await supabase.auth.signOut()
-    window.location.href = "/"  // Changé de "/login" à "/"
+    try {
+      await fetch("/auth/signout", { method: "POST", credentials: "include", cache: "no-store" })
+    } catch (error) {
+      console.error("Erreur lors de la déconnexion:", error)
+    } finally {
+      window.location.href = "/login"
+    }
   }
 
   const formatDate = (dateString: string) => {
@@ -228,7 +223,7 @@ export default function DashboardClient({ user }: DashboardClientProps) {
     const now = new Date()
     const diffMs = now.getTime() - date.getTime()
     const diffMins = Math.floor(diffMs / 60000)
-    
+
     if (diffMins < 1) return "À l'instant"
     if (diffMins < 60) return `Il y a ${diffMins} min`
     if (diffMins < 1440) return `Il y a ${Math.floor(diffMins / 60)}h`
@@ -240,13 +235,13 @@ export default function DashboardClient({ user }: DashboardClientProps) {
       {/* Header */}
       <header className="border-b bg-white h-14 flex items-center px-4 flex-shrink-0">
         <div className="flex items-center justify-between w-full">
-          <h1 className="text-xl font-semibold">Notlhy</h1>
-          
+          <h1 className="text-xl font-semibold">Nothly</h1>
+
           <div className="flex items-center gap-3">
             <span className="text-sm text-gray-600">{user.email}</span>
-            <Button 
-              variant="ghost" 
-              size="sm" 
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={logout}
               className="h-8"
             >
@@ -261,8 +256,8 @@ export default function DashboardClient({ user }: DashboardClientProps) {
         {/* Sidebar - Liste des notes */}
         <aside className="w-64 border-r bg-gray-50 flex flex-col">
           <div className="p-3 border-b bg-white">
-            <Button 
-              onClick={createNote} 
+            <Button
+              onClick={createNote}
               className="w-full justify-start gap-2 h-9"
               size="sm"
             >
@@ -270,7 +265,7 @@ export default function DashboardClient({ user }: DashboardClientProps) {
               Nouvelle note
             </Button>
           </div>
-          
+
           <div className="flex-1 overflow-y-auto">
             {notes.length === 0 ? (
               <div className="p-6 text-center text-sm text-gray-500">
@@ -283,11 +278,10 @@ export default function DashboardClient({ user }: DashboardClientProps) {
                   <button
                     key={note.id}
                     onClick={() => selectNote(note)}
-                    className={`w-full text-left p-3 rounded-lg mb-1 transition-colors ${
-                      selectedNote?.id === note.id
-                        ? "bg-white shadow-sm border"
-                        : "hover:bg-white hover:shadow-sm"
-                    }`}
+                    className={`w-full text-left p-3 rounded-lg mb-1 transition-colors ${selectedNote?.id === note.id
+                      ? "bg-white shadow-sm border"
+                      : "hover:bg-white hover:shadow-sm"
+                      }`}
                   >
                     <h3 className="font-medium text-sm truncate mb-1">
                       {note.title || "Sans titre"}
@@ -319,7 +313,7 @@ export default function DashboardClient({ user }: DashboardClientProps) {
                     <span className="text-green-600">✓ Enregistré</span>
                   )}
                 </div>
-                
+
                 <div className="flex items-center gap-2">
                   <Button
                     variant="ghost"
@@ -331,7 +325,7 @@ export default function DashboardClient({ user }: DashboardClientProps) {
                     <Sparkles className="h-4 w-4 mr-2" />
                     {improvingAI ? "Amélioration en cours..." : "Améliorer avec l'IA"}
                   </Button>
-                  
+
                   <Button
                     variant="ghost"
                     size="sm"
@@ -354,7 +348,7 @@ export default function DashboardClient({ user }: DashboardClientProps) {
                     placeholder="Titre de la note"
                     className="text-3xl font-bold w-full border-none outline-none mb-6 placeholder:text-gray-300"
                   />
-                  
+
                   <textarea
                     value={content}
                     onChange={(e) => setContent(e.target.value)}
@@ -381,20 +375,19 @@ export default function DashboardClient({ user }: DashboardClientProps) {
         {/* Bouton Mode IA Contextuelle */}
         <button
           onClick={() => setIsContextualMode(!isContextualMode)}
-          className={`group relative flex items-center justify-center w-14 h-14 rounded-full shadow-lg transition-all hover:scale-110 ${
-            isContextualMode
-              ? "bg-gradient-to-r from-purple-600 to-indigo-600 text-white"
-              : "bg-white text-gray-700 hover:bg-gray-50"
-          }`}
+          className={`group relative flex items-center justify-center w-14 h-14 rounded-full shadow-lg transition-all hover:scale-110 ${isContextualMode
+            ? "bg-gradient-to-r from-purple-600 to-indigo-600 text-white"
+            : "bg-white text-gray-700 hover:bg-gray-50"
+            }`}
           title={isContextualMode ? "Désactiver l'IA contextuelle" : "Activer l'IA contextuelle"}
         >
           <Wand2 className="h-6 w-6" />
-          
+
           {/* Tooltip */}
           <span className="absolute right-16 px-3 py-1.5 bg-gray-900 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
             {isContextualMode ? "Désactiver IA contextuelle" : "Activer IA contextuelle"}
           </span>
-          
+
           {/* Badge actif */}
           {isContextualMode && (
             <span className="absolute -top-1 -right-1 flex h-3 w-3">
@@ -407,15 +400,14 @@ export default function DashboardClient({ user }: DashboardClientProps) {
         {/* Bouton Chat IA */}
         <button
           onClick={() => setIsChatOpen(!isChatOpen)}
-          className={`group relative flex items-center justify-center w-14 h-14 rounded-full shadow-lg transition-all hover:scale-110 ${
-            isChatOpen
-              ? "bg-gradient-to-r from-purple-600 to-indigo-600 text-white"
-              : "bg-white text-gray-700 hover:bg-gray-50"
-          }`}
+          className={`group relative flex items-center justify-center w-14 h-14 rounded-full shadow-lg transition-all hover:scale-110 ${isChatOpen
+            ? "bg-gradient-to-r from-purple-600 to-indigo-600 text-white"
+            : "bg-white text-gray-700 hover:bg-gray-50"
+            }`}
           title="Chat IA"
         >
           <Bot className="h-6 w-6" />
-          
+
           {/* Tooltip */}
           <span className="absolute right-16 px-3 py-1.5 bg-gray-900 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
             Chat IA

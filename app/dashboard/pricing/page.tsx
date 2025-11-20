@@ -14,7 +14,7 @@ export default function DashboardPricingPage() {
       id: "free",
       name: "Free",
       price: "0€",
-      tagline: "Pour découvrir Notlhy",
+      tagline: "Pour découvrir Nothly",
       features: [
         "Jusqu'à 100 notes",
         "10 000 tokens IA offerts",

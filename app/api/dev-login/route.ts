@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
     <!DOCTYPE html>
     <html>
       <head>
-        <title>Login - Notlhy</title>
+        <title>Login - Nothly</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <style>
           * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -91,7 +91,7 @@ export async function GET(request: NextRequest) {
       </head>
       <body>
         <div class="container">
-          <h1>Notlhy</h1>
+          <h1>Nothly</h1>
           <p>Connexion rapide (dev)</p>
           <form method="POST" action="/api/dev-login?redirect=${encodeURIComponent(redirect)}">
             <input
