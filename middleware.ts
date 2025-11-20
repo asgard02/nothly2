@@ -5,6 +5,14 @@ import type { NextRequest } from 'next/server'
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname
   
+  // Rediriger les codes OAuth de la racine vers /auth/callback
+  if (pathname === '/' && request.nextUrl.searchParams.has('code')) {
+    const code = request.nextUrl.searchParams.get('code')
+    const redirectUrl = new URL('/auth/callback', request.url)
+    redirectUrl.searchParams.set('code', code || '')
+    return NextResponse.redirect(redirectUrl)
+  }
+  
   // Ignorer les fichiers statiques et manifest.json
   if (pathname.startsWith('/_next') || 
       pathname.startsWith('/api') || 
