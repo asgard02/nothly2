@@ -46,57 +46,75 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Configuration Supabase manquante" }, { status: 500 })
   }
 
-  const { data, error } = await admin
-    .from("documents")
-    .select(
-      `
-      id,
-      title,
-      original_filename,
-      status,
-      tags,
-      created_at,
-      updated_at,
-      current_version_id,
-      document_versions:document_versions!document_versions_document_id_fkey (
+  try {
+    const { data, error } = await admin
+      .from("documents")
+      .select(
+        `
         id,
+        title,
+        original_filename,
+        status,
+        tags,
         created_at,
-        processed_at,
-        storage_path,
-        page_count,
-        document_sections:document_sections (
+        updated_at,
+        current_version_id,
+        document_versions:document_versions!document_versions_document_id_fkey (
           id,
-          heading,
-          order_index
-        )
-      ),
-      current_version:document_versions!documents_current_version_fk (
-        id,
-        processed_at,
-        storage_path,
-        page_count,
-        document_sections:document_sections (
+          created_at,
+          processed_at,
+          storage_path,
+          page_count,
+          document_sections:document_sections (
+            id,
+            heading,
+            order_index
+          )
+        ),
+        current_version:document_versions!documents_current_version_fk (
           id,
-          heading,
-          order_index
+          processed_at,
+          storage_path,
+          page_count,
+          document_sections:document_sections (
+            id,
+            heading,
+            order_index
+          )
         )
+      `
       )
-    `
-    )
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false })
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
 
-  if (error) {
-    console.error("[GET /api/documents] ❌ Erreur Supabase", error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) {
+      console.error("[GET /api/documents] ❌ Erreur Supabase", error)
+      console.error("[GET /api/documents] ❌ Détails:", {
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code,
+        user_id: user.id,
+        user_email: user.email,
+      })
+      return NextResponse.json({ error: error.message || "Erreur lors de la récupération des documents" }, { status: 500 })
+    }
+
+    const normalized = (data ?? []).map((document) => ({
+      ...document,
+      tags: Array.isArray((document as any).tags) ? (document as any).tags : [],
+    }))
+
+    return NextResponse.json(normalized)
+  } catch (err: any) {
+    console.error("[GET /api/documents] ❌ Exception:", err)
+    console.error("[GET /api/documents] ❌ Stack:", err.stack)
+    return NextResponse.json({ 
+      error: err?.message || "Erreur serveur lors de la récupération des documents",
+      details: process.env.NODE_ENV === 'development' ? err?.stack : undefined
+    }, { status: 500 })
   }
 
-  const normalized = (data ?? []).map((document) => ({
-    ...document,
-    tags: Array.isArray((document as any).tags) ? (document as any).tags : [],
-  }))
-
-  return NextResponse.json(normalized)
 }
 
 export async function POST(req: NextRequest) {
@@ -125,16 +143,22 @@ export async function POST(req: NextRequest) {
 
     await ensureBucket()
 
+    // Créer/mettre à jour l'utilisateur dans la table users si elle existe
     if (user.email) {
-      await admin
-        .from("users")
-        .upsert(
-          {
-            id: user.id,
-            email: user.email,
-          },
-          { onConflict: "id" }
-        )
+      try {
+        await admin
+          .from("users")
+          .upsert(
+            {
+              id: user.id,
+              email: user.email,
+            },
+            { onConflict: "id" }
+          )
+      } catch (usersError: any) {
+        // Si la table users n'existe pas ou erreur, on continue quand même
+        console.warn("[POST /api/documents] ⚠️ Erreur upsert users (non bloquant):", usersError?.message)
+      }
     }
 
     const formData = await req.formData()
