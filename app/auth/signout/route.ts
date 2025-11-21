@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
-  const response = NextResponse.redirect(new URL("/login", request.url))
+  const response = NextResponse.redirect(new URL("/", request.url))
   return signOut(request, response)
 }
 

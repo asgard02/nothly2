@@ -214,7 +214,7 @@ export default function DashboardClient({ user }: DashboardClientProps) {
     } catch (error) {
       console.error("Erreur lors de la déconnexion:", error)
     } finally {
-      window.location.href = "/login"
+      window.location.href = "/"
     }
   }
 

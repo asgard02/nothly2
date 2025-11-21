@@ -26,7 +26,7 @@ export default async function StackPage() {
     return (
       <div className="flex h-screen bg-background">
         <Sidebar />
-        <div className="ml-64 flex-1 overflow-y-auto">
+        <div className="ml-56 flex-1 overflow-y-auto">
           <DocumentStack />
         </div>
         <ChatButton />

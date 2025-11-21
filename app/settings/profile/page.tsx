@@ -44,7 +44,7 @@ export default function ProfileSettingsPage() {
     } catch (error) {
       console.error("Erreur lors de la déconnexion:", error)
     } finally {
-      router.push("/login")
+      router.push("/")
       router.refresh()
     }
   }

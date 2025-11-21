@@ -217,6 +217,13 @@ export async function POST(req: NextRequest) {
       )
     }
 
+    if (tags.length === 0) {
+      return NextResponse.json(
+        { error: "Au moins un tag est requis pour importer un document." },
+        { status: 400 }
+      )
+    }
+
     if (file && file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) {
       return NextResponse.json({ error: "Seuls les fichiers PDF sont acceptés." }, { status: 400 })
     }

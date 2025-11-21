@@ -20,7 +20,7 @@ export default function Sidebar() {
     } catch (error) {
       console.error("Erreur lors de la déconnexion:", error)
     } finally {
-      router.push("/login")
+      router.push("/")
       router.refresh()
     }
   }
@@ -31,7 +31,7 @@ export default function Sidebar() {
 
   return (
     <>
-      <aside className="w-64 bg-background border-r border-border h-screen flex flex-col justify-between p-6 fixed left-0 top-0">
+      <aside className="w-56 bg-background border-r border-border h-screen flex flex-col justify-between p-6 fixed left-0 top-0">
         <div>
           {/* Logo */}
           <div className="mb-8">
@@ -48,8 +48,8 @@ export default function Sidebar() {
                   key={item.path}
                   onClick={() => router.push(item.path)}
                   className={`flex items-center gap-3 px-4 py-2 rounded-md transition-all ${isActive(item.path)
-                      ? "bg-primary/10 text-primary font-medium"
-                      : "text-muted-foreground hover:bg-muted"
+                    ? "bg-primary/10 text-primary font-medium"
+                    : "text-muted-foreground hover:bg-muted"
                     }`}
                 >
                   <Icon className="h-5 w-5" />
@@ -62,8 +62,8 @@ export default function Sidebar() {
             <button
               onClick={() => router.push("/flashcards")}
               className={`mt-4 flex items-center gap-3 rounded-md px-4 py-2 text-left transition ${isActive("/flashcards")
-                  ? "bg-primary/10 text-primary font-medium"
-                  : "text-muted-foreground hover:bg-muted"
+                ? "bg-primary/10 text-primary font-medium"
+                : "text-muted-foreground hover:bg-muted"
                 }`}
             >
               <Sparkles className="h-4 w-4" />

@@ -104,6 +104,9 @@ export default function DocumentStack() {
       if (!file) {
         throw new Error(t("messages.selectFileFirst"))
       }
+      if (!tagsInput.trim()) {
+        throw new Error(t("dialog.tagsRequired"))
+      }
       const formData = new FormData()
       formData.append("file", file)
       formData.append("title", title.trim() || file.name.replace(/\.[a-z0-9]+$/i, ""))
@@ -340,7 +343,7 @@ export default function DocumentStack() {
               <Button
                 type="button"
                 onClick={() => uploadMutation.mutate()}
-                disabled={!file || uploadMutation.isPending || !title.trim()}
+                disabled={!file || uploadMutation.isPending || !title.trim() || !tagsInput.trim()}
               >
                 {uploadMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 {t("dialog.submit")}

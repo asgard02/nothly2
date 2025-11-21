@@ -91,7 +91,7 @@ export default function SettingsLayout({ children }: SettingsLayoutProps) {
       <Sidebar />
 
       {/* Main container */}
-      <div className="flex-1 ml-64 flex">
+      <div className="flex-1 ml-56 flex">
         {/* Settings sidebar - style Gemini */}
         <aside className="w-72 bg-card border-r border-border h-screen flex flex-col">
           {/* Header */}
@@ -111,8 +111,8 @@ export default function SettingsLayout({ children }: SettingsLayoutProps) {
                     key={item.id}
                     onClick={() => setActiveSection(item.id)}
                     className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group ${isActive
-                        ? "bg-primary/10 text-primary"
-                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                      ? "bg-primary/10 text-primary"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
                       }`}
                   >
                     <Icon className={`h-5 w-5 flex-shrink-0 ${isActive ? "text-primary" : "text-muted-foreground"

@@ -28,6 +28,7 @@
       "titlePlaceholder": "e.g. Probability course - chapter 1",
       "tagsLabel": "Tags (comma separated)",
       "tagsPlaceholder": "probability, revision, semester 2",
+      "tagsRequired": "At least one tag is required to import a document.",
       "cancel": "Cancel",
       "submit": "Import"
     },
@@ -72,5 +73,42 @@
       "primary": "Start for free",
       "mobile": "Sign up"
     }
+  },
+  "Collections": {
+    "title": "Revision Collections",
+    "description": "Combine your tagged materials to automatically generate flashcards and quizzes.",
+    "createButton": "Create a collection",
+    "dialog": {
+      "title": "New collection",
+      "description": "Select the tags corresponding to the materials you want to group. We'll notify you if the context window is likely to be exceeded.",
+      "titleLabel": "Title",
+      "titlePlaceholder": "e.g. Analysis revision - chapters 1 to 3",
+      "tagsLabel": "Available tags",
+      "noTags": "No tags yet. Add some materials from the library first.",
+      "contextTitle": "Estimated context window",
+      "contextTokens": "tokens (~{chars} characters)",
+      "contextOverLimit": "The context window exceeds the limit (~{limit} characters). You can still launch generation, but some information might be truncated.",
+      "matchedDocuments": "Related materials",
+      "pages": "pages",
+      "cancel": "Cancel",
+      "submit": "Launch generation"
+    },
+    "status": {
+      "processing": "Generating",
+      "ready": "Ready",
+      "failed": "Failed"
+    },
+    "card": {
+      "deleteTitle": "Delete collection",
+      "noTags": "No tags",
+      "flashcards": "flashcards",
+      "questions": "questions"
+    },
+    "empty": {
+      "title": "No collections yet",
+      "description": "Create your first collection to automatically transform your materials into flashcards and quizzes.",
+      "cta": "Create a collection"
+    },
+    "footer": "Click on a collection to open the detailed study view with flashcards and quizzes."
   }
 }

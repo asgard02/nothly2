@@ -28,6 +28,7 @@
       "titlePlaceholder": "Ex. Cours de probabilités - chapitre 1",
       "tagsLabel": "Tags (séparés par des virgules)",
       "tagsPlaceholder": "probabilités, révision, semestre 2",
+      "tagsRequired": "Au moins un tag est requis pour importer un document.",
       "cancel": "Annuler",
       "submit": "Importer"
     },
@@ -72,5 +73,42 @@
       "primary": "Commencer gratuitement",
       "mobile": "S'inscrire"
     }
+  },
+  "Collections": {
+    "title": "Collections de révision",
+    "description": "Combine tes supports taggés pour générer automatiquement flashcards et quiz.",
+    "createButton": "Créer une collection",
+    "dialog": {
+      "title": "Nouvelle collection",
+      "description": "Sélectionne les tags correspondant aux supports que tu souhaites regrouper. Nous te signalons si la fenêtre de contexte risque d'être dépassée.",
+      "titleLabel": "Titre",
+      "titlePlaceholder": "Ex. Révision Analyse - chapitres 1 à 3",
+      "tagsLabel": "Tags disponibles",
+      "noTags": "Aucun tag pour le moment. Empile d'abord quelques supports depuis la bibliothèque.",
+      "contextTitle": "Fenêtre de contexte estimée",
+      "contextTokens": "tokens (~{chars} caractères)",
+      "contextOverLimit": "La fenêtre de contexte dépasse la limite (~{limit} caractères). Tu peux quand même lancer la génération, mais certaines informations pourraient être tronquées.",
+      "matchedDocuments": "Supports concernés",
+      "pages": "pages",
+      "cancel": "Annuler",
+      "submit": "Lancer la génération"
+    },
+    "status": {
+      "processing": "Génération en cours",
+      "ready": "Prête",
+      "failed": "Échec"
+    },
+    "card": {
+      "deleteTitle": "Supprimer la collection",
+      "noTags": "Aucun tag",
+      "flashcards": "flashcards",
+      "questions": "questions"
+    },
+    "empty": {
+      "title": "Aucune collection pour l'instant",
+      "description": "Crée ta première collection pour transformer automatiquement tes supports en flashcards et quiz.",
+      "cta": "Créer une collection"
+    },
+    "footer": "Clique sur une collection pour ouvrir la vue d'étude détaillée avec flashcards et quiz."
   }
 }

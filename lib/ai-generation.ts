@@ -639,8 +639,8 @@ async function runStructuredMode<T>(mode: StructuredMode, text: string, metadata
     // Estimation généreuse : ~200-250 tokens par flashcard, ~300-400 tokens par quiz
     // Utilisons une moyenne conservatrice pour éviter les coupures
     const estimatedTokens = flashcardsTarget * 250 + quizTarget * 400 + 2000 // +2000 pour metadata, JSON structure et marge
-    // Augmenter la limite maximale à 25000 pour les grandes collections
-    maxTokens = Math.max(8000, Math.min(estimatedTokens, 25000)) // Min 8000, max 25000
+    // Limite: gpt-4o-mini supporte max 16384 completion tokens
+    maxTokens = Math.max(8000, Math.min(estimatedTokens, 16384)) // Min 8000, max 16384
     console.log(`[runStructuredMode] Calcul max_tokens: ${flashcardsTarget} FC + ${quizTarget} Q = ${estimatedTokens} tokens estimés, limité à ${maxTokens} tokens`)
   }
 
@@ -765,8 +765,9 @@ async function generateCollectionStudySetWithChunking(
     )
 
     // Calculer max_tokens pour ce chunk
+    // Limite: gpt-4o-mini supporte max 16384 completion tokens
     const estimatedTokens = flashcardsTarget * 250 + quizTarget * 400 + 2000
-    const maxTokens = Math.max(8000, Math.min(estimatedTokens, 25000))
+    const maxTokens = Math.max(8000, Math.min(estimatedTokens, 16384))
 
     console.log(
       `[generateCollectionStudySetWithChunking] Chunk ${chunkIndex + 1}/${totalChunks}: ${flashcardsTarget} FC + ${quizTarget} Q, max_tokens: ${maxTokens}`

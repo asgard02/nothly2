@@ -15,9 +15,9 @@ import { useRealtimeNote } from "@/lib/hooks/useRealtimeNote"
 export default function NoteEditorPage() {
   const { id } = useParams()
   const router = useRouter()
-  
+
   const noteId = Array.isArray(id) ? id[0] : id
-  
+
   // Charger la note avec React Query (peut être null si la note n'existe pas encore)
   const { data: note, isLoading, error } = useNote(noteId || null)
 
@@ -29,7 +29,7 @@ export default function NoteEditorPage() {
   // ⚡ Utiliser les valeurs de la note chargée si disponibles, sinon des chaînes vides
   const noteTitle = note?.title ?? ""
   const noteContent = note?.content ?? ""
-  
+
   const {
     title,
     setTitle,
@@ -74,26 +74,26 @@ export default function NoteEditorPage() {
 
         if (selectedText && selectedText.length > 0 && start !== end) {
           const textareaRect = textarea.getBoundingClientRect()
-          
+
           // Calculer approximativement la position basée sur le nombre de lignes
           const textBeforeStart = content.substring(0, start)
           const linesBefore = textBeforeStart.split('\n')
           const lineHeight = parseFloat(window.getComputedStyle(textarea).lineHeight) || 24
           const paddingTop = parseFloat(window.getComputedStyle(textarea).paddingTop) || 0
-          
+
           // Position approximative : au-dessus de la ligne de sélection
           const approximateTop = textareaRect.top + paddingTop + (linesBefore.length - 1) * lineHeight - 50
-          
+
           // Centrer horizontalement sur le textarea (ou utiliser la position du curseur si possible)
           const menuLeft = textareaRect.left + (textareaRect.width / 2)
-          
+
           // Vérifier que le menu ne sort pas de l'écran
           const menuWidth = 280
           const adjustedLeft = Math.max(
             menuWidth / 2 + 10,
             Math.min(menuLeft, window.innerWidth - menuWidth / 2 - 10)
           )
-          
+
           const adjustedTop = Math.max(10, approximateTop)
 
           setSelectionMenu({
@@ -148,15 +148,15 @@ export default function NoteEditorPage() {
 
     try {
       const transformed = await transformText(selectionMenu.selectedText, action)
-      
+
       // Remplacer précisément le texte sélectionné
-      const newContent = 
+      const newContent =
         content.substring(0, selectionMenu.startOffset) +
         transformed +
         content.substring(selectionMenu.endOffset)
-      
+
       setContent(newContent)
-      
+
       // Fermer le menu et désélectionner
       setSelectionMenu({
         show: false,
@@ -165,7 +165,7 @@ export default function NoteEditorPage() {
         startOffset: 0,
         endOffset: 0,
       })
-      
+
       // Repositionner le curseur après le texte transformé
       if (textareaRef.current) {
         const newCursorPos = selectionMenu.startOffset + transformed.length
@@ -216,9 +216,9 @@ export default function NoteEditorPage() {
   return (
     <div className="flex h-screen bg-background">
       <Sidebar />
-      
+
       {/* Éditeur principal */}
-      <div className="flex-1 ml-64 flex flex-col">
+      <div className="flex-1 ml-56 flex flex-col">
         {/* Toolbar minimaliste */}
         <div className="border-b border-border bg-card/80 backdrop-blur-md px-8 py-4 flex items-center gap-5">
           <button
@@ -227,7 +227,7 @@ export default function NoteEditorPage() {
           >
             <ArrowLeft className="h-5 w-5" />
           </button>
-          
+
           {/* Indicateur de sauvegarde optimisé */}
           <SaveStatusIndicator status={saveStatus} />
         </div>
@@ -242,7 +242,7 @@ export default function NoteEditorPage() {
               placeholder="Titre de la note"
               className="text-5xl font-bold w-full bg-transparent border-none outline-none text-foreground placeholder:text-muted-foreground mb-8 tracking-tight"
             />
-            
+
             <textarea
               ref={textareaRef}
               value={content}
@@ -268,7 +268,7 @@ export default function NoteEditorPage() {
       )}
 
       {/* Chatbot flottant global avec contexte */}
-      <ChatButton 
+      <ChatButton
         noteId={noteId}
         noteTitle={note?.title || title}  // Utiliser la note chargée en priorité
         noteContent={note?.content || content}  // Utiliser la note chargée en priorité

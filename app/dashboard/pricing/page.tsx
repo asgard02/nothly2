@@ -68,7 +68,7 @@ export default function DashboardPricingPage() {
       <Sidebar />
 
       {/* Contenu principal */}
-      <div className="flex-1 ml-64 overflow-y-auto">
+      <div className="flex-1 ml-56 overflow-y-auto">
         <div className="max-w-6xl mx-auto py-16 px-6 flex flex-col items-center gap-12">
           {/* Header */}
           <div className="text-center">
@@ -126,18 +126,17 @@ export default function DashboardPricingPage() {
                   {/* Bouton CTA */}
                   <button
                     onClick={() => handleUpgrade(plan.id)}
-                    className={`w-full py-2 rounded-lg font-medium mt-6 transition-all ${
-                      plan.id === userPlan
+                    className={`w-full py-2 rounded-lg font-medium mt-6 transition-all ${plan.id === userPlan
                         ? "bg-muted text-muted-foreground cursor-default"
                         : "bg-primary text-primary-foreground hover:bg-primary/90"
-                    }`}
+                      }`}
                     disabled={plan.id === userPlan}
                   >
                     {plan.id === userPlan
                       ? "Plan actuel"
                       : plan.id === "gpt"
-                      ? "Acheter des tokens"
-                      : "Passer à Pro"}
+                        ? "Acheter des tokens"
+                        : "Passer à Pro"}
                   </button>
                 </div>
               </div>
