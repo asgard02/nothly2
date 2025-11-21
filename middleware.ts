@@ -4,7 +4,7 @@ import type { NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname
-  
+
   // Rediriger les codes OAuth de la racine vers /auth/callback
   if (pathname === '/' && request.nextUrl.searchParams.has('code')) {
     const code = request.nextUrl.searchParams.get('code')
@@ -12,29 +12,29 @@ export async function middleware(request: NextRequest) {
     redirectUrl.searchParams.set('code', code || '')
     return NextResponse.redirect(redirectUrl)
   }
-  
+
   // Ignorer les fichiers statiques et manifest.json
-  if (pathname.startsWith('/_next') || 
-      pathname.startsWith('/api') || 
-      pathname === '/manifest.json' ||
-      pathname.match(/\.(svg|png|jpg|jpeg|gif|webp|ico|woff|woff2|ttf|eot|json)$/)) {
+  if (pathname.startsWith('/_next') ||
+    pathname.startsWith('/api') ||
+    pathname === '/manifest.json' ||
+    pathname.match(/\.(svg|png|jpg|jpeg|gif|webp|ico|woff|woff2|ttf|eot|json)$/)) {
     return NextResponse.next()
   }
-  
+
   // Gérer la locale manuellement en lisant le cookie
   const localeCookie = request.cookies.get('NEXT_LOCALE')?.value || 'en'
   const locale = ['en', 'fr'].includes(localeCookie) ? localeCookie : 'en'
-  
+
   // Créer la réponse de base
   const baseResponse = NextResponse.next()
-  
+
   // Définir le header pour next-intl (utilisé par getRequestConfig)
   baseResponse.headers.set('x-next-intl-locale', locale)
-  
+
   // Vérifier que les variables d'environnement sont définies
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  
+
   if (!supabaseUrl || !supabaseAnonKey) {
     console.error('[Middleware] Variables d\'environnement Supabase manquantes')
     // Pour les routes publiques, on laisse passer même sans config Supabase
@@ -44,19 +44,19 @@ export async function middleware(request: NextRequest) {
     // Pour les autres routes, rediriger vers login
     return NextResponse.redirect(new URL('/login', request.url))
   }
-  
+
   // Liste des routes publiques (toujours accessibles, même sans session)
   const publicRoutes = ['/', '/pricing', '/login', '/register']
-  
+
   // Liste des routes protégées (nécessitent une session)
   const protectedRoutes = ['/dashboard', '/note', '/new', '/chat', '/settings', '/stack', '/flashcards']
-  
+
   // Vérifier si c'est une route publique
   const isPublicRoute = publicRoutes.some(route => pathname === route)
-  
+
   // Vérifier si c'est une route protégée
   const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route))
-  
+
   // Pour les routes publiques
   if (isPublicRoute) {
     try {
@@ -76,11 +76,19 @@ export async function middleware(request: NextRequest) {
           },
         }
       )
-      
+
       const { data: { session } } = await supabase.auth.getSession()
 
       if (session && (pathname === '/' || pathname === '/login' || pathname === '/register')) {
-        return NextResponse.redirect(new URL('/stack', request.url))
+        const redirectUrl = new URL('/stack', request.url)
+        const redirectResponse = NextResponse.redirect(redirectUrl)
+
+        // Copier les cookies de baseResponse (qui contient potentiellement le token rafraîchi)
+        baseResponse.cookies.getAll().forEach(cookie => {
+          redirectResponse.cookies.set(cookie.name, cookie.value, cookie)
+        })
+
+        return redirectResponse
       }
 
       return baseResponse
@@ -90,7 +98,7 @@ export async function middleware(request: NextRequest) {
       return baseResponse
     }
   }
-  
+
   // Pour les routes protégées, vérifier la session
   if (isProtectedRoute) {
     try {
@@ -110,21 +118,37 @@ export async function middleware(request: NextRequest) {
           },
         }
       )
-      
+
       const { data: { session } } = await supabase.auth.getSession()
-      
+
       if (!session) {
-        return NextResponse.redirect(new URL('/login', request.url))
+        const redirectUrl = new URL('/login', request.url)
+        const redirectResponse = NextResponse.redirect(redirectUrl)
+
+        // Copier les cookies (pour s'assurer que le nettoyage de session est bien propagé)
+        baseResponse.cookies.getAll().forEach(cookie => {
+          redirectResponse.cookies.set(cookie.name, cookie.value, cookie)
+        })
+
+        return redirectResponse
       }
-      
+
       return baseResponse
     } catch (error) {
       // Si erreur Supabase sur route protégée, rediriger vers login
       console.error('[Middleware] Erreur Supabase sur route protégée:', error)
-      return NextResponse.redirect(new URL('/login', request.url))
+      const redirectUrl = new URL('/login', request.url)
+      const redirectResponse = NextResponse.redirect(redirectUrl)
+
+      // Copier les cookies
+      baseResponse.cookies.getAll().forEach(cookie => {
+        redirectResponse.cookies.set(cookie.name, cookie.value, cookie)
+      })
+
+      return redirectResponse
     }
   }
-  
+
   // Pour les routes API protégées
   if (pathname.startsWith('/api/notes') || pathname.startsWith('/api/ai')) {
     try {
@@ -142,16 +166,16 @@ export async function middleware(request: NextRequest) {
           },
         }
       )
-      
+
       const { data: { session } } = await supabase.auth.getSession()
-      
+
       if (!session) {
         return NextResponse.json(
           { error: 'Non authentifié' },
           { status: 401 }
         )
       }
-      
+
       return NextResponse.next()
     } catch (error) {
       console.error('[Middleware] Erreur Supabase sur route API:', error)
@@ -161,7 +185,7 @@ export async function middleware(request: NextRequest) {
       )
     }
   }
-  
+
   // Par défaut, retourner la réponse de next-intl
   return baseResponse
 }
@@ -181,4 +205,3 @@ export const config = {
     '/((?!_next/static|_next/image|_next/webpack-hmr|favicon.ico|manifest.json|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|woff|woff2|ttf|eot|json)$).*)',
   ],
 }
-
