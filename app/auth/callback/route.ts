@@ -46,21 +46,21 @@ export async function GET(request: NextRequest) {
         },
       }
     )
-    
+
     try {
       const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
-      
+
       if (exchangeError) {
         console.error('[Auth Callback] ❌ Erreur exchangeCodeForSession:', exchangeError.message)
         console.error('[Auth Callback] ❌ Détails:', exchangeError)
-        
+
         // Gérer spécifiquement l'erreur invalid_grant
         if (exchangeError.message.includes('invalid_grant') || exchangeError.message.includes('account not found')) {
           const loginUrl = new URL('/login', request.url)
           loginUrl.searchParams.set('error', 'invalid_grant')
           loginUrl.searchParams.set('error_description', 'The authentication session has expired or is invalid. Please try signing in again.')
           return NextResponse.redirect(loginUrl)
-  }
+        }
 
         // Autres erreurs
         const loginUrl = new URL('/login', request.url)
@@ -92,6 +92,6 @@ export async function GET(request: NextRequest) {
   }
 
   // Redirige vers le dashboard après authentification réussie
-  return NextResponse.redirect(new URL('/dashboard', request.url))
+  return NextResponse.redirect(new URL('/stack', request.url))
 }
 
