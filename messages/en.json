@@ -39,7 +39,7 @@
     "empty": {
       "title": "Add your first document",
       "description": "Import a PDF to unlock note-taking, flashcard generation and AI quizzes.",
-      "cta": "Create a new note"
+      "cta": "Add a document"
     },
     "table": {
       "document": "Document",

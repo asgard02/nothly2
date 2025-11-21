@@ -53,3 +53,4 @@ Pour N=50 flashcards et M=25 quiz, l'IA génère seulement ~12 flashcards et ~8 
 Réécris ce prompt pour garantir que l'IA génère toujours le nombre exact demandé, même pour 50+ flashcards et 25+ quiz. Le prompt doit être efficace, clair et en français.
 
 
+

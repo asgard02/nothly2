@@ -13,9 +13,25 @@ const DOCUMENTS_BUCKET =
 async function ensureBucket() {
   try {
     const bucket = getStorageBucket(DOCUMENTS_BUCKET)
-    const [exists] = await bucket.exists()
-    if (!exists) {
-      await bucket.create()
+    // Ne pas vérifier l'existence du bucket car cela nécessite storage.buckets.get
+    // Le bucket sera créé automatiquement lors du premier upload si nécessaire
+    // ou l'erreur sera claire si les permissions sont insuffisantes
+    try {
+      const [exists] = await bucket.exists()
+      if (!exists) {
+        await bucket.create()
+      }
+    } catch (existsError: any) {
+      // Si on n'a pas la permission storage.buckets.get, on ignore cette erreur
+      // Le bucket sera utilisé directement lors de l'upload
+      if (existsError?.message?.includes("storage.buckets.get") || existsError?.code === 403) {
+        console.log("[ensureBucket] ⚠️ Cannot check bucket existence (missing storage.buckets.get permission)")
+        console.log("[ensureBucket] ℹ️  Proceeding anyway - bucket will be used directly during upload")
+        // Ne pas throw - on continue car l'upload fonctionnera quand même
+        return
+      }
+      // Pour les autres erreurs, on les propage
+      throw existsError
     }
   } catch (error) {
     console.error("[ensureBucket] Unable to ensure GCS bucket", error)
@@ -47,48 +63,48 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const { data, error } = await admin
-      .from("documents")
-      .select(
-        `
-        id,
-        title,
-        original_filename,
-        status,
-        tags,
-        created_at,
-        updated_at,
-        current_version_id,
-        document_versions:document_versions!document_versions_document_id_fkey (
-          id,
-          created_at,
-          processed_at,
-          storage_path,
-          page_count,
-          document_sections:document_sections (
-            id,
-            heading,
-            order_index
-          )
-        ),
-        current_version:document_versions!documents_current_version_fk (
-          id,
-          processed_at,
-          storage_path,
-          page_count,
-          document_sections:document_sections (
-            id,
-            heading,
-            order_index
-          )
-        )
+  const { data, error } = await admin
+    .from("documents")
+    .select(
       `
+      id,
+      title,
+      original_filename,
+      status,
+      tags,
+      created_at,
+      updated_at,
+      current_version_id,
+      document_versions:document_versions!document_versions_document_id_fkey (
+        id,
+        created_at,
+        processed_at,
+        storage_path,
+        page_count,
+        document_sections:document_sections (
+          id,
+          heading,
+          order_index
+        )
+      ),
+      current_version:document_versions!documents_current_version_fk (
+        id,
+        processed_at,
+        storage_path,
+        page_count,
+        document_sections:document_sections (
+          id,
+          heading,
+          order_index
+        )
       )
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false })
+    `
+    )
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false })
 
-    if (error) {
-      console.error("[GET /api/documents] ❌ Erreur Supabase", error)
+  if (error) {
+    console.error("[GET /api/documents] ❌ Erreur Supabase", error)
       console.error("[GET /api/documents] ❌ Détails:", {
         message: error.message,
         details: error.details,
@@ -98,17 +114,27 @@ export async function GET(req: NextRequest) {
         user_email: user.email,
       })
       return NextResponse.json({ error: error.message || "Erreur lors de la récupération des documents" }, { status: 500 })
-    }
+  }
 
-    const normalized = (data ?? []).map((document) => ({
-      ...document,
-      tags: Array.isArray((document as any).tags) ? (document as any).tags : [],
-    }))
+  const normalized = (data ?? []).map((document) => ({
+    ...document,
+    tags: Array.isArray((document as any).tags) ? (document as any).tags : [],
+  }))
 
-    return NextResponse.json(normalized)
+  return NextResponse.json(normalized)
   } catch (err: any) {
     console.error("[GET /api/documents] ❌ Exception:", err)
     console.error("[GET /api/documents] ❌ Stack:", err.stack)
+    
+    // Vérifier si c'est une erreur Google Storage
+    if (err?.message?.includes("invalid_grant") || err?.message?.includes("account not found") || err?.message?.includes("Google Cloud Storage")) {
+      return NextResponse.json({ 
+        error: "Google Cloud Storage configuration error",
+        message: "The service account key is invalid. Please check your GCP_SERVICE_ACCOUNT_KEY in .env.local",
+        details: process.env.NODE_ENV === 'development' ? err?.message : undefined
+      }, { status: 500 })
+    }
+    
     return NextResponse.json({ 
       error: err?.message || "Erreur serveur lors de la récupération des documents",
       details: process.env.NODE_ENV === 'development' ? err?.stack : undefined
@@ -141,20 +167,31 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Configuration Supabase manquante" }, { status: 500 })
     }
 
+    try {
     await ensureBucket()
+    } catch (bucketError: any) {
+      console.error("[POST /api/documents] ❌ Error ensuring bucket:", bucketError)
+      if (bucketError?.message?.includes("invalid_grant") || bucketError?.message?.includes("account not found")) {
+        return NextResponse.json({ 
+          error: "Google Cloud Storage authentication failed. Please check your GCP_SERVICE_ACCOUNT_KEY configuration.",
+          details: "The service account key is invalid or the account doesn't exist. Run: npx tsx --env-file=.env.local scripts/test-storage-auth.ts to diagnose."
+        }, { status: 500 })
+      }
+      throw bucketError
+    }
 
     // Créer/mettre à jour l'utilisateur dans la table users si elle existe
     if (user.email) {
       try {
-        await admin
-          .from("users")
-          .upsert(
-            {
-              id: user.id,
-              email: user.email,
-            },
-            { onConflict: "id" }
-          )
+      await admin
+        .from("users")
+        .upsert(
+          {
+            id: user.id,
+            email: user.email,
+          },
+          { onConflict: "id" }
+        )
       } catch (usersError: any) {
         // Si la table users n'existe pas ou erreur, on continue quand même
         console.warn("[POST /api/documents] ⚠️ Erreur upsert users (non bloquant):", usersError?.message)
@@ -232,6 +269,17 @@ export async function POST(req: NextRequest) {
         })
       } catch (uploadError: any) {
         console.error("[POST /api/documents] upload GCS", uploadError)
+        
+        // Gérer spécifiquement l'erreur invalid_grant de Google Storage
+        if (uploadError?.message?.includes("invalid_grant") || uploadError?.message?.includes("account not found")) {
+          console.error("[POST /api/documents] ❌ Google Storage authentication error - service account invalid")
+          throw new Error(
+            "Google Cloud Storage authentication failed. " +
+            "Please check your GCP_SERVICE_ACCOUNT_KEY environment variable. " +
+            "The service account key may be invalid, expired, or the account may have been deleted."
+          )
+        }
+        
         throw new Error(uploadError?.message || "Erreur lors du téléversement vers GCS")
       }
 

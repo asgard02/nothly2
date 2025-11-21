@@ -390,12 +390,13 @@ export default function DocumentStack() {
           <p className="mt-2 max-w-md text-sm text-muted-foreground">
             {t("empty.description")}
           </p>
-          <Link
-            href="/new"
+          <Button
+            onClick={() => setIsDialogOpen(true)}
             className="mt-6 inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground shadow-md transition hover:-translate-y-0.5 hover:shadow-lg"
           >
+            <UploadCloud className="h-4 w-4" />
             {t("empty.cta")}
-          </Link>
+          </Button>
         </div>
       ) : (
         <div className="overflow-hidden rounded-3xl border border-border/70 bg-card/70 shadow-sm">

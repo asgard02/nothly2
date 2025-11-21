@@ -1,13 +1,13 @@
 "use client"
 
 import Logo from "@/components/Logo"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { createClient } from "@/lib/supabase-client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Eye, EyeOff } from "lucide-react"
 
 type LoginMode = "password" | "magic-link"
@@ -24,6 +24,34 @@ export default function LoginPage() {
 
   const supabase = createClient()
   const router = useRouter()
+  const searchParams = useSearchParams()
+
+  // Vérifier les erreurs OAuth dans l'URL
+  useEffect(() => {
+    const error = searchParams.get('error')
+    const errorDescription = searchParams.get('error_description')
+    
+    if (error) {
+      let errorMessage = errorDescription || "An authentication error occurred"
+      
+      // Messages d'erreur plus conviviaux
+      if (error === 'invalid_grant') {
+        errorMessage = "The authentication session has expired or is invalid. Please try signing in again."
+      } else if (error === 'auth_failed') {
+        errorMessage = errorDescription || "Authentication failed. Please try again."
+      } else if (error === 'no_session') {
+        errorMessage = "Failed to create session. Please try again."
+      } else if (error === 'configuration') {
+        errorMessage = "Server configuration error. Please contact support."
+      }
+      
+      setMessage(`Error: ${errorMessage}`)
+      setIsSuccess(false)
+      
+      // Nettoyer l'URL
+      router.replace('/login', { scroll: false })
+    }
+  }, [searchParams, router])
 
   const handlePasswordLogin = async (e: React.FormEvent) => {
     e.preventDefault()

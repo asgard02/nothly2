@@ -39,7 +39,7 @@
     "empty": {
       "title": "Ajoute ton premier support",
       "description": "Importe un PDF pour activer la génération de notes, flashcards et quiz personnalisés.",
-      "cta": "Créer une nouvelle note"
+      "cta": "Ajouter un support"
     },
     "table": {
       "document": "Document",

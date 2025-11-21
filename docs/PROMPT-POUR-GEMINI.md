@@ -83,3 +83,4 @@ Améliorer le prompt pour que l'IA génère systématiquement le nombre exact de
 Peux-tu améliorer ce prompt pour garantir que l'IA génère toujours le nombre exact d'éléments demandé ? Le prompt doit être efficace avec GPT-4o et GPT-4o-mini. Tu peux restructurer complètement le prompt si nécessaire, mais il doit rester en français et produire du JSON strict.
 
 
+

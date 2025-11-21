@@ -92,13 +92,13 @@ function Flashcard({ card }: { card: StudyCollectionFlashcard }) {
           className="absolute inset-0 grid place-items-center px-6 text-center text-lg font-medium leading-relaxed"
           style={{ backfaceVisibility: "hidden", transform: "rotateY(0deg)" }}
         >
-          <MarkdownRenderer content={card.question} />
+              <MarkdownRenderer content={card.question} />
         </div>
         <div
           className="absolute inset-0 grid place-items-center px-6 text-center text-lg font-medium leading-relaxed"
           style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
         >
-          <MarkdownRenderer content={card.answer} />
+              <MarkdownRenderer content={card.answer} />
         </div>
       </button>
       <p className="mt-2 text-center text-xs text-neutral-500">Astuce : barre espace pour retourner • ← / → pour naviguer</p>
@@ -157,8 +157,8 @@ function QuizBlock({ item, onNext }: { item: QuizItem; onNext: () => void }) {
   return (
     <div className="rounded-2xl border border-white/60 bg-white/80 p-5 shadow-sm">
       <h3 className="text-base font-semibold">
-        <MarkdownRenderer content={item.prompt} />
-      </h3>
+          <MarkdownRenderer content={item.prompt} />
+        </h3>
       <div className="mt-6 grid gap-3">
         {item.options.map((option) => {
           const state = !chosen
