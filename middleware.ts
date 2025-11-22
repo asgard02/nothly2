@@ -25,10 +25,17 @@ export async function middleware(request: NextRequest) {
   const localeCookie = request.cookies.get('NEXT_LOCALE')?.value || 'en'
   const locale = ['en', 'fr'].includes(localeCookie) ? localeCookie : 'en'
 
-  // Créer la réponse de base
-  const baseResponse = NextResponse.next()
+  // Créer la réponse de base avec les headers de requête modifiés
+  const requestHeaders = new Headers(request.headers)
+  requestHeaders.set('x-next-intl-locale', locale)
 
-  // Définir le header pour next-intl (utilisé par getRequestConfig)
+  const baseResponse = NextResponse.next({
+    request: {
+      headers: requestHeaders,
+    },
+  })
+
+  // Définir le header sur la réponse aussi (pour le client/debug)
   baseResponse.headers.set('x-next-intl-locale', locale)
 
   // Vérifier que les variables d'environnement sont définies
