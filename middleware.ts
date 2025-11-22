@@ -21,9 +21,24 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // Gérer la locale manuellement en lisant le cookie
-  const localeCookie = request.cookies.get('NEXT_LOCALE')?.value || 'en'
-  const locale = ['en', 'fr'].includes(localeCookie) ? localeCookie : 'en'
+  // Gérer la locale
+  let locale = 'en'
+
+  // 1. Vérifier le cookie
+  const localeCookie = request.cookies.get('NEXT_LOCALE')?.value
+  if (localeCookie && ['en', 'fr'].includes(localeCookie)) {
+    locale = localeCookie
+  } else {
+    // 2. Vérifier le header Accept-Language
+    const acceptLanguage = request.headers.get('accept-language')
+    if (acceptLanguage) {
+      // Simple détection : si 'fr' apparaît dans les préférences
+      // Une implémentation plus robuste utiliserait un parser de qualité (q=...)
+      if (acceptLanguage.toLowerCase().includes('fr')) {
+        locale = 'fr'
+      }
+    }
+  }
 
   // Créer la réponse de base avec les headers de requête modifiés
   const requestHeaders = new Headers(request.headers)
