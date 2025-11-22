@@ -30,10 +30,10 @@ export default function LoginPage() {
   useEffect(() => {
     const error = searchParams.get('error')
     const errorDescription = searchParams.get('error_description')
-    
+
     if (error) {
       let errorMessage = errorDescription || "An authentication error occurred"
-      
+
       // Messages d'erreur plus conviviaux
       if (error === 'invalid_grant') {
         errorMessage = "The authentication session has expired or is invalid. Please try signing in again."
@@ -44,10 +44,10 @@ export default function LoginPage() {
       } else if (error === 'configuration') {
         errorMessage = "Server configuration error. Please contact support."
       }
-      
+
       setMessage(`Error: ${errorMessage}`)
       setIsSuccess(false)
-      
+
       // Nettoyer l'URL
       router.replace('/login', { scroll: false })
     }
@@ -55,7 +55,7 @@ export default function LoginPage() {
 
   const handlePasswordLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     if (!email || !password) {
       setMessage("Please fill in all fields")
       setIsSuccess(false)
@@ -80,7 +80,7 @@ export default function LoginPage() {
         router.replace("/stack")
       }
     } catch (error) {
-        setMessage("An error occurred")
+      setMessage("An error occurred")
       setIsSuccess(false)
     } finally {
       setIsLoading(false)
@@ -89,7 +89,7 @@ export default function LoginPage() {
 
   const handleMagicLinkLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     if (!email) {
       setMessage("Please enter your email")
       setIsSuccess(false)
@@ -125,19 +125,15 @@ export default function LoginPage() {
   const handleGoogleLogin = async () => {
     setIsLoading(true)
     setMessage("")
-    
+
     try {
       // Utiliser l'origine actuelle (localhost en dev, production en prod)
       const redirectUrl = `${window.location.origin}/auth/callback`
-      
+
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo: redirectUrl,
-          queryParams: {
-            // Forcer l'utilisation de l'URL actuelle
-            redirect_to: redirectUrl,
-          },
         },
       })
 
@@ -174,29 +170,27 @@ export default function LoginPage() {
             Log in to access your notes
           </CardDescription>
         </CardHeader>
-        
+
         <CardContent>
           {/* Tabs to choose login method */}
           <div className="flex gap-2 mb-6">
             <button
               type="button"
               onClick={() => setMode("password")}
-              className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors ${
-                mode === "password"
+              className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors ${mode === "password"
                   ? "bg-primary text-primary-foreground"
                   : "bg-muted text-muted-foreground hover:bg-muted/80"
-              }`}
+                }`}
             >
               Password
             </button>
             <button
               type="button"
               onClick={() => setMode("magic-link")}
-              className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors ${
-                mode === "magic-link"
+              className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors ${mode === "magic-link"
                   ? "bg-primary text-primary-foreground"
                   : "bg-muted text-muted-foreground hover:bg-muted/80"
-              }`}
+                }`}
             >
               Magic link
             </button>
@@ -212,7 +206,7 @@ export default function LoginPage() {
                 <span className="bg-card px-2 text-muted-foreground">Or continue with</span>
               </div>
             </div>
-            
+
             <Button
               type="button"
               variant="outline"
@@ -303,11 +297,10 @@ export default function LoginPage() {
 
               {message && (
                 <div
-                  className={`p-3 rounded-lg text-sm ${
-                    isSuccess
+                  className={`p-3 rounded-lg text-sm ${isSuccess
                       ? "bg-primary/10 text-primary border border-primary/20"
                       : "bg-destructive/10 text-destructive border border-destructive/20"
-                  }`}
+                    }`}
                 >
                   {message}
                 </div>
@@ -381,11 +374,10 @@ export default function LoginPage() {
 
                 {message && (
                   <div
-                    className={`p-3 rounded-lg text-sm ${
-                      isSuccess
+                    className={`p-3 rounded-lg text-sm ${isSuccess
                         ? "bg-primary/10 text-primary border border-primary/20"
                         : "bg-destructive/10 text-destructive border border-destructive/20"
-                    }`}
+                      }`}
                   >
                     {message}
                   </div>
