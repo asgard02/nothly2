@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useRouter, usePathname } from "next/navigation"
-import { useLocale } from "next-intl"
+import { useLocale, useTranslations } from "next-intl"
 import { Globe, Clock, CheckCircle } from "lucide-react"
 
 interface LanguageSettings {
@@ -15,10 +15,11 @@ interface LanguageSettings {
 export default function LanguagePage() {
     const router = useRouter()
     const pathname = usePathname()
-    const currentLocale = useLocale() // Récupérer la locale actuelle depuis next-intl
-    
+    const currentLocale = useLocale()
+    const t = useTranslations("Settings.Language") // Assumes you will add these keys to your translation files
+
     const [settings, setSettings] = useState<LanguageSettings>({
-        language: currentLocale || "en", // Utiliser la locale actuelle
+        language: currentLocale || "en",
         timezone: "Europe/Paris",
         dateFormat: "DD/MM/YYYY",
         timeFormat: "24h",
@@ -26,7 +27,6 @@ export default function LanguagePage() {
     const [saved, setSaved] = useState(false)
 
     useEffect(() => {
-        // Charger depuis localStorage si disponible, sinon utiliser la locale actuelle
         const stored = localStorage.getItem("nothly_language")
         if (stored) {
             try {
@@ -39,14 +39,12 @@ export default function LanguagePage() {
                     timeFormat: parsed.timeFormat || prev.timeFormat,
                 }))
             } catch {
-                // Si erreur de parsing, utiliser la locale actuelle
                 setSettings(prev => ({
                     ...prev,
                     language: currentLocale || "en",
                 }))
             }
         } else {
-            // Si pas de localStorage, utiliser la locale actuelle
             setSettings(prev => ({
                 ...prev,
                 language: currentLocale || "en",
@@ -60,12 +58,9 @@ export default function LanguagePage() {
         setSettings(newSettings)
         localStorage.setItem("nothly_language", JSON.stringify(newSettings))
 
-        // Si la langue a changé, mettre à jour le cookie et recharger
         if (languageChanged) {
-            // Définir le cookie pour next-intl (même nom que dans i18n/request.ts)
             document.cookie = `NEXT_LOCALE=${newSettings.language}; path=/; max-age=31536000; SameSite=Lax`
             setSaved(true)
-            // Petit délai pour montrer le message de sauvegarde puis recharger
             setTimeout(() => {
                 window.location.reload()
             }, 500)
@@ -82,7 +77,7 @@ export default function LanguagePage() {
 
     const timezones = [
         { value: "Europe/Paris", label: "Paris (GMT+1)" },
-        { value: "Europe/London", label: "Londres (GMT+0)" },
+        { value: "Europe/London", label: "London (GMT+0)" },
         { value: "America/New_York", label: "New York (GMT-5)" },
         { value: "America/Los_Angeles", label: "Los Angeles (GMT-8)" },
         { value: "Asia/Tokyo", label: "Tokyo (GMT+9)" },
@@ -99,9 +94,9 @@ export default function LanguagePage() {
         <div className="max-w-3xl mx-auto p-10">
             {/* Header */}
             <div className="mb-8">
-                <h1 className="text-3xl font-bold text-foreground mb-2">Langue & Région</h1>
+                <h1 className="text-3xl font-bold text-foreground mb-2">{t("title")}</h1>
                 <p className="text-muted-foreground">
-                    Personnalisez la langue et les formats régionaux
+                    {t("description")}
                 </p>
             </div>
 
@@ -110,7 +105,7 @@ export default function LanguagePage() {
                 <div className="mb-6 bg-green-500/10 border border-green-500/20 rounded-xl p-4 flex items-center gap-3 animate-in fade-in duration-200">
                     <CheckCircle className="h-5 w-5 text-green-500" />
                     <p className="text-sm font-medium text-green-500">
-                        Paramètres enregistrés
+                        {t("saved")}
                     </p>
                 </div>
             )}
@@ -122,7 +117,7 @@ export default function LanguagePage() {
                         <Globe className="h-5 w-5 text-primary" />
                     </div>
                     <h2 className="text-lg font-semibold text-foreground">
-                        Langue de l'interface
+                        {t("interfaceLanguage")}
                     </h2>
                 </div>
 
@@ -155,7 +150,7 @@ export default function LanguagePage() {
                         <Clock className="h-5 w-5 text-primary" />
                     </div>
                     <h2 className="text-lg font-semibold text-foreground">
-                        Fuseau horaire
+                        {t("timezone")}
                     </h2>
                 </div>
 
@@ -175,7 +170,7 @@ export default function LanguagePage() {
             {/* Format de date */}
             <div className="bg-card rounded-xl border border-border shadow-sm p-6 mb-6 transition-colors">
                 <h2 className="text-lg font-semibold text-foreground mb-4">
-                    Format de date
+                    {t("dateFormat")}
                 </h2>
 
                 <div className="grid grid-cols-3 gap-3">
@@ -202,7 +197,7 @@ export default function LanguagePage() {
             {/* Format d'heure */}
             <div className="bg-card rounded-xl border border-border shadow-sm p-6 transition-colors">
                 <h2 className="text-lg font-semibold text-foreground mb-4">
-                    Format d'heure
+                    {t("timeFormat")}
                 </h2>
 
                 <div className="grid grid-cols-2 gap-3">
@@ -217,7 +212,7 @@ export default function LanguagePage() {
                             ? "text-primary"
                             : "text-foreground"
                             }`}>
-                            12 heures (3:30 PM)
+                            {t("12h")} (3:30 PM)
                         </p>
                     </button>
                     <button
@@ -231,7 +226,7 @@ export default function LanguagePage() {
                             ? "text-primary"
                             : "text-foreground"
                             }`}>
-                            24 heures (15:30)
+                            {t("24h")} (15:30)
                         </p>
                     </button>
                 </div>

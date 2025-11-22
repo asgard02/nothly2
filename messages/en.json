@@ -110,5 +110,18 @@
       "cta": "Create a collection"
     },
     "footer": "Click on a collection to open the detailed study view with flashcards and quizzes."
+  },
+  "Settings": {
+    "Language": {
+      "title": "Language & Region",
+      "description": "Customize language and regional formats",
+      "saved": "Settings saved",
+      "interfaceLanguage": "Interface Language",
+      "timezone": "Timezone",
+      "dateFormat": "Date Format",
+      "timeFormat": "Time Format",
+      "12h": "12 hours",
+      "24h": "24 hours"
+    }
   }
 }
