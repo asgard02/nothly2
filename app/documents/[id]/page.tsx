@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo } from "react"
+import { useMemo, useState } from "react"
 import Link from "next/link"
 import {
   Loader2,
@@ -13,6 +13,8 @@ import {
   Clock,
   Target,
   PenSquare,
+  Eye,
+  X,
 } from "lucide-react"
 
 import { useDocumentDetail, type DocumentSectionDetail } from "@/lib/hooks/useDocuments"
@@ -42,6 +44,9 @@ function sanitizeExcerpt(text: string, limit = 240) {
 
 export default function DocumentDetailPage({ params }: { params: { id: string } }) {
   const { data, isLoading, error } = useDocumentDetail(params.id)
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null)
+  const [isLoadingPdf, setIsLoadingPdf] = useState(false)
+  const [showPdfViewer, setShowPdfViewer] = useState(false)
 
   const currentVersion = useMemo(() => {
     if (!data) return null
@@ -73,6 +78,30 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
     () => deckQuestions.length,
     [deckQuestions]
   )
+
+  // Fonction pour charger l'URL du PDF
+  const loadPdfUrl = async () => {
+    if (pdfUrl) {
+      setShowPdfViewer(true)
+      return
+    }
+
+    setIsLoadingPdf(true)
+    try {
+      const response = await fetch(`/api/documents/${params.id}/pdf`)
+      if (!response.ok) {
+        throw new Error("Impossible de charger le PDF")
+      }
+      const data = await response.json()
+      setPdfUrl(data.url)
+      setShowPdfViewer(true)
+    } catch (error) {
+      console.error("Erreur lors du chargement du PDF:", error)
+      alert("Impossible de charger le PDF")
+    } finally {
+      setIsLoadingPdf(false)
+    }
+  }
 
   if (isLoading) {
     return (
@@ -107,22 +136,42 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
     currentVersion?.processed_at ?? data.updated_at ?? data.created_at ?? null
 
   return (
-    <div className="mx-auto max-w-5xl px-6 py-12 space-y-10">
-      <div className="flex items-center justify-between gap-3">
-        <Link
-          href="/dashboard"
-          className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Retour au recueil
-        </Link>
-        <QuizDialogLauncher
-          questions={deckQuestions}
-          label="Lancer le quiz complet"
-          variant="default"
-          size="default"
-        />
-      </div>
+    <>
+      <div className="mx-auto max-w-5xl px-6 py-12 space-y-10">
+        <div className="flex items-center justify-between gap-3">
+          <Link
+            href="/dashboard"
+            className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Retour au recueil
+          </Link>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={loadPdfUrl}
+              disabled={isLoadingPdf}
+              className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2 text-sm font-medium text-foreground hover:border-primary hover:text-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isLoadingPdf ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Chargement...
+                </>
+              ) : (
+                <>
+                  <Eye className="h-4 w-4" />
+                  Voir le PDF
+                </>
+              )}
+            </button>
+            <QuizDialogLauncher
+              questions={deckQuestions}
+              label="Lancer le quiz complet"
+              variant="default"
+              size="default"
+            />
+          </div>
+        </div>
 
       <header className="space-y-6 rounded-3xl border border-border bg-card/70 p-8 shadow-sm">
         <div className="flex flex-wrap items-center gap-3">
@@ -209,7 +258,33 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
           </div>
         )}
       </section>
-    </div>
+      </div>
+
+      {/* Modal/Viewer pour le PDF */}
+      {showPdfViewer && pdfUrl && (
+        <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="w-full h-full max-w-7xl max-h-[90vh] flex flex-col bg-background rounded-lg shadow-2xl overflow-hidden">
+            <div className="flex items-center justify-between p-4 border-b border-border bg-muted/50">
+              <h2 className="text-lg font-semibold text-foreground">{data?.title || "Visualisation PDF"}</h2>
+              <button
+                onClick={() => setShowPdfViewer(false)}
+                className="p-2 rounded-lg hover:bg-muted transition-colors text-foreground"
+                aria-label="Fermer"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="flex-1 overflow-hidden">
+              <iframe
+                src={pdfUrl}
+                className="w-full h-full border-0"
+                title="PDF Viewer"
+              />
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   )
 }
 
@@ -223,7 +298,28 @@ function NoteCard({
   documentId: string
 }) {
   const revisionPayload = section.revision_notes?.[0]?.payload as RevisionNotePayload | undefined
-  const summary = sanitizeExcerpt(revisionPayload?.summary || section.content, 260)
+  
+  // Essayer de récupérer le résumé depuis plusieurs sources
+  let summaryText = ""
+  if (revisionPayload?.summary && revisionPayload.summary.trim()) {
+    summaryText = revisionPayload.summary
+  } else if (revisionPayload?.sections && revisionPayload.sections.length > 0) {
+    // Chercher le résumé dans les sections qui correspondent au heading
+    const matchingSection = revisionPayload.sections.find(
+      (s) => s.title === section.heading || s.title.toLowerCase().includes(section.heading.toLowerCase())
+    )
+    if (matchingSection?.summary && matchingSection.summary.trim()) {
+      summaryText = matchingSection.summary
+    } else if (revisionPayload.sections[0]?.summary && revisionPayload.sections[0].summary.trim()) {
+      // Utiliser le premier résumé de section disponible
+      summaryText = revisionPayload.sections[0].summary
+    }
+  }
+  
+  // Fallback sur le contenu de la section si aucun résumé n'est trouvé
+  // Si le contenu est trop long, on le tronque pour l'affichage
+  const fallbackText = section.content && section.content.trim() ? section.content : ""
+  const summary = sanitizeExcerpt(summaryText || fallbackText, 260)
   const learningObjectives = revisionPayload?.learningObjectives?.slice(0, 3) ?? []
   const keyIdeas =
     revisionPayload?.sections?.flatMap((part) => part.keyIdeas ?? []).slice(0, 4) ?? []
@@ -249,7 +345,13 @@ function NoteCard({
         </div>
       </div>
 
-      <p className="mt-4 text-sm leading-relaxed text-muted-foreground">{summary}</p>
+      {summary ? (
+        <p className="mt-4 text-sm leading-relaxed text-muted-foreground">{summary}</p>
+      ) : (
+        <p className="mt-4 text-sm leading-relaxed text-muted-foreground italic">
+          Résumé en cours de génération...
+        </p>
+      )}
 
       {learningObjectives.length > 0 && (
         <div className="mt-5 space-y-2 rounded-2xl bg-primary/5 p-4">

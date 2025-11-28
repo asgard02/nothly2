@@ -361,21 +361,21 @@ export default function DocumentStack() {
       )}
 
       <section className="grid gap-4 sm:grid-cols-3">
-        <div className="rounded-3xl border border-border/70 bg-card/80 p-5 shadow-sm">
+        <div className="rounded-3xl border border-border/40 bg-card/40 backdrop-blur-sm p-5 shadow-sm transition-all hover:bg-card/60 hover:border-primary/20">
           <div className="flex items-center gap-3 text-sm text-muted-foreground">
             <Layers className="h-4 w-4 text-primary" />
             {t("stats.totalDocuments")}
           </div>
           <p className="mt-2 text-3xl font-semibold text-foreground">{totalSupports}</p>
         </div>
-        <div className="rounded-3xl border border-border/70 bg-card/80 p-5 shadow-sm">
+        <div className="rounded-3xl border border-border/40 bg-card/40 backdrop-blur-sm p-5 shadow-sm transition-all hover:bg-card/60 hover:border-primary/20">
           <div className="flex items-center gap-3 text-sm text-muted-foreground">
             <FileText className="h-4 w-4 text-primary" />
             {t("stats.totalPages")}
           </div>
           <p className="mt-2 text-3xl font-semibold text-foreground">{totalPages > 0 ? totalPages : "—"}</p>
         </div>
-        <div className="rounded-3xl border border-border/70 bg-card/80 p-5 shadow-sm">
+        <div className="rounded-3xl border border-border/40 bg-card/40 backdrop-blur-sm p-5 shadow-sm transition-all hover:bg-card/60 hover:border-primary/20">
           <div className="flex items-center gap-3 text-sm text-muted-foreground">
             <Plus className="h-4 w-4 text-primary" />
             {t("stats.lastAdded")}
@@ -387,24 +387,24 @@ export default function DocumentStack() {
       </section>
 
       {supports.length === 0 ? (
-        <div className="flex min-h-[50vh] flex-col items-center justify-center rounded-3xl border border-dashed border-border/80 bg-card/60 text-center">
-          <UploadCloud className="h-10 w-10 text-muted-foreground" />
+        <div className="flex min-h-[50vh] flex-col items-center justify-center rounded-3xl border border-dashed border-border/60 bg-card/20 text-center backdrop-blur-sm">
+          <UploadCloud className="h-10 w-10 text-muted-foreground/50" />
           <h2 className="mt-4 text-xl font-semibold text-foreground">{t("empty.title")}</h2>
           <p className="mt-2 max-w-md text-sm text-muted-foreground">
             {t("empty.description")}
           </p>
           <Button
             onClick={() => setIsDialogOpen(true)}
-            className="mt-6 inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground shadow-md transition hover:-translate-y-0.5 hover:shadow-lg"
+            className="mt-6 inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground shadow-md transition hover:-translate-y-0.5 hover:shadow-lg hover:shadow-primary/20"
           >
             <UploadCloud className="h-4 w-4" />
             {t("empty.cta")}
           </Button>
         </div>
       ) : (
-        <div className="overflow-hidden rounded-3xl border border-border/70 bg-card/70 shadow-sm">
-          <table className="min-w-full divide-y divide-border/60">
-            <thead className="bg-muted/40 text-xs uppercase tracking-wide text-muted-foreground">
+        <div className="overflow-hidden rounded-3xl border border-border/40 bg-card/40 backdrop-blur-md shadow-sm">
+          <table className="min-w-full divide-y divide-border/40">
+            <thead className="bg-muted/20 text-xs uppercase tracking-wide text-muted-foreground">
               <tr>
                 <th className="px-6 py-3 text-left">{t("table.document")}</th>
                 <th className="px-6 py-3 text-left">{t("table.tags")}</th>
@@ -414,14 +414,14 @@ export default function DocumentStack() {
                 <th className="px-6 py-3 text-left">{t("table.actions")}</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-border/40 text-sm">
+            <tbody className="divide-y divide-border/30 text-sm">
               {supports.map((support) => {
                 const latestVersion =
                   support.document_versions?.find((version) => version.id === support.current_version_id) ??
                   support.document_versions?.[support.document_versions.length - 1]
                 const pageCount = latestVersion?.page_count ?? 0
                 return (
-                  <tr key={support.id} className="transition hover:bg-muted/40">
+                  <tr key={support.id} className="transition hover:bg-primary/5">
                     <td className="px-6 py-4">
                       <div className="flex flex-col gap-1">
                         <span className="text-foreground font-medium">{support.title}</span>
@@ -434,15 +434,15 @@ export default function DocumentStack() {
                           {support.tags.map((tagValue) => (
                             <span
                               key={`${support.id}-${tagValue}`}
-                              className="inline-flex items-center gap-1 rounded-full bg-muted px-3 py-1 text-xs text-muted-foreground"
+                              className="inline-flex items-center gap-1 rounded-full bg-primary/10 border border-primary/10 px-3 py-1 text-xs text-primary font-medium"
                             >
-                              <Tag className="h-3 w-3 text-primary" />
+                              <Tag className="h-3 w-3" />
                               {tagValue}
                             </span>
                           ))}
                         </div>
                       ) : (
-                        <span className="text-xs italic text-muted-foreground/70">{t("table.noTags")}</span>
+                        <span className="text-xs italic text-muted-foreground/50">{t("table.noTags")}</span>
                       )}
                     </td>
                     <td className="px-6 py-4 text-muted-foreground">{pageCount > 0 ? pageCount : "—"}</td>
@@ -452,14 +452,18 @@ export default function DocumentStack() {
                     <td className="px-6 py-4 text-muted-foreground">{formatDate(support.updated_at, locale)}</td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">
-                        <Link href={`/documents/${support.id}`} className="text-primary hover:text-primary/80">
-                          {t("table.open")}
+                        <Link 
+                          href={`/documents/${support.id}`} 
+                          className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+                          title={t("table.open")}
+                        >
+                          <FileText className="h-4 w-4" />
                         </Link>
                         <Button
                           type="button"
                           variant="ghost"
                           size="icon"
-                          className="text-muted-foreground hover:text-destructive"
+                          className="h-8 w-8 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                           onClick={() => {
                             setDocumentToDelete(support)
                             setDeleteError(null)

@@ -11,7 +11,10 @@ interface AppearanceSettings {
   contrast: "normal" | "high"
 }
 
+import { useTranslations } from "next-intl"
+
 export default function AppearanceSettingsPage() {
+  const t = useTranslations("Settings.Appearance")
   const { theme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
   const [settings, setSettings] = useState<AppearanceSettings>({
@@ -49,9 +52,9 @@ export default function AppearanceSettingsPage() {
     <div className="max-w-3xl mx-auto p-10">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-foreground mb-2">Apparence</h1>
+        <h1 className="text-3xl font-bold text-foreground mb-2">{t("title")}</h1>
         <p className="text-muted-foreground">
-          Personnalisez l'apparence de Nothly
+          {t("description")}
         </p>
       </div>
 
@@ -60,7 +63,7 @@ export default function AppearanceSettingsPage() {
         <div className="mb-6 bg-green-500/10 border border-green-500/20 rounded-xl p-4 flex items-center gap-3 animate-in fade-in duration-200">
           <CheckCircle className="h-5 w-5 text-green-500" />
           <p className="text-sm font-medium text-green-500">
-            Préférences enregistrées
+            {t("saved")}
           </p>
         </div>
       )}
@@ -72,7 +75,7 @@ export default function AppearanceSettingsPage() {
             <Moon className="h-5 w-5 text-primary" />
           </div>
           <h2 className="text-lg font-semibold text-foreground">
-            Thème
+            {t("theme")}
           </h2>
         </div>
 
@@ -86,8 +89,8 @@ export default function AppearanceSettingsPage() {
             <button
               onClick={() => setTheme("light")}
               className={`flex items-center gap-4 p-4 rounded-lg border-2 transition-all duration-200 ${theme === "light"
-                  ? "border-primary bg-primary/10"
-                  : "border-border hover:border-muted-foreground/50"
+                ? "border-primary bg-primary/10"
+                : "border-border hover:border-muted-foreground/50"
                 }`}
             >
               <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center">
@@ -95,17 +98,17 @@ export default function AppearanceSettingsPage() {
               </div>
               <div className="flex-1 text-left">
                 <p className={`font-medium ${theme === "light" ? "text-primary" : "text-foreground"}`}>
-                  Clair
+                  {t("light")}
                 </p>
-                <p className="text-xs text-muted-foreground">Thème lumineux</p>
+                <p className="text-xs text-muted-foreground">{t("lightDesc")}</p>
               </div>
             </button>
 
             <button
               onClick={() => setTheme("dark")}
               className={`flex items-center gap-4 p-4 rounded-lg border-2 transition-all duration-200 ${theme === "dark"
-                  ? "border-primary bg-primary/10"
-                  : "border-border hover:border-muted-foreground/50"
+                ? "border-primary bg-primary/10"
+                : "border-border hover:border-muted-foreground/50"
                 }`}
             >
               <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center">
@@ -113,9 +116,9 @@ export default function AppearanceSettingsPage() {
               </div>
               <div className="flex-1 text-left">
                 <p className={`font-medium ${theme === "dark" ? "text-primary" : "text-foreground"}`}>
-                  Sombre
+                  {t("dark")}
                 </p>
-                <p className="text-xs text-muted-foreground">Repose vos yeux</p>
+                <p className="text-xs text-muted-foreground">{t("darkDesc")}</p>
               </div>
             </button>
           </div>
@@ -129,15 +132,15 @@ export default function AppearanceSettingsPage() {
             <Zap className="h-5 w-5 text-primary" />
           </div>
           <h2 className="text-lg font-semibold text-foreground">
-            Animations
+            {t("animations")}
           </h2>
         </div>
 
         <div className="flex items-center justify-between">
           <div>
-            <p className="font-medium text-foreground">Activer les animations</p>
+            <p className="font-medium text-foreground">{t("enableAnimations")}</p>
             <p className="text-sm text-muted-foreground">
-              Transitions et effets visuels fluides
+              {t("enableAnimationsDesc")}
             </p>
           </div>
           <button
@@ -160,22 +163,22 @@ export default function AppearanceSettingsPage() {
             <Layout className="h-5 w-5 text-primary" />
           </div>
           <h2 className="text-lg font-semibold text-foreground">
-            Densité de l'interface
+            {t("density")}
           </h2>
         </div>
 
         <div className="grid grid-cols-3 gap-3">
           {[
-            { value: "compact" as const, label: "Compact", desc: "Plus d'infos" },
-            { value: "comfortable" as const, label: "Confortable", desc: "Équilibré" },
-            { value: "spacious" as const, label: "Spacieux", desc: "Plus d'espace" },
+            { value: "compact" as const, label: t("compact"), desc: t("compactDesc") },
+            { value: "comfortable" as const, label: t("comfortable"), desc: t("comfortableDesc") },
+            { value: "spacious" as const, label: t("spacious"), desc: t("spaciousDesc") },
           ].map((item) => (
             <button
               key={item.value}
               onClick={() => saveSettings({ ...settings, density: item.value })}
               className={`p-4 rounded-lg border-2 transition-all duration-200 ${settings.density === item.value
-                  ? "border-primary bg-primary/10"
-                  : "border-border hover:border-muted-foreground/50"
+                ? "border-primary bg-primary/10"
+                : "border-border hover:border-muted-foreground/50"
                 }`}
             >
               <p className={`font-medium text-sm ${settings.density === item.value ? "text-primary" : "text-foreground"
@@ -195,23 +198,23 @@ export default function AppearanceSettingsPage() {
             <Circle className="h-5 w-5 text-primary" />
           </div>
           <h2 className="text-lg font-semibold text-foreground">
-            Bordures arrondies
+            {t("borderRadius")}
           </h2>
         </div>
 
         <div className="grid grid-cols-4 gap-3">
           {[
-            { value: "none" as const, label: "Aucune", radius: "0px" },
-            { value: "small" as const, label: "Petite", radius: "4px" },
-            { value: "medium" as const, label: "Moyenne", radius: "8px" },
-            { value: "large" as const, label: "Grande", radius: "16px" },
+            { value: "none" as const, label: t("none"), radius: "0px" },
+            { value: "small" as const, label: t("small"), radius: "4px" },
+            { value: "medium" as const, label: t("medium"), radius: "8px" },
+            { value: "large" as const, label: t("large"), radius: "16px" },
           ].map((item) => (
             <button
               key={item.value}
               onClick={() => saveSettings({ ...settings, borderRadius: item.value })}
               className={`p-4 rounded-lg border-2 transition-all duration-200 ${settings.borderRadius === item.value
-                  ? "border-primary bg-primary/10"
-                  : "border-border hover:border-muted-foreground/50"
+                ? "border-primary bg-primary/10"
+                : "border-border hover:border-muted-foreground/50"
                 }`}
             >
               <div
@@ -234,21 +237,21 @@ export default function AppearanceSettingsPage() {
             <Eye className="h-5 w-5 text-primary" />
           </div>
           <h2 className="text-lg font-semibold text-foreground">
-            Contraste
+            {t("contrast")}
           </h2>
         </div>
 
         <div className="grid grid-cols-2 gap-3">
           {[
-            { value: "normal" as const, label: "Normal", desc: "Contraste standard" },
-            { value: "high" as const, label: "Élevé", desc: "Meilleure lisibilité" },
+            { value: "normal" as const, label: t("normal"), desc: t("normalDesc") },
+            { value: "high" as const, label: t("high"), desc: t("highDesc") },
           ].map((item) => (
             <button
               key={item.value}
               onClick={() => saveSettings({ ...settings, contrast: item.value })}
               className={`p-4 rounded-lg border-2 transition-all duration-200 ${settings.contrast === item.value
-                  ? "border-primary bg-primary/10"
-                  : "border-border hover:border-muted-foreground/50"
+                ? "border-primary bg-primary/10"
+                : "border-border hover:border-muted-foreground/50"
                 }`}
             >
               <p className={`font-medium text-sm ${settings.contrast === item.value ? "text-primary" : "text-foreground"

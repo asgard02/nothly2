@@ -23,8 +23,11 @@ export interface DocumentGenerationJobPayload extends Record<string, unknown> {
   bucket: string
   objectPath?: string
   manualText?: string | null
+  pageCount?: number
   checksum?: string | null
 }
+
+// ... (keep existing code)
 
 export interface DocumentGenerationJobResult extends Record<string, unknown> {
   documentId: string
@@ -192,7 +195,7 @@ async function loadDocumentText(
     const checksum = createHash("sha256").update(payload.manualText).digest("hex")
     return {
       rawText: payload.manualText.trim(),
-      pageCount: 0,
+      pageCount: payload.pageCount ?? 0,
       checksum,
     }
   }
@@ -282,6 +285,10 @@ export async function processDocumentGenerationJob(
   let generatedQuizCount = 0
 
   for (const section of insertedSections) {
+    // Automatic generation disabled as per user request
+    // Users will trigger generation manually when needed
+    
+    /* 
     const metadata = {
       documentTitle: payload.title,
       sectionHeading: section.heading,
@@ -370,6 +377,7 @@ export async function processDocumentGenerationJob(
         }
       }
     }
+    */
   }
 
   onProgress?.(0.7)

@@ -203,6 +203,7 @@ export async function POST(req: NextRequest) {
     const manualTitle = formData.get("title")?.toString()
     const manualText = formData.get("text")?.toString()
     const tagsInput = formData.get("tags")?.toString() ?? ""
+    const collectionId = formData.get("collection_id")?.toString()
     const tags =
       tagsInput
         .split(",")
@@ -217,9 +218,10 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    if (tags.length === 0) {
+    // Les tags ne sont plus obligatoires si on upload dans une collection
+    if (tags.length === 0 && !collectionId) {
       return NextResponse.json(
-        { error: "Au moins un tag est requis pour importer un document." },
+        { error: "Au moins un tag est requis pour importer un document, ou spécifiez une collection." },
         { status: 400 }
       )
     }
@@ -231,21 +233,48 @@ export async function POST(req: NextRequest) {
     const originalFilename = file?.name || "document.txt"
     const title = manualTitle || originalFilename.replace(/\.[a-zA-Z0-9]+$/, "")
 
+    const documentData: Record<string, any> = {
+      user_id: user.id,
+      title,
+      original_filename: originalFilename,
+      status: "processing",
+    }
+
+    // Ajouter les tags seulement s'ils existent
+    if (tags.length > 0) {
+      documentData.tags = tags
+    }
+
+    // Ajouter la collection_id si fournie
+    if (collectionId) {
+      documentData.collection_id = collectionId
+    }
+
     const { data: document, error: insertDocError } = await admin
       .from("documents")
-      .insert({
-        user_id: user.id,
-        title,
-        original_filename: originalFilename,
-        status: "processing",
-        tags,
-      })
+      .insert(documentData)
       .select("id, title")
       .single()
 
-    if (insertDocError || !document) {
+    // Si l'erreur est due à une colonne manquante, informer l'utilisateur
+    if (insertDocError) {
+      const errorMessage = insertDocError.message || ""
+      if (errorMessage.includes("collection_id") || errorMessage.includes("column")) {
+        console.error("[POST /api/documents] ❌ Collection column missing:", insertDocError)
+        return NextResponse.json(
+          { 
+            error: "La colonne collection_id n'existe pas dans la base de données.",
+            details: "Exécutez le fichier supabase-add-collections.sql dans l'éditeur SQL de Supabase pour ajouter le support des collections."
+          },
+          { status: 500 }
+        )
+      }
       console.error("[POST /api/documents] insert document", insertDocError)
       throw new Error(insertDocError?.message || "Impossible de créer le document")
+    }
+
+    if (!document) {
+      throw new Error("Impossible de créer le document")
     }
 
     documentId = document.id
@@ -294,6 +323,14 @@ export async function POST(req: NextRequest) {
         if (file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf")) {
           const pdfInfo = await pdfParse(buffer)
           pageCount = pdfInfo.numpages ?? 0
+          // Extraire le texte du PDF et le stocker
+          if (pdfInfo.text && pdfInfo.text.trim().length > 0) {
+            // Sanitize text to remove null bytes which Postgres hates
+            payloadManualText = pdfInfo.text.replace(/\x00/g, "").trim()
+            console.log(`[POST /api/documents] Texte extrait du PDF: ${payloadManualText.length} caractères`)
+          } else {
+            console.warn("[POST /api/documents] PDF parsé mais aucun texte extrait (peut être un PDF scanné)")
+          }
         }
       } catch (parseError) {
         console.warn("[POST /api/documents] pdf parse failed", parseError)
@@ -307,36 +344,35 @@ export async function POST(req: NextRequest) {
       payloadManualText = manualText.trim()
       checksum = createHash("sha256").update(payloadManualText).digest("hex")
     }
-
-    const { data: version, error: versionError } = await admin
-      .from("document_versions")
-      .insert({
-        document_id: documentId,
-        storage_path: objectPath ? `${DOCUMENTS_BUCKET}/${objectPath}` : null,
-        page_count: pageCount,
-        raw_text: payloadManualText ?? "",
-        checksum: checksum ?? createHash("sha256").update(`${documentId}-${Date.now()}`).digest("hex"),
-      })
-      .select("id")
-      .single()
-
-    if (versionError || !version) {
-      console.error("[POST /api/documents] insert version", versionError)
-      throw new Error(versionError?.message || "Impossible de créer la version du document")
+    
+    // Si on a du texte extrait du PDF, créer le checksum
+    if (payloadManualText && !checksum) {
+      checksum = createHash("sha256").update(payloadManualText).digest("hex")
     }
 
-    await admin
-      .from("documents")
-      .update({
-        status: "ready",
-        current_version_id: version.id,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", documentId)
+    // Créer le job de génération de document
+    const { createJob } = await import("@/lib/jobs")
+    
+    await createJob({
+      userId: user.id,
+      type: "document-generation",
+      payload: {
+        documentId,
+        userId: user.id,
+        userEmail: user.email,
+        title,
+        originalFilename,
+        bucket: DOCUMENTS_BUCKET,
+        objectPath,
+        manualText: payloadManualText,
+        pageCount,
+        checksum,
+      },
+    })
 
     return NextResponse.json({
       documentId,
-      status: "ready",
+      status: "processing",
     })
   } catch (error: any) {
     console.error("[POST /api/documents]", error)

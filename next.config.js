@@ -10,6 +10,7 @@ const nextConfig = {
     // Désactivé temporairement pour éviter les problèmes de vendor-chunks
     // optimizePackageImports: ['lucide-react', '@radix-ui/react-dialog'],
   },
+  transpilePackages: ['react-markdown', 'remark-gfm'],
   
   // Désactiver le cache Turbopack si problématique (décommentez si nécessaire)
   // turbo: {},

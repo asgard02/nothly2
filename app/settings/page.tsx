@@ -1,6 +1,5 @@
-"use client"
+import { redirect } from "next/navigation"
 
-// Cette page redirige automatiquement vers le layout qui gère tout
 export default function SettingsPage() {
-  return null
+  redirect("/settings/profile")
 }

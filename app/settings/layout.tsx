@@ -1,8 +1,10 @@
 "use client"
 
-import { useState } from "react"
+import { usePathname } from "next/navigation"
+import Link from "next/link"
 import Sidebar from "@/components/Sidebar"
 import ChatButton from "@/components/ChatButton"
+import MainContent from "@/components/MainContent"
 import {
   User,
   Palette,
@@ -13,91 +15,66 @@ import {
   Database,
   ChevronRight
 } from "lucide-react"
-
-// Import all settings components
-import ProfileSettings from "./profile/page"
-import AppearanceSettings from "./appearance/page"
-import PlanSettings from "./plan/page"
-import SecuritySettings from "./security/page"
-import NotificationsSettings from "./notifications/page"
-import LanguageSettings from "./language/page"
-import DataSettings from "./data/page"
+import { useTranslations } from "next-intl"
 
 interface SettingsLayoutProps {
   children: React.ReactNode
 }
 
-type SettingSection = "profile" | "appearance" | "plan" | "security" | "notifications" | "language" | "data"
-
 export default function SettingsLayout({ children }: SettingsLayoutProps) {
-  const [activeSection, setActiveSection] = useState<SettingSection>("profile")
+  const t = useTranslations("Settings.Menu")
+  const pathname = usePathname()
 
   const menuItems = [
     {
-      id: "profile" as SettingSection,
-      label: "Profil",
+      href: "/settings/profile",
+      label: t("profile"),
       icon: User,
-      description: "Informations personnelles",
-      component: ProfileSettings
     },
     {
-      id: "appearance" as SettingSection,
-      label: "Apparence",
+      href: "/settings/appearance",
+      label: t("appearance"),
       icon: Palette,
-      description: "Thèmes et personnalisation",
-      component: AppearanceSettings
     },
     {
-      id: "plan" as SettingSection,
-      label: "Abonnement",
+      href: "/settings/plan",
+      label: t("plan"),
       icon: CreditCard,
-      description: "Plan et facturation",
-      component: PlanSettings
     },
     {
-      id: "security" as SettingSection,
-      label: "Sécurité",
+      href: "/settings/security",
+      label: t("security"),
       icon: Shield,
-      description: "Mot de passe et sessions",
-      component: SecuritySettings
     },
     {
-      id: "notifications" as SettingSection,
-      label: "Notifications",
+      href: "/settings/notifications",
+      label: t("notifications"),
       icon: Bell,
-      description: "Préférences de notifications",
-      component: NotificationsSettings
     },
     {
-      id: "language" as SettingSection,
-      label: "Langue & Région",
+      href: "/settings/language",
+      label: t("language"),
       icon: Globe,
-      description: "Langue et fuseau horaire",
-      component: LanguageSettings
     },
     {
-      id: "data" as SettingSection,
-      label: "Données",
+      href: "/settings/data",
+      label: t("data"),
       icon: Database,
-      description: "Export et sauvegarde",
-      component: DataSettings
     },
   ]
-
-  const ActiveComponent = menuItems.find(item => item.id === activeSection)?.component || ProfileSettings
 
   return (
     <div className="flex h-screen bg-background">
       <Sidebar />
 
       {/* Main container */}
-      <div className="flex-1 ml-56 flex">
+      <MainContent className="flex flex-1 h-full overflow-hidden">
         {/* Settings sidebar - style Gemini */}
-        <aside className="w-72 bg-card border-r border-border h-screen flex flex-col">
+        <aside className="w-72 bg-card border-r border-border h-full flex flex-col overflow-hidden">
           {/* Header */}
-          <div className="p-6 border-b border-border">
-            <h2 className="text-xl font-bold text-foreground mb-1">Paramètres</h2>
-            <p className="text-sm text-muted-foreground">Gérez votre compte</p>
+          <div className="p-6 border-b border-border shrink-0">
+            <h2 className="text-xl font-bold text-foreground mb-1">{t("title")}</h2>
+            <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
           </div>
 
           {/* Navigation */}
@@ -105,11 +82,11 @@ export default function SettingsLayout({ children }: SettingsLayoutProps) {
             <div className="space-y-1">
               {menuItems.map((item) => {
                 const Icon = item.icon
-                const isActive = activeSection === item.id
+                const isActive = pathname === item.href
                 return (
-                  <button
-                    key={item.id}
-                    onClick={() => setActiveSection(item.id)}
+                  <Link
+                    key={item.href}
+                    href={item.href}
                     className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group ${isActive
                       ? "bg-primary/10 text-primary"
                       : "text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -126,14 +103,14 @@ export default function SettingsLayout({ children }: SettingsLayoutProps) {
                     {isActive && (
                       <ChevronRight className="h-4 w-4 text-primary" />
                     )}
-                  </button>
+                  </Link>
                 )
               })}
             </div>
           </nav>
 
           {/* Footer */}
-          <div className="p-6 border-t border-border">
+          <div className="p-6 border-t border-border shrink-0">
             <p className="text-xs text-muted-foreground text-center">
               Nothly © 2025
             </p>
@@ -141,10 +118,10 @@ export default function SettingsLayout({ children }: SettingsLayoutProps) {
         </aside>
 
         {/* Main content */}
-        <main className="flex-1 overflow-y-auto bg-background">
-          <ActiveComponent />
+        <main className="flex-1 overflow-y-auto bg-background h-full p-6">
+          {children}
         </main>
-      </div>
+      </MainContent>
 
       {/* Chatbot flottant global */}
       <ChatButton />

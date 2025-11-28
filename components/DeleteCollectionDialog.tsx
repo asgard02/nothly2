@@ -63,7 +63,7 @@ export default function DeleteCollectionDialog({
           <span className="font-semibold text-gray-900 dark:text-gray-100">
             "{collectionTitle || "Sans titre"}"
           </span>{" "}
-          ? Cette action est irréversible et supprimera toutes les flashcards et quiz associés.
+          ? Cette action est irréversible et supprimera tous les documents associés à cette collection.
         </p>
 
         {/* Actions */}
@@ -96,5 +96,6 @@ export default function DeleteCollectionDialog({
 
   return createPortal(modalContent, document.body)
 }
+
 
 

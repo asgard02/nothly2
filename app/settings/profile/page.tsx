@@ -4,7 +4,10 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { LogOut, Trash2, Mail, User as UserIcon, Calendar, TrendingUp, FileText, Zap } from "lucide-react"
 
+import { useTranslations } from "next-intl"
+
 export default function ProfileSettingsPage() {
+  const t = useTranslations("Settings.Profile")
   const router = useRouter()
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
@@ -52,7 +55,7 @@ export default function ProfileSettingsPage() {
   const handleDeleteAccount = async () => {
     if (
       !confirm(
-        "⚠️ Êtes-vous sûr de vouloir supprimer votre compte ? Cette action est irréversible et supprimera toutes vos notes."
+        t("deleteConfirm")
       )
     ) {
       return
@@ -71,11 +74,11 @@ export default function ProfileSettingsPage() {
         await Promise.all(deletePromises)
       }
 
-      alert("✅ Compte supprimé avec succès")
+      alert(t("deleteSuccess"))
       handleLogout()
     } catch (error) {
       console.error("Erreur:", error)
-      alert("❌ Erreur lors de la suppression du compte")
+      alert(t("deleteError"))
     }
   }
 
@@ -103,9 +106,9 @@ export default function ProfileSettingsPage() {
     <div className="max-w-3xl mx-auto p-10">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-foreground mb-2">Profil</h1>
+        <h1 className="text-3xl font-bold text-foreground mb-2">{t("title")}</h1>
         <p className="text-muted-foreground">
-          Gérez vos informations personnelles
+          {t("description")}
         </p>
       </div>
 
@@ -129,7 +132,7 @@ export default function ProfileSettingsPage() {
             </p>
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <Calendar className="h-3 w-3" />
-              <span>Membre depuis {user?.created_at ? getJoinDate(user.created_at) : "..."}</span>
+              <span>{t("memberSince", { date: user?.created_at ? getJoinDate(user.created_at) : "..." })}</span>
             </div>
           </div>
         </div>
@@ -139,22 +142,22 @@ export default function ProfileSettingsPage() {
           <div className="text-center p-3 bg-muted/50 rounded-lg">
             <FileText className="h-5 w-5 text-primary mx-auto mb-1" />
             <p className="text-2xl font-bold text-foreground">{stats.notesCount}</p>
-            <p className="text-xs text-muted-foreground">Notes</p>
+            <p className="text-xs text-muted-foreground">{t("notes")}</p>
           </div>
           <div className="text-center p-3 bg-muted/50 rounded-lg">
             <TrendingUp className="h-5 w-5 text-primary mx-auto mb-1" />
             <p className="text-2xl font-bold text-foreground">{stats.flashcardsCount}</p>
-            <p className="text-xs text-muted-foreground">Flashcards</p>
+            <p className="text-xs text-muted-foreground">{t("flashcards")}</p>
           </div>
           <div className="text-center p-3 bg-muted/50 rounded-lg">
             <UserIcon className="h-5 w-5 text-primary mx-auto mb-1" />
             <p className="text-2xl font-bold text-foreground">{stats.quizzesCount}</p>
-            <p className="text-xs text-muted-foreground">Quiz</p>
+            <p className="text-xs text-muted-foreground">{t("quizzes")}</p>
           </div>
           <div className="text-center p-3 bg-muted/50 rounded-lg">
             <Zap className="h-5 w-5 text-primary mx-auto mb-1" />
             <p className="text-2xl font-bold text-foreground">{stats.tokensUsed}</p>
-            <p className="text-xs text-muted-foreground">Tokens</p>
+            <p className="text-xs text-muted-foreground">{t("tokens")}</p>
           </div>
         </div>
       </div>
@@ -162,7 +165,7 @@ export default function ProfileSettingsPage() {
       {/* Informations du compte */}
       <div className="bg-card rounded-xl border border-border shadow-sm p-6 mb-6 transition-colors">
         <h2 className="text-lg font-semibold text-foreground mb-4">
-          Informations du compte
+          {t("accountInfo")}
         </h2>
 
         <div className="space-y-4">
@@ -171,14 +174,14 @@ export default function ProfileSettingsPage() {
             <div className="flex items-center gap-3">
               <Mail className="h-5 w-5 text-muted-foreground" />
               <div>
-                <p className="text-sm font-medium text-foreground">Email</p>
+                <p className="text-sm font-medium text-foreground">{t("email")}</p>
                 <p className="text-xs text-muted-foreground">
                   {user?.email || "Non disponible"}
                 </p>
               </div>
             </div>
             <span className="px-3 py-1 bg-green-500/10 text-green-500 text-xs font-medium rounded-full">
-              Vérifié
+              {t("verified")}
             </span>
           </div>
 
@@ -187,7 +190,7 @@ export default function ProfileSettingsPage() {
             <div className="flex items-center gap-3">
               <UserIcon className="h-5 w-5 text-muted-foreground" />
               <div>
-                <p className="text-sm font-medium text-foreground">ID utilisateur</p>
+                <p className="text-sm font-medium text-foreground">{t("userId")}</p>
                 <p className="text-xs text-muted-foreground font-mono">
                   {user?.id?.substring(0, 20)}...
                 </p>
@@ -200,7 +203,7 @@ export default function ProfileSettingsPage() {
       {/* Actions */}
       <div className="bg-card rounded-xl border border-border shadow-sm p-6 mb-6 transition-colors">
         <h2 className="text-lg font-semibold text-foreground mb-4">
-          Actions
+          {t("actions")}
         </h2>
 
         <div className="space-y-3">
@@ -210,7 +213,7 @@ export default function ProfileSettingsPage() {
             className="w-full flex items-center gap-3 px-4 py-3 rounded-lg border border-border text-foreground hover:bg-muted transition-all duration-200 font-medium"
           >
             <LogOut className="h-5 w-5" />
-            Se déconnecter
+            {t("logout")}
           </button>
         </div>
       </div>
@@ -219,11 +222,11 @@ export default function ProfileSettingsPage() {
       <div className="bg-destructive/10 border border-destructive/20 rounded-xl p-6 transition-colors">
         <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
           <Trash2 className="h-5 w-5 text-destructive" />
-          Zone dangereuse
+          {t("dangerZone")}
         </h2>
 
         <p className="text-sm text-muted-foreground mb-4">
-          Cette action est irréversible et supprimera définitivement toutes vos données.
+          {t("dangerZoneDesc")}
         </p>
 
         <button
@@ -231,7 +234,7 @@ export default function ProfileSettingsPage() {
           className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-lg bg-destructive/20 border border-destructive text-destructive hover:bg-destructive/30 transition-all duration-200 font-medium"
         >
           <Trash2 className="h-5 w-5" />
-          Supprimer mon compte
+          {t("deleteAccount")}
         </button>
       </div>
     </div>

@@ -25,6 +25,10 @@ async function fetchNextPendingJob(): Promise<AsyncJob | null> {
 
   if (error) {
     console.error("[process-ai-jobs] fetchNextPendingJob error", error)
+    // @ts-ignore - Supabase error typing can be loose
+    if (error.message === 'Internal server error.' || error.code === '500') {
+       console.error("[process-ai-jobs] 🚨 CRITICAL: Supabase returned 'Internal server error'. Your project might be PAUSED or the database is down. Check: https://supabase.com/dashboard/project/_")
+    }
     return null
   }
 

@@ -12,7 +12,10 @@ interface NotificationSettings {
     marketingEmails: boolean
 }
 
+import { useTranslations } from "next-intl"
+
 export default function NotificationsPage() {
+    const t = useTranslations("Settings.Notifications")
     const [settings, setSettings] = useState<NotificationSettings>({
         emailNotifications: true,
         pushNotifications: true,
@@ -46,56 +49,56 @@ export default function NotificationsPage() {
 
     const notificationGroups = [
         {
-            title: "Notifications essentielles",
+            title: t("essential"),
             icon: Bell,
             items: [
                 {
                     key: "emailNotifications" as keyof NotificationSettings,
-                    label: "Notifications par email",
-                    description: "Recevez des emails pour les événements importants",
+                    label: t("emailNotifs"),
+                    description: t("emailNotifsDesc"),
                 },
                 {
                     key: "pushNotifications" as keyof NotificationSettings,
-                    label: "Notifications push",
-                    description: "Notifications dans le navigateur",
+                    label: t("pushNotifs"),
+                    description: t("pushNotifsDesc"),
                 },
             ],
         },
         {
-            title: "Intelligence artificielle",
+            title: t("ai"),
             icon: Sparkles,
             items: [
                 {
                     key: "aiSuggestions" as keyof NotificationSettings,
-                    label: "Suggestions IA",
-                    description: "Recevez des suggestions pour améliorer vos notes",
+                    label: t("aiSuggestions"),
+                    description: t("aiSuggestionsDesc"),
                 },
             ],
         },
         {
-            title: "Récapitulatifs",
+            title: t("digests"),
             icon: MessageSquare,
             items: [
                 {
                     key: "weeklyDigest" as keyof NotificationSettings,
-                    label: "Récapitulatif hebdomadaire",
-                    description: "Un résumé de votre activité chaque semaine",
+                    label: t("weeklyDigest"),
+                    description: t("weeklyDigestDesc"),
                 },
             ],
         },
         {
-            title: "Mises à jour",
+            title: t("updates"),
             icon: Mail,
             items: [
                 {
                     key: "newFeatures" as keyof NotificationSettings,
-                    label: "Nouvelles fonctionnalités",
-                    description: "Soyez informé des nouvelles fonctionnalités",
+                    label: t("newFeatures"),
+                    description: t("newFeaturesDesc"),
                 },
                 {
                     key: "marketingEmails" as keyof NotificationSettings,
-                    label: "Emails marketing",
-                    description: "Offres spéciales et actualités",
+                    label: t("marketing"),
+                    description: t("marketingDesc"),
                 },
             ],
         },
@@ -105,9 +108,9 @@ export default function NotificationsPage() {
         <div className="max-w-3xl mx-auto p-10">
             {/* Header */}
             <div className="mb-8">
-                <h1 className="text-3xl font-bold text-foreground mb-2">Notifications</h1>
+                <h1 className="text-3xl font-bold text-foreground mb-2">{t("title")}</h1>
                 <p className="text-muted-foreground">
-                    Gérez vos préférences de notifications
+                    {t("description")}
                 </p>
             </div>
 
@@ -116,7 +119,7 @@ export default function NotificationsPage() {
                 <div className="mb-6 bg-green-500/10 border border-green-500/20 rounded-xl p-4 flex items-center gap-3 animate-in fade-in duration-200">
                     <CheckCircle className="h-5 w-5 text-green-500" />
                     <p className="text-sm font-medium text-green-500">
-                        Préférences enregistrées
+                        {t("saved")}
                     </p>
                 </div>
             )}
@@ -156,14 +159,14 @@ export default function NotificationsPage() {
                                         <button
                                             onClick={() => handleToggle(item.key)}
                                             className={`relative w-12 h-6 rounded-full transition-all duration-200 ${settings[item.key]
-                                                    ? "bg-primary"
-                                                    : "bg-muted"
+                                                ? "bg-primary"
+                                                : "bg-muted"
                                                 }`}
                                         >
                                             <div
                                                 className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow-md transition-all duration-200 ${settings[item.key]
-                                                        ? "left-[26px]"
-                                                        : "left-0.5"
+                                                    ? "left-[26px]"
+                                                    : "left-0.5"
                                                     }`}
                                             />
                                         </button>
@@ -178,11 +181,10 @@ export default function NotificationsPage() {
             {/* Info */}
             <div className="mt-6 bg-primary/10 border border-primary/20 rounded-xl p-6 transition-colors">
                 <h3 className="text-sm font-semibold text-foreground mb-2">
-                    💡 À savoir
+                    {t("infoTitle")}
                 </h3>
                 <p className="text-sm text-muted-foreground">
-                    Vous pouvez modifier ces préférences à tout moment. Les notifications
-                    essentielles liées à la sécurité de votre compte seront toujours envoyées.
+                    {t("infoDesc")}
                 </p>
             </div>
         </div>

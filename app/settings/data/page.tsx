@@ -3,7 +3,10 @@
 import { useState } from "react"
 import { Download, Upload, Database, Trash2, FileJson, FileText, Archive } from "lucide-react"
 
+import { useTranslations } from "next-intl"
+
 export default function DataPage() {
+    const t = useTranslations("Settings.Data")
     const [exporting, setExporting] = useState(false)
     const [importing, setImporting] = useState(false)
 
@@ -23,7 +26,7 @@ export default function DataPage() {
             URL.revokeObjectURL(url)
         } catch (error) {
             console.error("Erreur export:", error)
-            alert("Erreur lors de l'export")
+            alert(t("exportError"))
         } finally {
             setExporting(false)
         }
@@ -51,17 +54,17 @@ export default function DataPage() {
             URL.revokeObjectURL(url)
         } catch (error) {
             console.error("Erreur export:", error)
-            alert("Erreur lors de l'export")
+            alert(t("exportError"))
         } finally {
             setExporting(false)
         }
     }
 
     const handleClearCache = () => {
-        if (confirm("Voulez-vous vraiment vider le cache ? Cela peut améliorer les performances.")) {
+        if (confirm(t("clearCacheConfirm"))) {
             localStorage.clear()
             sessionStorage.clear()
-            alert("Cache vidé avec succès")
+            alert(t("clearCacheSuccess"))
             window.location.reload()
         }
     }
@@ -70,9 +73,9 @@ export default function DataPage() {
         <div className="max-w-3xl mx-auto p-10">
             {/* Header */}
             <div className="mb-8">
-                <h1 className="text-3xl font-bold text-foreground mb-2">Données</h1>
+                <h1 className="text-3xl font-bold text-foreground mb-2">{t("title")}</h1>
                 <p className="text-muted-foreground">
-                    Exportez, importez et gérez vos données
+                    {t("description")}
                 </p>
             </div>
 
@@ -83,12 +86,12 @@ export default function DataPage() {
                         <Download className="h-5 w-5 text-primary" />
                     </div>
                     <h2 className="text-lg font-semibold text-foreground">
-                        Exporter vos données
+                        {t("export")}
                     </h2>
                 </div>
 
                 <p className="text-sm text-muted-foreground mb-6">
-                    Téléchargez toutes vos notes dans différents formats
+                    {t("exportDesc")}
                 </p>
 
                 <div className="space-y-3">
@@ -99,8 +102,8 @@ export default function DataPage() {
                     >
                         <FileJson className="h-5 w-5" />
                         <div className="flex-1 text-left">
-                            <p className="text-sm font-medium">Export JSON</p>
-                            <p className="text-xs text-muted-foreground">Format structuré pour réimporter</p>
+                            <p className="text-sm font-medium">{t("exportJson")}</p>
+                            <p className="text-xs text-muted-foreground">{t("exportJsonDesc")}</p>
                         </div>
                     </button>
 
@@ -111,8 +114,8 @@ export default function DataPage() {
                     >
                         <FileText className="h-5 w-5" />
                         <div className="flex-1 text-left">
-                            <p className="text-sm font-medium">Export Markdown</p>
-                            <p className="text-xs text-muted-foreground">Format texte lisible</p>
+                            <p className="text-sm font-medium">{t("exportMarkdown")}</p>
+                            <p className="text-xs text-muted-foreground">{t("exportMarkdownDesc")}</p>
                         </div>
                     </button>
                 </div>
@@ -125,12 +128,12 @@ export default function DataPage() {
                         <Upload className="h-5 w-5 text-primary" />
                     </div>
                     <h2 className="text-lg font-semibold text-foreground">
-                        Importer des données
+                        {t("import")}
                     </h2>
                 </div>
 
                 <p className="text-sm text-muted-foreground mb-6">
-                    Importez vos notes depuis un fichier JSON
+                    {t("importDesc")}
                 </p>
 
                 <button
@@ -138,7 +141,7 @@ export default function DataPage() {
                     className="w-full flex items-center gap-3 px-4 py-3 rounded-lg border border-border text-foreground hover:bg-muted transition-all duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     <Archive className="h-5 w-5" />
-                    Importer un fichier JSON
+                    {t("importJson")}
                 </button>
             </div>
 
@@ -149,21 +152,21 @@ export default function DataPage() {
                         <Database className="h-5 w-5 text-primary" />
                     </div>
                     <h2 className="text-lg font-semibold text-foreground">
-                        Stockage
+                        {t("storage")}
                     </h2>
                 </div>
 
                 <div className="space-y-4">
                     <div className="flex items-center justify-between py-3 border-b border-border">
                         <div>
-                            <p className="text-sm font-medium text-foreground">Cache local</p>
-                            <p className="text-xs text-muted-foreground">Données temporaires stockées localement</p>
+                            <p className="text-sm font-medium text-foreground">{t("localCache")}</p>
+                            <p className="text-xs text-muted-foreground">{t("localCacheDesc")}</p>
                         </div>
                         <button
                             onClick={handleClearCache}
                             className="px-4 py-2 rounded-lg border border-border text-foreground hover:bg-muted transition-all duration-200 text-sm font-medium"
                         >
-                            Vider le cache
+                            {t("clearCache")}
                         </button>
                     </div>
                 </div>
@@ -176,19 +179,19 @@ export default function DataPage() {
                         <Trash2 className="h-5 w-5 text-destructive" />
                     </div>
                     <h2 className="text-lg font-semibold text-foreground">
-                        Zone dangereuse
+                        {t("dangerZone")}
                     </h2>
                 </div>
 
                 <p className="text-sm text-muted-foreground mb-4">
-                    Ces actions sont irréversibles. Soyez prudent.
+                    {t("dangerZoneDesc")}
                 </p>
 
                 <button
                     className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-lg bg-destructive/20 border border-destructive text-destructive hover:bg-destructive/30 transition-all duration-200 font-medium"
                 >
                     <Trash2 className="h-5 w-5" />
-                    Supprimer toutes mes données
+                    {t("deleteAll")}
                 </button>
             </div>
         </div>

@@ -135,8 +135,9 @@ export default function NotesGrid({ notes }: NotesGridProps) {
           <h3 className="text-2xl font-bold text-foreground mb-3">
             Aucune note pour le moment
           </h3>
-          <p className="text-muted-foreground mb-8 text-base">
-            Créez votre première note pour commencer à noter vos idées
+          <p className="text-muted-foreground mb-8 text-base max-w-sm mx-auto leading-relaxed">
+            Note_fi transforme vos cours en quiz interactifs. <br/>
+            <span className="text-primary/80">Copiez-collez votre cours</span> dans une nouvelle note, et laissez l'IA générer vos révisions.
           </p>
           <button
             onClick={() => router.push('/new')}
@@ -189,12 +190,15 @@ export default function NotesGrid({ notes }: NotesGridProps) {
             <div
               key={note.id}
               onMouseEnter={() => prefetchNote(note.id)}
-              className={`group bg-card/80 backdrop-blur-sm rounded-2xl p-6 border transition-all duration-300 hover:shadow-xl hover:-translate-y-1 relative ${
+              className={`group bg-card/40 backdrop-blur-xl rounded-2xl p-6 border transition-all duration-500 ease-out hover:-translate-y-2 hover:shadow-2xl relative overflow-hidden ${
                 isSelected
-                  ? "border-primary shadow-lg shadow-primary/20"
-                  : "border-border hover:border-primary/50 hover:shadow-primary/10"
+                  ? "border-primary shadow-lg shadow-primary/20 ring-1 ring-primary"
+                  : "border-white/10 dark:border-white/5 hover:border-primary/30 hover:shadow-primary/5"
               }`}
             >
+              {/* Ajout d'un dégradé subtil en arrière-plan au survol */}
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+
               {/* Checkbox de sélection */}
               <button
                 onClick={(e) => {

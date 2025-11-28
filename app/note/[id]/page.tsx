@@ -3,14 +3,17 @@
 import { useState, useEffect, useRef } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Sidebar from "@/components/Sidebar"
-import { Loader2, ArrowLeft } from "lucide-react"
+import { Loader2, ArrowLeft, Sparkles } from "lucide-react"
 import NotionStyleMenu from "@/components/NotionStyleMenu"
+import MainContent from "@/components/MainContent"
 import { transformText } from "@/lib/ai-client"
 import ChatButton from "@/components/ChatButton"
 import SaveStatusIndicator from "@/components/SaveStatusIndicator"
 import { useNote } from "@/lib/hooks/useNotes"
 import { useAutoSave } from "@/lib/hooks/useAutoSave"
 import { useRealtimeNote } from "@/lib/hooks/useRealtimeNote"
+import { triggerGenerationToast } from "@/components/GenerationToast"
+import { toast } from "sonner"
 
 export default function NoteEditorPage() {
   const { id } = useParams()
@@ -58,6 +61,7 @@ export default function NoteEditorPage() {
     endOffset: 0,
   })
   const [isTransforming, setIsTransforming] = useState(false)
+  const [isGenerating, setIsGenerating] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   // Détecter la sélection de texte dans le textarea
@@ -180,6 +184,48 @@ export default function NoteEditorPage() {
     }
   }
 
+  const handleGenerateCollection = async () => {
+    if (!content || content.trim().length < 50) {
+      toast.error("Votre note est trop courte pour générer des fiches (min. 50 caractères).")
+      return
+    }
+
+    setIsGenerating(true)
+    
+    // 1. Déclencher le toast visuel
+    triggerGenerationToast(() => {
+      // Callback appelée quand l'animation du toast est finie (succès)
+      router.push("/flashcards")
+    })
+
+    try {
+      // 2. Appeler l'API pour lancer le job
+      const res = await fetch("/api/ai", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          text: content,
+          mode: "collection",
+          metadata: {
+            noteId: noteId,
+            title: title || "Sans titre"
+          }
+        })
+      })
+
+      if (!res.ok) {
+        throw new Error("Erreur lors du lancement de la génération")
+      }
+      
+      // Le toast gère la redirection à la fin de son animation
+      
+    } catch (error) {
+      console.error("Erreur génération:", error)
+      toast.error("Impossible de lancer la génération. Réessayez.")
+      setIsGenerating(false)
+    }
+  }
+
   // États de chargement et d'erreur
   // ⚡ Ne pas bloquer si la note n'existe pas encore (création au premier edit)
   if (isLoading && noteId) {
@@ -218,22 +264,43 @@ export default function NoteEditorPage() {
       <Sidebar />
 
       {/* Éditeur principal */}
-      <div className="flex-1 ml-56 flex flex-col">
-        {/* Toolbar minimaliste */}
-        <div className="border-b border-border bg-card/80 backdrop-blur-md px-8 py-4 flex items-center gap-5">
-          <button
-            onClick={() => router.push("/dashboard")}
-            className="text-muted-foreground hover:text-foreground transition-colors duration-200"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </button>
+      <MainContent className="flex flex-col relative">
+        {/* Toolbar flottante minimaliste */}
+        <div className="absolute top-6 left-6 right-6 z-40 flex justify-center pointer-events-none">
+          <div className="bg-background/60 backdrop-blur-xl border border-border/40 rounded-full px-6 py-2 shadow-sm flex items-center gap-6 pointer-events-auto transition-all hover:bg-background/80 hover:shadow-md hover:border-border/60">
+            <button
+              onClick={() => router.push("/dashboard")}
+              className="text-muted-foreground hover:text-foreground transition-colors duration-200 flex items-center gap-2 text-sm font-medium"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              <span>Retour</span>
+            </button>
 
-          {/* Indicateur de sauvegarde optimisé */}
-          <SaveStatusIndicator status={saveStatus} />
+            <div className="w-px h-4 bg-border/60" />
+
+            {/* Indicateur de sauvegarde optimisé */}
+            <SaveStatusIndicator status={saveStatus} />
+
+            <div className="w-px h-4 bg-border/60" />
+
+            {/* ✨ NOUVEAU BOUTON D'ACTION PRINCIPAL */}
+            <button
+              onClick={handleGenerateCollection}
+              disabled={isGenerating || !content.trim()}
+              className="flex items-center gap-2 bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-1.5 rounded-full text-sm font-medium transition-all shadow-sm hover:shadow-primary/25 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isGenerating ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Sparkles className="h-3.5 w-3.5" />
+              )}
+              <span>Générer Fiches & Quiz</span>
+            </button>
+          </div>
         </div>
 
         {/* Zone d'édition */}
-        <div className="flex-1 overflow-y-auto p-10 bg-background">
+        <div className="flex-1 overflow-y-auto px-10 pt-28 pb-10 bg-background">
           <div className="max-w-4xl mx-auto">
             <input
               type="text"
@@ -253,7 +320,7 @@ export default function NoteEditorPage() {
             />
           </div>
         </div>
-      </div>
+      </MainContent>
 
       {/* Menu contextuel style Notion */}
       {selectionMenu.show && (
@@ -276,4 +343,3 @@ export default function NoteEditorPage() {
     </div>
   )
 }
-

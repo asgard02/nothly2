@@ -4,7 +4,10 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { CreditCard, Sparkles, Crown, Zap, CheckCircle } from "lucide-react"
 
+import { useTranslations } from "next-intl"
+
 export default function PlanSettingsPage() {
+  const t = useTranslations("Settings.Plan")
   const router = useRouter()
   const [userPlan, setUserPlan] = useState("free")
   const [tokensUsed, setTokensUsed] = useState(2500)
@@ -14,9 +17,9 @@ export default function PlanSettingsPage() {
     <div className="max-w-3xl mx-auto p-10">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-foreground mb-2">Abonnement</h1>
+        <h1 className="text-3xl font-bold text-foreground mb-2">{t("title")}</h1>
         <p className="text-muted-foreground">
-          Gérez votre plan et vos crédits IA
+          {t("description")}
         </p>
       </div>
 
@@ -27,7 +30,7 @@ export default function PlanSettingsPage() {
             <CreditCard className="h-5 w-5 text-primary" />
           </div>
           <h2 className="text-lg font-semibold text-foreground">
-            Plan actuel
+            {t("currentPlan")}
           </h2>
         </div>
 
@@ -35,7 +38,7 @@ export default function PlanSettingsPage() {
           <div>
             <div className="flex items-center gap-3 mb-2">
               <span className="text-2xl font-bold text-foreground">
-                {userPlan === "free" ? "Gratuit" : "Pro"}
+                {userPlan === "free" ? t("free") : t("pro")}
               </span>
               {userPlan === "pro" && (
                 <Crown className="h-5 w-5 text-yellow-500" />
@@ -43,58 +46,58 @@ export default function PlanSettingsPage() {
             </div>
             <p className="text-sm text-muted-foreground">
               {userPlan === "free"
-                ? "Plan de base avec fonctionnalités limitées"
-                : "Accès illimité à toutes les fonctionnalités"}
+                ? t("freeDesc")
+                : t("proDesc")}
             </p>
           </div>
           <button
             onClick={() => router.push("/pricing")}
             className="px-6 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg font-medium transition-all duration-200"
           >
-            {userPlan === "free" ? "Passer à Pro" : "Gérer"}
+            {userPlan === "free" ? t("upgrade") : t("manage")}
           </button>
         </div>
 
         {/* Fonctionnalités */}
         <div className="pt-6 border-t border-border">
-          <p className="text-sm font-medium text-foreground mb-3">Inclus dans votre plan :</p>
+          <p className="text-sm font-medium text-foreground mb-3">{t("included")}</p>
           <div className="grid grid-cols-2 gap-2">
             {userPlan === "free" ? (
               <>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <CheckCircle className="h-4 w-4 text-green-500" />
-                  <span>100 notes max</span>
+                  <span>{t("notesLimit")}</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <CheckCircle className="h-4 w-4 text-green-500" />
-                  <span>10K tokens IA</span>
+                  <span>{t("tokensLimit")}</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <CheckCircle className="h-4 w-4 text-green-500" />
-                  <span>Export Markdown</span>
+                  <span>{t("markdownExport")}</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <CheckCircle className="h-4 w-4 text-green-500" />
-                  <span>Sync cloud</span>
+                  <span>{t("cloudSync")}</span>
                 </div>
               </>
             ) : (
               <>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <CheckCircle className="h-4 w-4 text-green-500" />
-                  <span>Notes illimitées</span>
+                  <span>{t("unlimitedNotes")}</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <CheckCircle className="h-4 w-4 text-green-500" />
-                  <span>IA illimitée</span>
+                  <span>{t("unlimitedAI")}</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <CheckCircle className="h-4 w-4 text-green-500" />
-                  <span>Support prioritaire</span>
+                  <span>{t("prioritySupport")}</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <CheckCircle className="h-4 w-4 text-green-500" />
-                  <span>Accès anticipé</span>
+                  <span>{t("earlyAccess")}</span>
                 </div>
               </>
             )}
@@ -110,13 +113,13 @@ export default function PlanSettingsPage() {
               <Sparkles className="h-5 w-5 text-primary" />
             </div>
             <h2 className="text-lg font-semibold text-foreground">
-              Crédits IA
+              {t("aiCredits")}
             </h2>
           </div>
 
           <div className="mb-6">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-sm font-medium text-muted-foreground">Utilisation</span>
+              <span className="text-sm font-medium text-muted-foreground">{t("usage")}</span>
               <span className="text-sm font-bold text-foreground">
                 {tokensUsed.toLocaleString()} / {tokensLimit.toLocaleString()}
               </span>
@@ -130,7 +133,7 @@ export default function PlanSettingsPage() {
               />
             </div>
             <p className="text-xs text-muted-foreground mt-2">
-              {((tokensLimit - tokensUsed) / tokensLimit * 100).toFixed(0)}% restants
+              {t("remaining", { percent: ((tokensLimit - tokensUsed) / tokensLimit * 100).toFixed(0) })}
             </p>
           </div>
 
@@ -138,7 +141,7 @@ export default function PlanSettingsPage() {
             onClick={() => router.push("/pricing")}
             className="w-full px-4 py-3 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg font-medium transition-all duration-200"
           >
-            Obtenir plus de crédits
+            {t("getMore")}
           </button>
         </div>
       )}
@@ -151,15 +154,15 @@ export default function PlanSettingsPage() {
               <Zap className="h-6 w-6" />
             </div>
             <div className="flex-1">
-              <h3 className="text-lg font-bold mb-2">Passez à Pro</h3>
+              <h3 className="text-lg font-bold mb-2">{t("upgradeBannerTitle")}</h3>
               <p className="text-sm text-white/90 mb-4">
-                Débloquez l'IA illimitée, le support prioritaire et toutes les fonctionnalités premium.
+                {t("upgradeBannerDesc")}
               </p>
               <button
                 onClick={() => router.push("/pricing")}
                 className="px-6 py-2 bg-white text-primary rounded-lg font-medium hover:bg-white/90 transition-all duration-200"
               >
-                Voir les plans
+                {t("viewPlans")}
               </button>
             </div>
           </div>
@@ -171,14 +174,14 @@ export default function PlanSettingsPage() {
         <div className="bg-gradient-to-r from-yellow-500/10 to-orange-500/10 border border-yellow-500/20 rounded-xl p-6">
           <div className="flex items-center gap-3 mb-3">
             <Crown className="h-6 w-6 text-yellow-500" />
-            <h3 className="text-lg font-bold text-foreground">Membre Pro</h3>
+            <h3 className="text-lg font-bold text-foreground">{t("proMember")}</h3>
           </div>
           <p className="text-sm text-muted-foreground mb-4">
-            Vous profitez de toutes les fonctionnalités premium de Nothly. Merci pour votre soutien ! 🎉
+            {t("proMemberDesc")}
           </p>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <CheckCircle className="h-4 w-4 text-green-500" />
-            <span>Abonnement actif</span>
+            <span>{t("activeSubscription")}</span>
           </div>
         </div>
       )}

@@ -515,10 +515,10 @@ export default function AIChat({ isOpen, onClose, context }: AIChatProps) {
           className={`flex ${message.sender === "user" ? "justify-end" : "justify-start"}`}
         >
           <div
-            className={`max-w-[80%] rounded-2xl px-4 py-2.5 ${
+            className={`max-w-[85%] rounded-2xl px-5 py-3 shadow-sm transition-all duration-200 ${
               message.sender === "user"
-                ? "bg-gradient-to-r from-nothly-blue to-nothly-violet text-white rounded-br-sm"
-                : "bg-white text-gray-800 shadow-sm border border-gray-100 rounded-bl-sm dark:bg-card dark:text-foreground dark:border-border"
+                ? "bg-primary text-primary-foreground rounded-tr-sm hover:shadow-md"
+                : "bg-muted/50 backdrop-blur-sm border border-border/50 text-foreground rounded-tl-sm hover:bg-muted/70"
             }`}
           >
             {message.sender === "ai" ? (
@@ -527,10 +527,10 @@ export default function AIChat({ isOpen, onClose, context }: AIChatProps) {
               <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">{message.text}</p>
             )}
             <p
-              className={`text-xs mt-1.5 ${
+              className={`text-[10px] mt-1.5 font-medium opacity-70 ${
                 message.sender === "user"
-                  ? "text-purple-100"
-                  : "text-gray-400 dark:text-muted-foreground"
+                  ? "text-primary-foreground/80"
+                  : "text-muted-foreground"
               }`}
             >
               {formatTime(message.timestamp)}
@@ -547,7 +547,7 @@ export default function AIChat({ isOpen, onClose, context }: AIChatProps) {
     <>
       {/* Overlay semi-transparent */}
       <div
-        className={`fixed inset-0 z-40 bg-black/40 transition-opacity duration-150 ease-out ${
+        className={`fixed inset-0 z-40 bg-black/40 backdrop-blur-sm transition-opacity duration-300 ease-out ${
           isOpen && !isAnimatingOut ? "opacity-100" : "opacity-0"
         }`}
       />
@@ -555,26 +555,29 @@ export default function AIChat({ isOpen, onClose, context }: AIChatProps) {
       {/* Panneau de chat */}
       <div
         ref={panelRef}
-        className={`fixed bottom-20 right-6 z-50 flex h-[600px] w-96 flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl will-change-transform transition-all duration-200 ease-out dark:border-border dark:bg-background ${
+        className={`fixed bottom-24 right-6 z-50 flex h-[600px] w-96 flex-col overflow-hidden rounded-3xl border border-white/20 bg-background/80 backdrop-blur-2xl shadow-2xl will-change-transform transition-all duration-300 cubic-bezier(0.16, 1, 0.3, 1) ${
           isOpen && !isAnimatingOut
-            ? "translate-y-0 opacity-100 drop-shadow-xl"
-            : "translate-y-2 opacity-0 drop-shadow-md pointer-events-none"
+            ? "translate-y-0 opacity-100 scale-100"
+            : "translate-y-10 opacity-0 scale-95 pointer-events-none"
         }`}
       >
         {/* Header */}
-        <div className="bg-gradient-to-r from-nothly-blue to-nothly-violet text-white p-4 flex items-center justify-between flex-shrink-0">
+        <div className="bg-gradient-to-r from-primary/10 to-primary/5 border-b border-border/40 p-4 flex items-center justify-between flex-shrink-0 backdrop-blur-sm">
           <div className="flex items-center gap-3">
-            <div className="bg-white/20 backdrop-blur-sm p-2 rounded-full">
-              <Bot className="h-5 w-5" />
+            <div className="bg-primary/10 p-2.5 rounded-2xl ring-1 ring-white/10 shadow-sm">
+              <Bot className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <h3 className="font-semibold text-base">Assistant IA</h3>
-              <p className="text-xs text-purple-100">En ligne</p>
+              <h3 className="font-semibold text-base text-foreground tracking-tight">Assistant IA</h3>
+              <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                En ligne
+              </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="hover:bg-white/20 p-1.5 rounded-lg transition-colors"
+            className="hover:bg-muted/50 p-2 rounded-xl transition-colors text-muted-foreground hover:text-foreground"
             aria-label="Fermer le chat"
           >
             <X className="h-5 w-5" />
@@ -582,15 +585,15 @@ export default function AIChat({ isOpen, onClose, context }: AIChatProps) {
         </div>
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50 dark:bg-background">
+        <div className="flex-1 overflow-y-auto p-4 space-y-6 bg-transparent scrollbar-none">
           {renderedMessages}
 
           {isLoading && (
             <div className="flex justify-start">
-              <div className="bg-white dark:bg-card rounded-2xl rounded-bl-sm px-4 py-3 shadow-sm border border-gray-100 dark:border-border">
-                <div className="flex items-center gap-2 text-gray-500">
+              <div className="bg-muted/50 backdrop-blur-md rounded-2xl rounded-tl-none px-4 py-3 shadow-sm border border-white/5">
+                <div className="flex items-center gap-2 text-muted-foreground">
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  <span className="text-sm">L'IA réfléchit...</span>
+                  <span className="text-sm font-medium">L'IA réfléchit...</span>
                 </div>
               </div>
             </div>
@@ -600,8 +603,8 @@ export default function AIChat({ isOpen, onClose, context }: AIChatProps) {
         </div>
 
         {/* Input */}
-        <div className="border-t border-gray-200 dark:border-border p-4 bg-white dark:bg-card flex-shrink-0">
-          <div className="flex gap-2">
+        <div className="p-4 bg-background/40 backdrop-blur-xl border-t border-border/40 flex-shrink-0">
+          <div className="flex gap-2 items-end bg-muted/30 rounded-2xl border border-border/40 p-1.5 focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary/30 transition-all">
             <input
               ref={inputRef}
               type="text"
@@ -610,7 +613,7 @@ export default function AIChat({ isOpen, onClose, context }: AIChatProps) {
               onKeyPress={handleKeyPress}
               placeholder="Posez une question..."
               disabled={isLoading}
-              className="flex-1 px-4 py-2.5 border border-gray-200 dark:border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent disabled:bg-gray-50 dark:disabled:bg-muted disabled:cursor-not-allowed text-sm bg-white dark:bg-background text-foreground"
+              className="flex-1 px-3 py-2.5 bg-transparent border-none focus:outline-none text-sm text-foreground placeholder:text-muted-foreground min-h-[44px]"
             />
             
             {/* Bouton Microphone */}
@@ -618,33 +621,22 @@ export default function AIChat({ isOpen, onClose, context }: AIChatProps) {
             <button
                 onClick={toggleListening}
                 disabled={isLoading}
-                className={`p-2.5 rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0 ${
+                className={`p-2.5 rounded-xl transition-all duration-200 disabled:opacity-50 flex-shrink-0 ${
                   isListening
-                    ? "bg-red-500 text-white shadow-lg shadow-red-500/50 ring-2 ring-red-300 ring-offset-2"
-                    : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
+                    ? "bg-red-500 text-white shadow-lg shadow-red-500/25 animate-pulse"
+                    : "text-muted-foreground hover:bg-background hover:text-foreground hover:shadow-sm"
                 }`}
                 title={isListening ? "Arrêter l'enregistrement (clic)" : "Parler (reconnaissance vocale)"}
                 aria-label={isListening ? "Arrêter l'enregistrement" : "Démarrer la reconnaissance vocale"}
               >
-                {isListening ? (
-                  <div className="relative">
-                    <Mic className="h-5 w-5 animate-pulse" />
-                    {/* Point rouge animé pour indiquer l'enregistrement */}
-                    <span className="absolute -top-1 -right-1 flex h-2 w-2">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
-                    </span>
-                  </div>
-                ) : (
-                  <Mic className="h-5 w-5" />
-                )}
+                <Mic className="h-5 w-5" />
               </button>
             )}
             
             <button
               onClick={handleSend}
               disabled={!inputValue.trim() || isLoading}
-              className="bg-gradient-to-r from-nothly-blue to-nothly-violet text-white p-2.5 rounded-xl hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-none flex-shrink-0"
+              className="bg-primary text-primary-foreground p-2.5 rounded-xl hover:shadow-lg hover:shadow-primary/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-none flex-shrink-0 active:scale-95"
               aria-label="Envoyer le message"
             >
               <Send className="h-5 w-5" />
@@ -652,7 +644,7 @@ export default function AIChat({ isOpen, onClose, context }: AIChatProps) {
           </div>
 
           {isListening && (
-            <div className="mt-3 mb-2 rounded-2xl border border-red-200/80 bg-red-50/80 px-4 py-3 dark:border-red-500/40 dark:bg-red-500/10">
+            <div className="mt-3 mb-1 rounded-2xl border border-red-500/20 bg-red-500/5 px-4 py-3 backdrop-blur-sm">
               <div className="flex items-center gap-3">
                 <span className="flex h-9 w-9 items-center justify-center rounded-full bg-red-500 text-white shadow-inner shadow-red-300">
                   <Mic className="h-4 w-4" />

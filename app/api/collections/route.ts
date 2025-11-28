@@ -1,240 +1,209 @@
 import { NextRequest, NextResponse } from "next/server"
-
 import { createServerClient } from "@/lib/supabase-server"
 import { getSupabaseAdmin } from "@/lib/db"
-import { createJob } from "@/lib/jobs"
-import type { CollectionGenerationJobPayload, CollectionGenerationSource } from "@/lib/collections/processor"
 
-function ensureArray(value: unknown): string[] {
-  if (!value) return []
-  if (Array.isArray(value)) {
-    return value.map((entry) => String(entry).trim()).filter(Boolean)
-  }
-  return String(value)
-    .split(",")
-    .map((entry) => entry.trim())
-    .filter(Boolean)
-}
+export const dynamic = "force-dynamic"
 
-function pickLatestVersion(document: any) {
-  if (document.current_version) {
-    return document.current_version
-  }
-  const versions = document.document_versions ?? []
-  if (!versions.length) return null
-  return versions.slice().sort((a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()).pop()
-}
-
-export async function GET(req: NextRequest) {
-  const supabase = await createServerClient()
-  if (!supabase) {
-    return NextResponse.json({ error: "Configuration Supabase manquante" }, { status: 500 })
-  }
-
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser()
-
-  if (authError || !user) {
-    return NextResponse.json({ error: "Non authentifié" }, { status: 401 })
-  }
-
-  const admin = getSupabaseAdmin()
-  if (!admin) {
-    console.error("[GET /api/collections] Admin client is null - SUPABASE_SERVICE_ROLE_KEY not configured")
-    return NextResponse.json({ error: "Configuration serveur invalide" }, { status: 500 })
-  }
-  const db = admin
-
-  const { data, error } = await db
-    .from("study_collections")
-    .select(
-      `
-      id,
-      title,
-      tags,
-      status,
-      total_sources,
-      total_flashcards,
-      total_quiz,
-      prompt_tokens,
-      completion_tokens,
-      metadata,
-      created_at,
-      updated_at
-    `
-    )
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false })
-
-  if (error) {
-    console.error("[GET /api/collections] Supabase error", error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
-  }
-
-  return NextResponse.json(data ?? [])
-}
-
-export async function POST(req: NextRequest) {
-  const supabase = await createServerClient()
-  if (!supabase) {
-    return NextResponse.json({ error: "Configuration Supabase manquante" }, { status: 500 })
-  }
-
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser()
-
-  if (authError || !user) {
-    return NextResponse.json({ error: "Non authentifié" }, { status: 401 })
-  }
-
-  const admin = getSupabaseAdmin()
-  if (!admin) {
-    console.error("[POST /api/collections] Admin client is null - SUPABASE_SERVICE_ROLE_KEY not configured")
-    return NextResponse.json({ error: "Configuration serveur invalide" }, { status: 500 })
-  }
-  const db = admin
-
-  let body: any = null
+// GET /api/collections - Récupérer toutes les collections de l'utilisateur
+export async function GET() {
   try {
-    body = await req.json()
-  } catch {
-    return NextResponse.json({ error: "JSON invalide" }, { status: 400 })
-  }
-
-  const rawTags = ensureArray(body?.tags)
-  if (rawTags.length === 0) {
-    return NextResponse.json({ error: "Merci de sélectionner au moins un tag" }, { status: 400 })
-  }
-
-  const title =
-    typeof body?.title === "string" && body.title.trim()
-      ? body.title.trim()
-      : `Collection ${new Date().toLocaleString("fr-FR")}`
-
-  const { data: documents, error: documentsError } = await db
-    .from("documents")
-    .select(
-      `
-      id,
-      title,
-      tags,
-      status,
-      current_version_id,
-      current_version:document_versions!documents_current_version_fk (
-        id,
-        storage_path,
-        raw_text,
-        created_at
-      ),
-      document_versions:document_versions!document_versions_document_id_fkey (
-        id,
-        storage_path,
-        raw_text,
-        created_at
-      )
-    `
-    )
-    .eq("user_id", user.id)
-    .overlaps("tags", rawTags)
-
-  if (documentsError) {
-    console.error("[POST /api/collections] documents ERROR:", {
-      error: documentsError,
-      code: documentsError.code,
-      message: documentsError.message,
-      details: documentsError.details,
-      hint: documentsError.hint,
-      tags: rawTags,
-    })
-    return NextResponse.json({ error: "Impossible de récupérer les supports" }, { status: 500 })
-  }
-
-  console.log("[POST /api/collections] documents found:", documents?.length || 0)
-
-  const sources: Array<{ document: any; version: any }> = []
-
-  for (const document of documents ?? []) {
-    const version = pickLatestVersion(document)
-    if (!version) continue
-
-    if (!version.storage_path && !version.raw_text) {
-      continue
+    const supabase = await createServerClient()
+    if (!supabase) {
+      return NextResponse.json({ error: "Configuration Supabase manquante" }, { status: 500 })
     }
 
-    sources.push({ document, version })
-  }
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser()
 
-  if (sources.length === 0) {
-    return NextResponse.json({ error: "Aucun support trouvé pour les tags sélectionnés" }, { status: 400 })
-  }
+    if (authError || !user) {
+      return NextResponse.json({ error: "Non authentifié" }, { status: 401 })
+    }
 
-  const { data: collection, error: collectionError } = await db
-    .from("study_collections")
-    .insert({
-      user_id: user.id,
-      title,
-      tags: rawTags,
-      status: "processing",
-      total_sources: sources.length,
-    })
-    .select("id")
-    .single()
+    const admin = getSupabaseAdmin()
+    if (!admin) {
+      return NextResponse.json({ error: "Configuration Supabase manquante" }, { status: 500 })
+    }
 
-  if (collectionError || !collection) {
-    console.error("[POST /api/collections] insert collection", collectionError)
-    return NextResponse.json({ error: "Impossible de créer la collection" }, { status: 500 })
-  }
+    // Récupérer les collections
+    const { data: collections, error } = await admin
+      .from("collections")
+      .select("id, title, color, created_at, updated_at")
+      .eq("user_id", user.id)
+      .order("updated_at", { ascending: false })
 
-  const sourceRows = sources.map(({ document, version }) => ({
-    collection_id: collection.id,
-    document_id: document.id,
-    document_version_id: version.id,
-    title: document.title,
-    tags: document.tags ?? [],
-    text_length: 0,
-  }))
+    console.log("[GET /api/collections] ✅ Collections trouvées:", collections?.length || 0, "pour user:", user.id)
 
-  const { error: insertSourcesError } = await db.from("study_collection_sources").insert(sourceRows)
-
-  if (insertSourcesError) {
-    console.error("[POST /api/collections] insert sources", insertSourcesError)
-    await db.from("study_collections").delete().eq("id", collection.id)
-    return NextResponse.json({ error: "Impossible d'enregistrer les sources de la collection" }, { status: 500 })
-  }
-
-  const jobPayload: CollectionGenerationJobPayload = {
-    collectionId: collection.id,
-    userId: user.id,
-    title,
-    tags: rawTags,
-    sources: sources.map(({ document, version }) => {
-      const prepared: CollectionGenerationSource = {
-        documentId: document.id,
-        documentVersionId: version.id,
-        storagePath: version.storage_path ?? "",
-        title: document.title,
-        tags: document.tags ?? [],
-        rawText: version.raw_text ?? null,
+    if (error) {
+      console.error("[GET /api/collections] ❌ Erreur Supabase:", error)
+      
+      // Si la table n'existe pas, donner des instructions claires
+      if (error.message?.includes("does not exist") || error.message?.includes("schema cache")) {
+        return NextResponse.json(
+          { 
+            error: "La table 'collections' n'existe pas dans la base de données.",
+            details: "Veuillez exécuter le fichier 'supabase-create-collections-table.sql' dans l'éditeur SQL de Supabase pour créer la table collections et la colonne collection_id.",
+            migrationFile: "supabase-create-collections-table.sql"
+          },
+          { status: 500 }
+        )
       }
-      return prepared
-    }),
+      
+      return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+
+    if (!collections || collections.length === 0) {
+      console.log("[GET /api/collections] ⚠️ Aucune collection trouvée pour l'utilisateur")
+      return NextResponse.json([])
+    }
+
+    // Transformer les données pour correspondre à l'interface Collection
+    const formattedCollections = await Promise.all(
+      collections.map(async (collection: any) => {
+        // Compter les documents
+        const { count: docCount } = await admin
+          .from("documents")
+          .select("*", { count: "exact", head: true })
+          .eq("collection_id", collection.id)
+
+        // Compter les artefacts (revision_notes via document_sections)
+        const { data: documents } = await admin
+          .from("documents")
+          .select("id")
+          .eq("collection_id", collection.id)
+
+        const documentIds = documents?.map((d: any) => d.id) || []
+        
+        let artifactCount = 0
+        if (documentIds.length > 0) {
+          const { data: versions } = await admin
+            .from("document_versions")
+            .select("id")
+            .in("document_id", documentIds)
+
+          const versionIds = versions?.map((v: any) => v.id) || []
+          
+          if (versionIds.length > 0) {
+            const { data: sections } = await admin
+              .from("document_sections")
+              .select("id")
+              .in("document_version_id", versionIds)
+
+            const sectionIds = sections?.map((s: any) => s.id) || []
+            
+            if (sectionIds.length > 0) {
+              const { count } = await admin
+                .from("revision_notes")
+                .select("*", { count: "exact", head: true })
+                .in("document_section_id", sectionIds)
+              
+              artifactCount = count || 0
+            }
+          }
+        }
+
+        // Trouver la date de dernière activité
+        const { data: lastDoc } = await admin
+          .from("documents")
+          .select("updated_at")
+          .eq("collection_id", collection.id)
+          .order("updated_at", { ascending: false })
+          .limit(1)
+          .maybeSingle()
+
+        return {
+          id: collection.id,
+          title: collection.title,
+          color: collection.color,
+          doc_count: docCount || 0,
+          artifact_count: artifactCount,
+          last_active: lastDoc?.updated_at || collection.updated_at || collection.created_at,
+        }
+      })
+    )
+
+    console.log("[GET /api/collections] ✅ Collections formatées:", formattedCollections.length)
+    return NextResponse.json(formattedCollections)
+  } catch (err: any) {
+    console.error("[GET /api/collections] ❌ Exception:", err)
+    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 })
   }
-
-  const job = await createJob({
-    userId: user.id,
-    type: "collection-generation",
-    payload: jobPayload,
-    client: db,
-  })
-
-  return NextResponse.json({
-    collectionId: collection.id,
-    jobId: job.id,
-    status: "processing",
-  })
 }
 
+// POST /api/collections - Créer une nouvelle collection
+export async function POST(request: NextRequest) {
+  try {
+    const supabase = await createServerClient()
+    if (!supabase) {
+      return NextResponse.json({ error: "Configuration Supabase manquante" }, { status: 500 })
+    }
+
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser()
+
+    if (authError || !user) {
+      return NextResponse.json({ error: "Non authentifié" }, { status: 401 })
+    }
+
+    const admin = getSupabaseAdmin()
+    if (!admin) {
+      return NextResponse.json({ error: "Configuration Supabase manquante" }, { status: 500 })
+    }
+
+    const body = await request.json()
+    const { title, color } = body
+
+    if (!title || !title.trim()) {
+      return NextResponse.json({ error: "Le titre est requis" }, { status: 400 })
+    }
+
+    console.log("[POST /api/collections] 📝 Création collection:", { title: title.trim(), color, user_id: user.id })
+
+    const { data: collection, error } = await admin
+      .from("collections")
+      .insert({
+        user_id: user.id,
+        title: title.trim(),
+        color: color || "from-blue-500/20 via-blue-400/10 to-purple-500/20",
+      })
+      .select("id, title, color, created_at, updated_at")
+      .single()
+
+    if (error) {
+      console.error("[POST /api/collections] ❌ Erreur Supabase:", error)
+      
+      // Si la table n'existe pas, donner des instructions claires
+      if (error.message?.includes("does not exist") || error.message?.includes("schema cache")) {
+        return NextResponse.json(
+          { 
+            error: "La table 'collections' n'existe pas dans la base de données.",
+            details: "Veuillez exécuter le fichier 'supabase-create-collections-table.sql' dans l'éditeur SQL de Supabase pour créer la table collections.",
+            migrationFile: "supabase-create-collections-table.sql"
+          },
+          { status: 500 }
+        )
+      }
+      
+      return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+
+    // Retourner au format Collection
+    const response = {
+      id: collection.id,
+      title: collection.title,
+      color: collection.color,
+      doc_count: 0,
+      artifact_count: 0,
+      last_active: collection.created_at,
+    }
+    
+    console.log("[POST /api/collections] ✅ Collection créée avec succès:", response.id)
+    return NextResponse.json(response)
+  } catch (err: any) {
+    console.error("[POST /api/collections] ❌ Exception:", err)
+    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 })
+  }
+}

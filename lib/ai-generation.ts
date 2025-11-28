@@ -301,7 +301,32 @@ function buildSystemPrompt(mode: GenerationMode, language: 'fr' | 'en' = 'fr'): 
     case "translate":
       return "Traduis fidèlement le texte source en anglais, sans notes ni introduction. Réponds uniquement avec la traduction."
     case "summarize":
-      return "Résume le texte en deux phrases maximum, sans métadonnées ni tournures inutiles."
+      return `Tu es un expert en synthèse documentaire chargé de rédiger des résumés clairs et structurés.
+
+RÈGLES ABSOLUES DE FORMATAGE (MARKDOWN ÉPURÉ) :
+1. INTERDICTION FORMELLE d'utiliser le caractère astérisque (*). Ni pour le gras (**mot**), ni pour l'italique (*mot*), ni pour les listes (* item).
+2. Pour la structure, utilise UNIQUEMENT des dièses (#) :
+   - "## " pour les titres principaux.
+   - "### " pour les sous-titres.
+3. Pour les énumérations, utilise UNIQUEMENT des tirets du milieu ("- ") ou des chiffres ("1. ").
+4. Pour mettre en valeur une idée clé sans utiliser de gras, utilise les citations Markdown ("> ").
+5. Rédige de vrais paragraphes complets et aérés. Saute une ligne entre chaque élément.
+
+TON OBJECTIF :
+Produire un texte qui s'affiche parfaitement dans un lecteur Markdown, qui soit très lisible, professionnel, et sans aucun bruit visuel.
+
+STRUCTURE DE LA RÉPONSE :
+## Synthèse
+[Résumé global du document]
+
+## Points Essentiels
+- [Point 1]
+- [Point 2]
+
+> Note importante : [Si besoin de souligner un point crucial]
+
+## Conclusion
+[Conclusion brève]`
     case "fiche":
       return `Tu es Nothly, assistant de révision. Tu reçois un extrait de document (parfois incomplet) et tu dois produire une fiche ultra-complète en combinant :
 - les informations réellement présentes dans "source"

@@ -22,7 +22,10 @@ interface Session {
   current: boolean
 }
 
+import { useTranslations } from "next-intl"
+
 export default function SecuritySettingsPage() {
+  const t = useTranslations("Settings.Security")
   const [loading, setLoading] = useState(false)
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(false)
   const [sessions, setSessions] = useState<Session[]>([
@@ -60,10 +63,10 @@ export default function SecuritySettingsPage() {
 
       if (resetError) throw resetError
 
-      alert("✅ Un email de réinitialisation a été envoyé à votre adresse email")
+      alert(t("resetSent"))
     } catch (error) {
       console.error("Erreur:", error)
-      alert("❌ Erreur lors de l'envoi de l'email de réinitialisation")
+      alert(t("resetError"))
     } finally {
       setLoading(false)
     }
@@ -72,7 +75,7 @@ export default function SecuritySettingsPage() {
   const handleLogoutAll = async () => {
     if (
       !confirm(
-        "Voulez-vous vraiment déconnecter tous vos appareils ? Vous devrez vous reconnecter partout."
+        t("logoutAllConfirm")
       )
     ) {
       return
@@ -80,28 +83,28 @@ export default function SecuritySettingsPage() {
 
     try {
       await fetch("/auth/signout", { method: "POST", credentials: "include", cache: "no-store" })
-      alert("✅ Toutes les sessions ont été fermées")
+      alert(t("logoutAllSuccess"))
       window.location.href = "/login"
     } catch (error) {
       console.error("Erreur:", error)
-      alert("❌ Erreur lors de la déconnexion")
+      alert(t("logoutAllError"))
     }
   }
 
   const handleLogoutSession = (sessionId: string) => {
-    if (confirm("Voulez-vous déconnecter cet appareil ?")) {
+    if (confirm(t("logoutSessionConfirm"))) {
       setSessions(sessions.filter(s => s.id !== sessionId))
-      alert("✅ Appareil déconnecté")
+      alert(t("logoutSessionSuccess"))
     }
   }
 
   const handleToggle2FA = () => {
     if (!twoFactorEnabled) {
-      alert("🔐 La configuration de l'authentification à deux facteurs sera bientôt disponible")
+      alert(t("2faComingSoon"))
     } else {
-      if (confirm("Voulez-vous désactiver l'authentification à deux facteurs ?")) {
+      if (confirm(t("2faDisableConfirm"))) {
         setTwoFactorEnabled(false)
-        alert("✅ Authentification à deux facteurs désactivée")
+        alert(t("2faDisabled"))
       }
     }
   }
@@ -110,9 +113,9 @@ export default function SecuritySettingsPage() {
     <div className="max-w-3xl mx-auto p-10">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-foreground mb-2">Sécurité</h1>
+        <h1 className="text-3xl font-bold text-foreground mb-2">{t("title")}</h1>
         <p className="text-muted-foreground">
-          Protégez votre compte et vos données
+          {t("description")}
         </p>
       </div>
 
@@ -123,7 +126,7 @@ export default function SecuritySettingsPage() {
             <Lock className="h-5 w-5 text-primary" />
           </div>
           <h2 className="text-lg font-semibold text-foreground">
-            Authentification
+            {t("authentication")}
           </h2>
         </div>
 
@@ -133,8 +136,8 @@ export default function SecuritySettingsPage() {
             <div className="flex items-center gap-3">
               <Key className="h-5 w-5 text-muted-foreground" />
               <div>
-                <p className="font-medium text-foreground text-sm">Mot de passe</p>
-                <p className="text-xs text-muted-foreground">Dernière modification il y a 30 jours</p>
+                <p className="font-medium text-foreground text-sm">{t("password")}</p>
+                <p className="text-xs text-muted-foreground">{t("lastModified")}</p>
               </div>
             </div>
             <button
@@ -142,7 +145,7 @@ export default function SecuritySettingsPage() {
               disabled={loading}
               className="px-4 py-2 rounded-lg border border-border text-foreground hover:bg-muted transition-all duration-200 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? "Envoi..." : "Modifier"}
+              {loading ? t("sending") : t("change")}
             </button>
           </div>
 
@@ -151,9 +154,9 @@ export default function SecuritySettingsPage() {
             <div className="flex items-center gap-3">
               <Shield className="h-5 w-5 text-muted-foreground" />
               <div>
-                <p className="font-medium text-foreground text-sm">Authentification à deux facteurs</p>
+                <p className="font-medium text-foreground text-sm">{t("twoFactor")}</p>
                 <p className="text-xs text-muted-foreground">
-                  {twoFactorEnabled ? "Activée" : "Sécurité renforcée recommandée"}
+                  {twoFactorEnabled ? t("enabled") : t("recommended")}
                 </p>
               </div>
             </div>
@@ -179,14 +182,14 @@ export default function SecuritySettingsPage() {
               <Monitor className="h-5 w-5 text-primary" />
             </div>
             <h2 className="text-lg font-semibold text-foreground">
-              Appareils connectés
+              {t("connectedDevices")}
             </h2>
           </div>
           <button
             onClick={handleLogoutAll}
             className="text-sm text-destructive hover:underline font-medium"
           >
-            Tout déconnecter
+            {t("logoutAll")}
           </button>
         </div>
 
@@ -210,7 +213,7 @@ export default function SecuritySettingsPage() {
                   </p>
                   {session.current && (
                     <span className="px-2 py-0.5 bg-green-500/10 text-green-500 text-xs font-medium rounded-full">
-                      Actuel
+                      {t("current")}
                     </span>
                   )}
                 </div>
@@ -230,7 +233,7 @@ export default function SecuritySettingsPage() {
                   onClick={() => handleLogoutSession(session.id)}
                   className="text-sm text-destructive hover:underline font-medium"
                 >
-                  Déconnecter
+                  {t("logout")}
                 </button>
               )}
             </div>
@@ -245,15 +248,15 @@ export default function SecuritySettingsPage() {
             <Clock className="h-5 w-5 text-primary" />
           </div>
           <h2 className="text-lg font-semibold text-foreground">
-            Activité récente
+            {t("recentActivity")}
           </h2>
         </div>
 
         <div className="space-y-3">
           {[
-            { action: "Connexion réussie", time: "Il y a 2 heures", status: "success" },
-            { action: "Mot de passe modifié", time: "Il y a 30 jours", status: "success" },
-            { action: "Tentative de connexion échouée", time: "Il y a 45 jours", status: "warning" },
+            { action: t("loginSuccess"), time: "Il y a 2 heures", status: "success" },
+            { action: t("passwordChanged"), time: "Il y a 30 jours", status: "success" },
+            { action: t("loginFailed"), time: "Il y a 45 jours", status: "warning" },
           ].map((activity, index) => (
             <div
               key={index}
@@ -279,28 +282,28 @@ export default function SecuritySettingsPage() {
       <div className="bg-primary/10 border border-primary/20 rounded-xl p-6 mb-6 transition-colors">
         <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
           <Shield className="h-4 w-4" />
-          Bonnes pratiques de sécurité
+          {t("bestPractices")}
         </h3>
         <ul className="space-y-2 text-sm text-muted-foreground">
           <li className="flex items-start gap-2">
             <span className="text-primary mt-0.5">•</span>
-            Utilisez un mot de passe fort et unique (12+ caractères)
+            {t("bp1")}
           </li>
           <li className="flex items-start gap-2">
             <span className="text-primary mt-0.5">•</span>
-            Activez l'authentification à deux facteurs
+            {t("bp2")}
           </li>
           <li className="flex items-start gap-2">
             <span className="text-primary mt-0.5">•</span>
-            Ne partagez jamais votre mot de passe
+            {t("bp3")}
           </li>
           <li className="flex items-start gap-2">
             <span className="text-primary mt-0.5">•</span>
-            Vérifiez régulièrement vos appareils connectés
+            {t("bp4")}
           </li>
           <li className="flex items-start gap-2">
             <span className="text-primary mt-0.5">•</span>
-            Déconnectez-vous des appareils publics
+            {t("bp5")}
           </li>
         </ul>
       </div>
@@ -312,12 +315,12 @@ export default function SecuritySettingsPage() {
             <AlertTriangle className="h-5 w-5 text-destructive" />
           </div>
           <h2 className="text-lg font-semibold text-foreground">
-            Zone dangereuse
+            {t("dangerZone")}
           </h2>
         </div>
 
         <p className="text-sm text-muted-foreground mb-4">
-          Ces actions sont irréversibles et peuvent compromettre la sécurité de votre compte.
+          {t("dangerZoneDesc")}
         </p>
 
         <button
@@ -325,7 +328,7 @@ export default function SecuritySettingsPage() {
           className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-lg bg-destructive/20 border border-destructive text-destructive hover:bg-destructive/30 transition-all duration-200 font-medium"
         >
           <LogOut className="h-5 w-5" />
-          Déconnecter tous les appareils
+          {t("logoutAllDevices")}
         </button>
       </div>
     </div>

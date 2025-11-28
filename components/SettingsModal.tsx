@@ -10,7 +10,10 @@ interface SettingsModalProps {
 
 type SettingSection = "profile" | "appearance" | "plan" | "security" | "notifications" | "language" | "data"
 
+import { useTranslations } from "next-intl"
+
 export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
+    const t = useTranslations("Settings.Menu")
     const [activeSection, setActiveSection] = useState<SettingSection>("profile")
     const [ActiveComponent, setActiveComponent] = useState<any>(null)
     const [loading, setLoading] = useState(false)
@@ -64,37 +67,37 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     const menuItems = [
         {
             id: "profile" as SettingSection,
-            label: "Profil",
+            label: t("profile"),
             icon: User,
         },
         {
             id: "appearance" as SettingSection,
-            label: "Apparence",
+            label: t("appearance"),
             icon: Palette,
         },
         {
             id: "plan" as SettingSection,
-            label: "Abonnement",
+            label: t("plan"),
             icon: CreditCard,
         },
         {
             id: "security" as SettingSection,
-            label: "Sécurité",
+            label: t("security"),
             icon: Shield,
         },
         {
             id: "notifications" as SettingSection,
-            label: "Notifications",
+            label: t("notifications"),
             icon: Bell,
         },
         {
             id: "language" as SettingSection,
-            label: "Langue & Région",
+            label: t("language"),
             icon: Globe,
         },
         {
             id: "data" as SettingSection,
-            label: "Données",
+            label: t("data"),
             icon: Database,
         },
     ]
@@ -118,8 +121,8 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                         {/* Header */}
                         <div className="p-6 border-b border-border flex items-center justify-between">
                             <div>
-                                <h2 className="text-xl font-bold text-foreground">Paramètres</h2>
-                                <p className="text-sm text-muted-foreground">Gérez votre compte</p>
+                                <h2 className="text-xl font-bold text-foreground">{t("title")}</h2>
+                                <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
                             </div>
                         </div>
 

@@ -17,13 +17,12 @@ export default async function DashboardPage() {
       redirect("/login")
     }
 
-    redirect("/stack")
+    // Nouvelle redirection vers l'espace de travail unifié
+    redirect("/workspace")
   } catch (error: any) {
-    // Si c'est une erreur de redirection, la laisser passer
     if (error?.digest?.includes('NEXT_REDIRECT')) {
       throw error
     }
-    // Sinon, rediriger vers login
     redirect("/login")
   }
 }
