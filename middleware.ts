@@ -71,7 +71,7 @@ export async function middleware(request: NextRequest) {
   const publicRoutes = ['/', '/pricing', '/login', '/register']
 
   // Liste des routes protégées (nécessitent une session)
-  const protectedRoutes = ['/dashboard', '/note', '/new', '/chat', '/settings', '/stack', '/flashcards', '/workspace', '/calendar', '/documents']
+  const protectedRoutes = ['/dashboard', '/note', '/new', '/chat', '/settings', '/workspace', '/calendar', '/documents']
 
   // Vérifier si c'est une route publique
   const isPublicRoute = publicRoutes.some(route => pathname === route)
@@ -102,7 +102,7 @@ export async function middleware(request: NextRequest) {
       const { data: { session } } = await supabase.auth.getSession()
 
       if (session && (pathname === '/' || pathname === '/login' || pathname === '/register')) {
-        const redirectUrl = new URL('/stack', request.url)
+        const redirectUrl = new URL('/workspace', request.url)
         const redirectResponse = NextResponse.redirect(redirectUrl)
 
         // Copier les cookies de baseResponse (qui contient potentiellement le token rafraîchi)
