@@ -6,6 +6,8 @@ import { ThemeProvider } from "@/components/ThemeProvider"
 import { NextIntlClientProvider } from "next-intl"
 import { getLocale, getMessages } from "next-intl/server"
 import { notFound } from "next/navigation"
+import { SidebarProvider } from "@/components/providers/SidebarProvider"
+import { Toaster } from "sonner"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -59,9 +61,12 @@ export default async function RootLayout({
       <body className={`${inter.className} min-h-screen bg-background text-foreground transition-colors`}>
         <NextIntlClientProvider locale={locale} messages={messages}>
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-            <ReactQueryProvider>
-              {children}
-            </ReactQueryProvider>
+            <SidebarProvider>
+              <ReactQueryProvider>
+                {children}
+                <Toaster position="bottom-right" theme="system" closeButton richColors />
+              </ReactQueryProvider>
+            </SidebarProvider>
           </ThemeProvider>
         </NextIntlClientProvider>
       </body>
