@@ -12,6 +12,13 @@ const nextConfig = {
   },
   transpilePackages: ['react-markdown', 'remark-gfm'],
   
+  // Augmenter la limite de taille pour les uploads de PDF
+  api: {
+    bodyParser: {
+      sizeLimit: '50mb',
+    },
+  },
+  
   // Désactiver le cache Turbopack si problématique (décommentez si nécessaire)
   // turbo: {},
   
