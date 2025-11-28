@@ -77,7 +77,7 @@ export default function LoginPage() {
       } else if (data.session) {
         setMessage("✅ Logged in! Redirecting...")
         setIsSuccess(true)
-        router.replace("/stack")
+        router.replace("/workspace")
       }
     } catch (error) {
       setMessage("An error occurred")
@@ -178,8 +178,8 @@ export default function LoginPage() {
               type="button"
               onClick={() => setMode("password")}
               className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors ${mode === "password"
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-muted-foreground hover:bg-muted/80"
+                ? "bg-primary text-primary-foreground"
+                : "bg-muted text-muted-foreground hover:bg-muted/80"
                 }`}
             >
               Password
@@ -188,8 +188,8 @@ export default function LoginPage() {
               type="button"
               onClick={() => setMode("magic-link")}
               className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors ${mode === "magic-link"
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-muted-foreground hover:bg-muted/80"
+                ? "bg-primary text-primary-foreground"
+                : "bg-muted text-muted-foreground hover:bg-muted/80"
                 }`}
             >
               Magic link
@@ -298,8 +298,8 @@ export default function LoginPage() {
               {message && (
                 <div
                   className={`p-3 rounded-lg text-sm ${isSuccess
-                      ? "bg-primary/10 text-primary border border-primary/20"
-                      : "bg-destructive/10 text-destructive border border-destructive/20"
+                    ? "bg-primary/10 text-primary border border-primary/20"
+                    : "bg-destructive/10 text-destructive border border-destructive/20"
                     }`}
                 >
                   {message}
@@ -375,8 +375,8 @@ export default function LoginPage() {
                 {message && (
                   <div
                     className={`p-3 rounded-lg text-sm ${isSuccess
-                        ? "bg-primary/10 text-primary border border-primary/20"
-                        : "bg-destructive/10 text-destructive border border-destructive/20"
+                      ? "bg-primary/10 text-primary border border-primary/20"
+                      : "bg-destructive/10 text-destructive border border-destructive/20"
                       }`}
                   >
                     {message}
