@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { RotateCcw, X } from "lucide-react"
+import { RotateCcw, X, Zap, Brain } from "lucide-react"
 import MarkdownRenderer from "@/components/MarkdownRenderer"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -19,16 +19,65 @@ interface FlashcardViewerProps {
   onClose?: () => void
 }
 
-export default function FlashcardViewer({ cards, onClose }: FlashcardViewerProps) {
+export default function FlashcardViewer({ cards, onClose, studyCollectionId }: FlashcardViewerProps & { studyCollectionId?: string }) {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isFlipped, setIsFlipped] = useState(false)
   const [showButtons, setShowButtons] = useState(false)
+  const [stats, setStats] = useState<Record<string, any>>({})
+  const [mode, setMode] = useState<"all" | "smart">("all")
+  const [activeCards, setActiveCards] = useState<FlashcardItem[]>(cards)
 
+  // Charger les stats
   useEffect(() => {
+    if (studyCollectionId) {
+      fetch(`/api/flashcards/progress?studyCollectionId=${studyCollectionId}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.stats) {
+            const statsMap: Record<string, any> = {}
+            data.stats.forEach((s: any) => {
+              statsMap[s.flashcard_id] = s
+            })
+            setStats(statsMap)
+          }
+        })
+        .catch(err => console.error("Erreur chargement stats flashcards:", err))
+    }
+  }, [studyCollectionId])
+
+  // Filtrer les cartes en mode Smart
+  useEffect(() => {
+    if (mode === "smart") {
+      const now = new Date()
+      const dueCards = cards.filter(card => {
+        const stat = stats[card.id]
+        if (!stat) return true // Nouvelle carte -> à étudier
+        return new Date(stat.next_review_at) <= now // Date passée -> à réviser
+      })
+      // Si aucune carte due, on montre tout (ou un message de félicitations ?)
+      // Pour l'instant on montre tout trié par priorité (box la plus faible)
+      if (dueCards.length === 0) {
+        const sorted = [...cards].sort((a, b) => {
+          const boxA = stats[a.id]?.box || 0
+          const boxB = stats[b.id]?.box || 0
+          return boxA - boxB
+        })
+        setActiveCards(sorted)
+      } else {
+        setActiveCards(dueCards)
+      }
+    } else {
+      setActiveCards(cards)
+    }
     setCurrentIndex(0)
     setIsFlipped(false)
-    setShowButtons(false)
-  }, [cards])
+  }, [mode, cards, stats])
+
+  // Fonction pour tronquer le texte si trop long
+  const truncateText = (text: string, maxLength: number = 200): string => {
+    if (text.length <= maxLength) return text
+    return text.substring(0, maxLength).trim() + "..."
+  }
 
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
@@ -42,17 +91,18 @@ export default function FlashcardViewer({ cards, onClose }: FlashcardViewerProps
     return () => window.removeEventListener("keydown", handleKeyPress)
   }, [isFlipped])
 
-  if (!cards.length) {
+  if (!activeCards.length) {
     return null
   }
 
-  const current = cards[currentIndex]
-  const progress = ((currentIndex + 1) / cards.length) * 100
+  const current = activeCards[currentIndex]
+  const currentStat = stats[current.id]
+  const progress = ((currentIndex + 1) / activeCards.length) * 100
 
   const handleFlip = () => {
     const newFlippedState = !isFlipped
     setIsFlipped(newFlippedState)
-    
+
     // Délai pour afficher les boutons après le début du flip
     if (newFlippedState) {
       setTimeout(() => {
@@ -63,10 +113,39 @@ export default function FlashcardViewer({ cards, onClose }: FlashcardViewerProps
     }
   }
 
-  const handleStatus = (status: "difficile" | "moyen" | "acquis") => {
+  const handleStatus = async (status: "difficile" | "moyen" | "acquis") => {
+    // Sauvegarder le progrès
+    if (studyCollectionId) {
+      const quality = status === "acquis" ? "easy" : status === "moyen" ? "medium" : "hard"
+      try {
+        const res = await fetch("/api/flashcards/progress", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            flashcardId: current.id,
+            quality,
+            studyCollectionId
+          })
+        })
+        const data = await res.json()
+        if (data.success) {
+          setStats(prev => ({
+            ...prev,
+            [current.id]: {
+              ...prev[current.id],
+              box: data.box,
+              next_review_at: data.nextReview
+            }
+          }))
+        }
+      } catch (err) {
+        console.error("Erreur sauvegarde flashcard:", err)
+      }
+    }
+
     // Marquer le statut et passer à la carte suivante
     setShowButtons(false)
-    if (currentIndex < cards.length - 1) {
+    if (currentIndex < activeCards.length - 1) {
       setIsFlipped(false)
       setCurrentIndex(currentIndex + 1)
     } else {
@@ -85,11 +164,35 @@ export default function FlashcardViewer({ cards, onClose }: FlashcardViewerProps
   return (
     <div className="h-full w-full flex flex-col items-center justify-center p-6 md:p-8">
       <div className="w-full max-w-4xl mx-auto flex flex-col h-full justify-center">
-        {/* Header minimaliste avec titre et bouton fermer */}
-        <div className="flex justify-between items-center mb-8">
-          <h2 className="text-xl font-semibold text-foreground">
-            {currentIndex + 1}/{cards.length}
-          </h2>
+        {/* Header avec mode et progression */}
+        <div className="flex justify-between items-center mb-6">
+          <div className="flex items-center gap-4">
+            <h2 className="text-xl font-semibold text-foreground">
+              {currentIndex + 1}/{activeCards.length}
+            </h2>
+            <div className="flex bg-muted rounded-lg p-1">
+              <button
+                onClick={() => setMode("all")}
+                className={cn(
+                  "px-3 py-1 text-xs font-medium rounded-md transition-all",
+                  mode === "all" ? "bg-background shadow text-foreground" : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                Tout
+              </button>
+              <button
+                onClick={() => setMode("smart")}
+                className={cn(
+                  "px-3 py-1 text-xs font-medium rounded-md transition-all flex items-center gap-1.5",
+                  mode === "smart" ? "bg-background shadow text-primary" : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <Zap className="h-3 w-3" />
+                Smart Review
+              </button>
+            </div>
+          </div>
+
           {onClose && (
             <button
               onClick={onClose}
@@ -101,10 +204,20 @@ export default function FlashcardViewer({ cards, onClose }: FlashcardViewerProps
           )}
         </div>
 
+        {/* Info sur la carte actuelle (Box Leitner) */}
+        {currentStat && (
+          <div className="flex justify-center mb-4">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium">
+              <Brain className="h-3 w-3" />
+              Niveau {currentStat.box || 1}/5
+            </div>
+          </div>
+        )}
+
         {/* Scène 3D pour l'animation de flip */}
-        <div 
+        <div
           className="w-full"
-          style={{ 
+          style={{
             perspective: '1000px',
             height: '500px',
             maxHeight: '70vh'
@@ -139,7 +252,7 @@ export default function FlashcardViewer({ cards, onClose }: FlashcardViewerProps
                 </span>
                 {/* Question */}
                 <div className="text-3xl md:text-4xl font-semibold text-gray-800 dark:text-gray-100 leading-relaxed max-w-4xl [&_.prose]:text-3xl [&_.prose]:md:text-4xl [&_.prose]:font-semibold [&_.prose]:text-gray-800 [&_.prose_dark]:text-gray-100">
-                  <MarkdownRenderer content={current.question} />
+                  <MarkdownRenderer content={truncateText(current.question)} />
                 </div>
                 {/* Instruction */}
                 <p className="text-gray-400 dark:text-gray-400 text-base mt-6">
@@ -171,7 +284,7 @@ export default function FlashcardViewer({ cards, onClose }: FlashcardViewerProps
                 </span>
                 {/* Réponse */}
                 <div className="text-3xl md:text-4xl font-semibold text-gray-800 dark:text-gray-100 leading-relaxed max-w-4xl [&_.prose]:text-3xl [&_.prose]:md:text-4xl [&_.prose]:font-semibold [&_.prose]:text-gray-800 [&_.prose_dark]:text-gray-100">
-                  <MarkdownRenderer content={current.answer} />
+                  <MarkdownRenderer content={truncateText(current.answer)} />
                 </div>
                 {/* Instruction */}
                 <p className="text-gray-400 dark:text-gray-400 text-base mt-6">

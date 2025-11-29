@@ -58,31 +58,31 @@ interface QuizViewerProps {
 }
 
 const MASTERY_COLORS: Record<MasteryLevel, { bg: string; text: string; border: string; icon: typeof Brain; gradient: string }> = {
-  new: { 
-    bg: "bg-slate-50 dark:bg-slate-900/50", 
-    text: "text-slate-700 dark:text-slate-300", 
-    border: "border-slate-200 dark:border-slate-700", 
+  new: {
+    bg: "bg-slate-50 dark:bg-slate-900/50",
+    text: "text-slate-700 dark:text-slate-300",
+    border: "border-slate-200 dark:border-slate-700",
     icon: CircleDashed,
     gradient: "from-slate-500 to-slate-600"
   },
-  learning: { 
-    bg: "bg-rose-50 dark:bg-rose-950/40", 
-    text: "text-rose-700 dark:text-rose-400", 
-    border: "border-rose-200 dark:border-rose-800", 
+  learning: {
+    bg: "bg-rose-50 dark:bg-rose-950/40",
+    text: "text-rose-700 dark:text-rose-400",
+    border: "border-rose-200 dark:border-rose-800",
     icon: AlertCircle,
     gradient: "from-rose-500 to-rose-600"
   },
-  reviewing: { 
-    bg: "bg-amber-50 dark:bg-amber-950/40", 
-    text: "text-amber-700 dark:text-amber-400", 
-    border: "border-amber-200 dark:border-amber-800", 
+  reviewing: {
+    bg: "bg-amber-50 dark:bg-amber-950/40",
+    text: "text-amber-700 dark:text-amber-400",
+    border: "border-amber-200 dark:border-amber-800",
     icon: RotateCcw,
     gradient: "from-amber-500 to-amber-600"
   },
-  mastered: { 
-    bg: "bg-emerald-50 dark:bg-emerald-950/40", 
-    text: "text-emerald-700 dark:text-emerald-400", 
-    border: "border-emerald-200 dark:border-emerald-800", 
+  mastered: {
+    bg: "bg-emerald-50 dark:bg-emerald-950/40",
+    text: "text-emerald-700 dark:text-emerald-400",
+    border: "border-emerald-200 dark:border-emerald-800",
     icon: Award,
     gradient: "from-emerald-500 to-emerald-600"
   },
@@ -102,6 +102,8 @@ export default function QuizViewer({ questions, studyCollectionId, mode = "pract
   const [weakAreas, setWeakAreas] = useState<any[]>([])
   const [showWeakAreas, setShowWeakAreas] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
+
+  const [isFinished, setIsFinished] = useState(false)
 
   // Charger les zones de difficulté
   useEffect(() => {
@@ -157,11 +159,24 @@ export default function QuizViewer({ questions, studyCollectionId, mode = "pract
     }
   }, [studyCollectionId, questions])
 
+  const [filterMode, setFilterMode] = useState<"all" | "mistakes">("all")
+
   // Mode adaptatif : réorganiser les questions par priorité
   const prioritizedQuestions = useMemo(() => {
-    if (mode !== "adaptive") return questions
+    let filtered = questions
 
-    return [...questions].sort((a, b) => {
+    if (filterMode === "mistakes") {
+      // Filtrer les questions qui ont été ratées dans la session précédente
+      // On utilise les stats actuelles pour identifier celles qui sont en "learning" ou ont des erreurs récentes
+      filtered = questions.filter(q => {
+        const stats = questionStats[q.id]
+        return stats && (stats.incorrect_attempts > 0 || stats.mastery_level === "learning")
+      })
+    }
+
+    if (mode !== "adaptive" && filterMode !== "mistakes") return filtered
+
+    return [...filtered].sort((a, b) => {
       const statsA = questionStats[a.id]
       const statsB = questionStats[b.id]
 
@@ -177,7 +192,23 @@ export default function QuizViewer({ questions, studyCollectionId, mode = "pract
       const errorsB = statsB?.incorrect_attempts || 0
       return errorsB - errorsA
     })
-  }, [questions, questionStats, mode])
+  }, [questions, questionStats, mode, filterMode])
+
+
+
+  const handleRestart = (onlyMistakes: boolean = false) => {
+    setQuestionStatuses({})
+    setIsFinished(false)
+    setStartTime(Date.now())
+
+    if (onlyMistakes) {
+      setFilterMode("mistakes")
+      // On laisse le useEffect de prioritizedQuestions mettre à jour currentQuestionId
+    } else {
+      setFilterMode("all")
+      // On laisse le useEffect de prioritizedQuestions mettre à jour currentQuestionId
+    }
+  }
 
   // Trouver l'index de la question actuelle dans prioritizedQuestions
   const currentIndex = useMemo(() => {
@@ -196,13 +227,13 @@ export default function QuizViewer({ questions, studyCollectionId, mode = "pract
   useEffect(() => {
     const currentQuestionsSet = new Set(prioritizedQuestions.map(q => q.id))
     const previousSet = previousQuestionsIds.current
-    
+
     // Vérifier si c'est un nouveau quiz (nouvelles questions) ou juste un réordonnancement
-    const isNewQuiz = 
-      previousSet.size === 0 || 
+    const isNewQuiz =
+      previousSet.size === 0 ||
       currentQuestionsSet.size !== previousSet.size ||
       ![...currentQuestionsSet].every(id => previousSet.has(id))
-    
+
     if (isNewQuiz) {
       // Nouveau quiz : réinitialiser
       previousQuestionsIds.current = currentQuestionsSet
@@ -223,7 +254,7 @@ export default function QuizViewer({ questions, studyCollectionId, mode = "pract
         }
       }
     }
-    
+
     // Toujours mettre à jour les statuts pour les nouvelles questions
     setQuestionStatuses((prev) => {
       const next: Record<string, QuizQuestionStatus> = {}
@@ -284,6 +315,19 @@ export default function QuizViewer({ questions, studyCollectionId, mode = "pract
   const answeredCount = prioritizedQuestions.length - statusCounts.pending
   const accuracyPercent = answeredCount ? Math.round((statusCounts.correct / answeredCount) * 100) : 0
   const progressPercent = prioritizedQuestions.length ? Math.round((answeredCount / prioritizedQuestions.length) * 100) : 0
+
+  // Vérifier si le quiz est terminé
+  useEffect(() => {
+    if (prioritizedQuestions.length > 0 && answeredCount === prioritizedQuestions.length && !isFinished) {
+      // Petit délai pour laisser l'utilisateur voir la dernière réponse
+      const timer = setTimeout(() => setIsFinished(true), 1500)
+      return () => clearTimeout(timer)
+    }
+  }, [answeredCount, prioritizedQuestions.length, isFinished])
+
+
+
+
 
   const currentStatus: QuizQuestionStatus = current ? questionStatuses[current.id] ?? "pending" : "pending"
   const currentStats = current ? questionStats[current.id] : null
@@ -408,6 +452,66 @@ export default function QuizViewer({ questions, studyCollectionId, mode = "pract
     return null
   }
 
+
+
+  if (isFinished) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full p-8 text-center space-y-8 animate-in fade-in zoom-in-95 duration-500">
+        <div className="space-y-4">
+          <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-primary/10 mb-4">
+            <Award className="h-12 w-12 text-primary" />
+          </div>
+          <h2 className="text-3xl font-bold">Session terminée !</h2>
+          <p className="text-muted-foreground text-lg max-w-md mx-auto">
+            Vous avez répondu à toutes les questions. Voici votre résumé.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-3 gap-6 w-full max-w-2xl">
+          <div className="bg-card border rounded-xl p-6 shadow-sm">
+            <div className="text-4xl font-bold text-primary mb-2">{accuracyPercent}%</div>
+            <div className="text-sm text-muted-foreground font-medium">Précision</div>
+          </div>
+          <div className="bg-card border rounded-xl p-6 shadow-sm">
+            <div className="text-4xl font-bold text-emerald-500 mb-2">{statusCounts.correct}</div>
+            <div className="text-sm text-muted-foreground font-medium">Correctes</div>
+          </div>
+          <div className="bg-card border rounded-xl p-6 shadow-sm">
+            <div className="text-4xl font-bold text-rose-500 mb-2">{statusCounts.incorrect}</div>
+            <div className="text-sm text-muted-foreground font-medium">À revoir</div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-4 pt-8">
+          <Button
+            variant="outline"
+            size="lg"
+            onClick={() => handleRestart(false)}
+            className="h-12 px-8 text-base"
+          >
+            <RotateCcw className="mr-2 h-5 w-5" />
+            Tout recommencer
+          </Button>
+          {statusCounts.incorrect > 0 && (
+            <Button
+              size="lg"
+              onClick={() => {
+                // Reset statuses for incorrect questions only? 
+                // For now, let's just reset everything but maybe we can implement a "Review" mode later
+                // Actually, let's just restart for now as per the alert above
+                handleRestart(false)
+              }}
+              className="h-12 px-8 text-base shadow-lg hover:shadow-xl transition-all"
+            >
+              <Target className="mr-2 h-5 w-5" />
+              Revoir les erreurs
+            </Button>
+          )}
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="flex flex-col gap-4 h-full max-w-7xl mx-auto w-full px-4 py-6">
       {/* Header compact avec mode et progression */}
@@ -425,7 +529,7 @@ export default function QuizViewer({ questions, studyCollectionId, mode = "pract
             </p>
           </div>
         </div>
-        
+
         <div className="flex items-center gap-2">
           {weakAreas.length > 0 && (
             <Button
@@ -463,13 +567,13 @@ export default function QuizViewer({ questions, studyCollectionId, mode = "pract
                       type: "quiz",
                     }),
                   })
-                  
+
                   if (!response.ok) {
                     const errorData = await response.json().catch(() => ({ error: "Erreur inconnue" }))
                     alert(`Erreur: ${errorData.error || `Erreur ${response.status}`}`)
                     return
                   }
-                  
+
                   const data = await response.json()
                   if (data.success) {
                     alert(`✅ ${data.itemsGenerated} questions ciblées générées avec succès !`)
@@ -592,8 +696,8 @@ export default function QuizViewer({ questions, studyCollectionId, mode = "pract
               <div className="flex items-center gap-2 flex-wrap">
                 <div className={cn(
                   "inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-semibold",
-                  masteryMeta.bg, 
-                  masteryMeta.text, 
+                  masteryMeta.bg,
+                  masteryMeta.text,
                   masteryMeta.border
                 )}>
                   <masteryMeta.icon className="h-3 w-3" />
@@ -619,22 +723,22 @@ export default function QuizViewer({ questions, studyCollectionId, mode = "pract
                   </div>
                 )}
               </div>
-              
+
               <div className="flex items-center gap-2">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={handlePrevious} 
-                  className="rounded-lg" 
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handlePrevious}
+                  className="rounded-lg"
                   disabled={currentIndex === 0}
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={handleNext} 
-                  className="rounded-lg" 
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleNext}
+                  className="rounded-lg"
                   disabled={currentIndex === prioritizedQuestions.length - 1}
                 >
                   <ChevronRight className="h-4 w-4" />
@@ -783,22 +887,22 @@ export default function QuizViewer({ questions, studyCollectionId, mode = "pract
                     isActive
                       ? "border-primary bg-primary/10 text-primary shadow-sm"
                       : cn(
-                          masteryColor.border,
-                          masteryColor.bg,
-                          masteryColor.text,
-                          "hover:opacity-80"
-                        )
+                        masteryColor.border,
+                        masteryColor.bg,
+                        masteryColor.text,
+                        "hover:opacity-80"
+                      )
                   )}
                 >
-                  <span 
+                  <span
                     className={cn(
                       "h-1.5 w-1.5 rounded-full",
-                      status === "correct" 
-                        ? "bg-emerald-500" 
-                        : status === "incorrect" 
-                        ? "bg-rose-500" 
-                        : "bg-slate-400"
-                    )} 
+                      status === "correct"
+                        ? "bg-emerald-500"
+                        : status === "incorrect"
+                          ? "bg-rose-500"
+                          : "bg-slate-400"
+                    )}
                   />
                   {idx + 1}
                 </button>

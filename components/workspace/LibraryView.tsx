@@ -152,25 +152,60 @@ export function LibraryView({ onSelectCollection }: LibraryViewProps) {
       {/* Contenu - Grille moderne */}
       <div className="relative z-10 flex-1 overflow-y-auto p-6">
         {filteredCollections.length === 0 ? (
-          <div className="flex items-center justify-center h-full">
-            <div className="text-center max-w-md">
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/10 mb-4">
-                <Layers className="h-8 w-8 text-primary" />
+          <div className="flex flex-col items-center justify-center h-full relative z-10">
+            {/* Decorative background elements */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[100px]" />
+            </div>
+
+            <div className="relative z-10 flex flex-col items-center text-center max-w-lg mx-auto p-8 rounded-3xl border border-border/50 bg-background/30 backdrop-blur-xl shadow-2xl animate-in fade-in zoom-in-95 duration-500">
+              {/* Icon with glow */}
+              <div className="relative mb-8 group cursor-default">
+                <div className="absolute inset-0 bg-primary/20 rounded-full blur-xl group-hover:blur-2xl transition-all duration-500" />
+                <div className="relative h-24 w-24 rounded-2xl bg-gradient-to-br from-background to-muted border border-border/50 shadow-xl flex items-center justify-center group-hover:-translate-y-2 transition-transform duration-500">
+                  <Layers className="h-10 w-10 text-primary" />
+                  <Plus className="absolute top-4 right-4 h-4 w-4 text-primary/60" />
+                </div>
               </div>
-              <h2 className="text-xl font-semibold mb-2 text-foreground">
+
+              <h2 className="text-3xl font-bold tracking-tight mb-3 bg-clip-text text-transparent bg-gradient-to-br from-foreground to-foreground/70">
                 {t("noCollections")}
               </h2>
-              <p className="text-muted-foreground mb-6 text-sm">
+
+              <p className="text-muted-foreground text-lg mb-8 leading-relaxed">
                 {t("noCollectionsDesc")}
               </p>
+
               <Button
                 onClick={() => setIsCreateDialogOpen(true)}
-                size="sm"
-                className="rounded-lg"
+                size="lg"
+                className="h-12 px-8 rounded-full shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all duration-300 hover:scale-105 text-base"
               >
-                <Plus className="h-4 w-4 mr-2" />
+                <Plus className="h-5 w-5 mr-2" />
                 {t("createCollection")}
               </Button>
+
+              {/* Quick tips or features */}
+              <div className="grid grid-cols-2 gap-4 mt-12 w-full">
+                <div className="p-4 rounded-xl bg-background/50 border border-border/50 text-left hover:bg-background/80 transition-colors">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="p-1.5 rounded-lg bg-blue-500/10">
+                      <FileText className="h-4 w-4 text-blue-500" />
+                    </div>
+                    <span className="text-sm font-medium">Documents</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">Importez vos PDF et notes</p>
+                </div>
+                <div className="p-4 rounded-xl bg-background/50 border border-border/50 text-left hover:bg-background/80 transition-colors">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="p-1.5 rounded-lg bg-purple-500/10">
+                      <Sparkles className="h-4 w-4 text-purple-500" />
+                    </div>
+                    <span className="text-sm font-medium">AI Magic</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">Générez quiz et flashcards</p>
+                </div>
+              </div>
             </div>
           </div>
         ) : (

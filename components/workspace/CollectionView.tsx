@@ -3,6 +3,7 @@
 import { useState, useTransition, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { ArrowLeft, ArrowRight, FileText, Plus, Search, Sparkles, BookOpen, MessageSquare, Send, Loader2, X, Brain, ListChecks, ChevronDown, ChevronUp, Calendar, Trash2 } from "lucide-react"
+import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import type { Collection } from "@/lib/hooks/useCollections"
@@ -13,6 +14,8 @@ import QuizViewer, { type QuizQuestionItem } from "@/components/collections/Quiz
 import FlashcardViewer from "@/components/collections/FlashcardViewer"
 import type { FlashcardItem } from "@/components/collections/FlashcardViewer"
 import ReactMarkdown from "react-markdown"
+import { GenerationOverlay, type GenerationStep } from "@/components/GenerationOverlay"
+import { GenerationDialog, type GenerationIntent } from "./GenerationDialog"
 
 import remarkGfm from "remark-gfm"
 import { useTranslations } from "next-intl"
@@ -47,6 +50,18 @@ export function CollectionView({ collection, onBack, onSelectDocument }: Collect
   })
   const [activeTab, setActiveTab] = useState<"pdf" | "flashcards" | "quiz" | "resume">("pdf")
   const [showNoDocsWarning, setShowNoDocsWarning] = useState(true)
+
+  // États pour l'overlay de génération
+  const [isGenerating, setIsGenerating] = useState(false)
+  const [generationStep, setGenerationStep] = useState<GenerationStep>("intent")
+  const [pendingGenerationResult, setPendingGenerationResult] = useState<{
+    type: 'flashcards' | 'quiz' | 'summary',
+    data: any
+  } | null>(null)
+
+  // États pour le dialogue de génération
+  const [isGenerationDialogOpen, setIsGenerationDialogOpen] = useState(false)
+  const [generationIntent, setGenerationIntent] = useState<GenerationIntent | null>(null)
 
   // Charger les détails complets de la study_collection sélectionnée
   const { data: selectedFlashcardCollection, isLoading: isLoadingFlashcards } = useQuery({
@@ -187,14 +202,25 @@ export function CollectionView({ collection, onBack, onSelectDocument }: Collect
     }
   }
 
-  const handleSendMessage = async () => {
-    if (!chatInput.trim() || isSending) return
+  const handleSendMessage = async (messageOverride?: string, explicitDocIds?: string[]) => {
+    const messageToSend = typeof messageOverride === 'string' ? messageOverride : chatInput
+    if (!messageToSend.trim() || isSending) return
 
     setIsSending(true)
+    setIsGenerating(true)
+    setGenerationStep("intent")
+
+    // Simulation des étapes pendant que l'IA travaille
+    const stepTimers: NodeJS.Timeout[] = []
+
+    stepTimers.push(setTimeout(() => setGenerationStep("documents"), 1500))
+    stepTimers.push(setTimeout(() => setGenerationStep("context"), 3000))
+    stepTimers.push(setTimeout(() => setGenerationStep("generation"), 4500))
+
     try {
       // Extraire les IDs des documents mentionnés
-      const mentionedDocumentIds = extractMentionedDocumentIds(
-        chatInput,
+      let mentionedDocumentIds = extractMentionedDocumentIds(
+        messageToSend,
         documents.map((doc: any) => ({
           id: doc.id,
           title: doc.title,
@@ -202,16 +228,27 @@ export function CollectionView({ collection, onBack, onSelectDocument }: Collect
         }))
       )
 
+      // Si des IDs explicites sont fournis (via le dialogue), on les utilise
+      if (explicitDocIds && explicitDocIds.length > 0) {
+        mentionedDocumentIds = explicitDocIds
+      }
+
       // Appel API pour envoyer le message avec contexte de la collection et documents mentionnés
       const response = await fetch("/api/chat/collection", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           collectionId: collection.id,
-          message: chatInput.trim(),
+          message: messageToSend.trim(),
           mentionedDocumentIds: mentionedDocumentIds.length > 0 ? mentionedDocumentIds : undefined
         })
       })
+
+      // Nettoyer les timers si la réponse arrive avant la fin de la simulation
+      stepTimers.forEach(clearTimeout)
+
+      // Passer à l'étape de sauvegarde/finalisation
+      setGenerationStep("saving")
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}))
@@ -228,27 +265,50 @@ export function CollectionView({ collection, onBack, onSelectDocument }: Collect
         queryClient.invalidateQueries({ queryKey: ["collection-documents", collection.id] })
       ])
 
-      // Si des flashcards ou quiz ont été créés, afficher un message de succès et rediriger
+      // Marquer comme terminé
+      setGenerationStep("complete")
+
+      // Attendre un peu pour que l'utilisateur voie le succès
+      await new Promise(resolve => setTimeout(resolve, 1500))
+
+      // Si des flashcards ou quiz ont été créés, on prépare la sélection mais on ne change pas d'onglet
       if (data.studyCollectionId && (data.flashcards || data.quizQuestions)) {
         const flashcardCount = data.flashcards?.length || 0
         const quizCount = data.quizQuestions?.length || 0
-        const topic = data.searchTopic || 'demandé'
 
-        let message = ""
-        if (flashcardCount > 0 && quizCount > 0) {
-          message = t("successFlashcardsQuiz", { flashcardCount, quizCount, topic })
-        } else if (flashcardCount > 0) {
-          message = t("successFlashcards", { flashcardCount, topic })
+        if (flashcardCount > 0) {
+          setPendingGenerationResult({ type: 'flashcards', data: data.studyCollectionId })
         } else if (quizCount > 0) {
-          message = t("successQuiz", { quizCount, topic })
+          setPendingGenerationResult({
+            type: 'quiz',
+            data: {
+              id: data.studyCollectionId,
+              title: data.searchTopic || "Quiz",
+              quizQuestions: data.quizQuestions
+            }
+          })
         }
+      } else if (data.summary) {
+        setPendingGenerationResult({
+          type: 'summary',
+          data: {
+            title: t("summaryPrefix"),
+            summary: data.summary,
+            createdAt: new Date().toISOString()
+          }
+        })
       }
 
       setChatInput("")
+
+      // L'overlay reste ouvert jusqu'à ce que l'utilisateur clique sur "Ouvrir l'onglet"
+      // setIsGenerating(false) est géré par le bouton de l'overlay
+
     } catch (error) {
       console.error("Erreur lors de l'envoi:", error)
-      const errorMessage = error instanceof Error ? error.message : t("errorSendingMessage") + " " + tCommon("loading") // Using loading as placeholder for "Please try again" or just keep it simple
-      alert(errorMessage)
+      const errorMessage = error instanceof Error ? error.message : t("errorSendingMessage")
+      toast.error(errorMessage)
+      setIsGenerating(false)
     } finally {
       setIsSending(false)
     }
@@ -273,6 +333,41 @@ export function CollectionView({ collection, onBack, onSelectDocument }: Collect
       console.error("Erreur suppression:", error)
       alert(t("unableToDeleteItem"))
     }
+  }
+
+  const handleOpenGenerationDialog = (intent: GenerationIntent) => {
+    setGenerationIntent(intent)
+    setIsGenerationDialogOpen(true)
+  }
+
+  const handleConfirmGeneration = (selectedDocIds: string[], topic: string) => {
+    // Construire le message pour l'IA
+    let prompt = ""
+    switch (generationIntent) {
+      case "flashcards":
+        prompt = t("promptFlashcardsAction")
+        break
+      case "quiz":
+        prompt = t("promptQuizAction")
+        break
+      case "summary":
+        prompt = t("promptSummaryAction")
+        break
+      default:
+        prompt = "Génère du contenu"
+    }
+
+    if (topic.trim()) {
+      prompt += ` sur le sujet : "${topic}"`
+    }
+
+    // Ajouter les mentions des documents sélectionnés
+    // On utilise le format @[Titre](id) que MentionInput utilise ou juste les IDs
+    // Mais handleSendMessage utilise extractMentionedDocumentIds qui parse le texte
+    // OU on peut passer directement les IDs à l'API si on modifie handleSendMessage
+    // Pour l'instant, on va modifier handleSendMessage pour accepter une liste d'IDs explicite
+
+    handleSendMessage(prompt, selectedDocIds)
   }
 
   // Séparer les flashcards et quiz des study collections
@@ -306,7 +401,28 @@ export function CollectionView({ collection, onBack, onSelectDocument }: Collect
   }
 
   return (
-    <div className="h-full flex flex-col bg-gradient-to-br from-background via-background to-muted/10 overflow-hidden">
+    <div className="h-full flex flex-col bg-gradient-to-br from-background via-background to-muted/10 overflow-hidden relative">
+      <GenerationOverlay
+        isVisible={isGenerating}
+        currentStep={generationStep}
+        onClose={() => {
+          setIsGenerating(false)
+          // Changer d'onglet seulement quand l'utilisateur clique sur le bouton "Ouvrir l'onglet"
+          if (pendingGenerationResult) {
+            if (pendingGenerationResult.type === 'flashcards') {
+              setSelectedFlashcardCollectionId(pendingGenerationResult.data)
+              setActiveTab("flashcards")
+            } else if (pendingGenerationResult.type === 'quiz') {
+              setSelectedQuizCollection(pendingGenerationResult.data)
+              setActiveTab("quiz")
+            } else if (pendingGenerationResult.type === 'summary') {
+              setSelectedSummary(pendingGenerationResult.data)
+              setActiveTab("resume")
+            }
+            setPendingGenerationResult(null)
+          }
+        }}
+      />
       {/* Header avec gradient de la collection amélioré - Caché quand on affiche flashcards/quiz */}
       {!isViewingStudy && (
         <div className={cn(
@@ -587,7 +703,7 @@ export function CollectionView({ collection, onBack, onSelectDocument }: Collect
                                   onClick={(e) => {
                                     e.stopPropagation()
                                     if (summary.sectionId) {
-                                      router.push(`/documents/${doc.id}/sections/${summary.sectionId}`)
+                                      router.push(`/ documents / ${doc.id} / sections / ${summary.sectionId}`)
                                     }
                                   }}
                                   className="p-3 rounded-lg border border-border/40 bg-muted/30 hover:border-primary/40 hover:bg-muted/50 transition-all cursor-pointer"
@@ -654,14 +770,7 @@ export function CollectionView({ collection, onBack, onSelectDocument }: Collect
                         <Button
                           onClick={() => {
                             setActiveTab("pdf")
-                            setChatInput(t("promptFlashcardsAction"))
-                            setTimeout(() => {
-                              const textarea = document.querySelector('textarea')
-                              if (textarea) {
-                                textarea.focus()
-                                textarea.scrollIntoView({ behavior: 'smooth', block: 'center' })
-                              }
-                            }, 100)
+                            handleOpenGenerationDialog("flashcards")
                           }}
                           size="sm"
                           className="rounded-lg"
@@ -796,14 +905,7 @@ export function CollectionView({ collection, onBack, onSelectDocument }: Collect
                         <Button
                           onClick={() => {
                             setActiveTab("pdf")
-                            setChatInput(t("promptQuizAction"))
-                            setTimeout(() => {
-                              const textarea = document.querySelector('textarea')
-                              if (textarea) {
-                                textarea.focus()
-                                textarea.scrollIntoView({ behavior: 'smooth', block: 'center' })
-                              }
-                            }, 100)
+                            handleOpenGenerationDialog("quiz")
                           }}
                           size="sm"
                           className="rounded-lg"
@@ -970,14 +1072,7 @@ export function CollectionView({ collection, onBack, onSelectDocument }: Collect
                         </div>
                         <Button
                           onClick={() => {
-                            setChatInput(t("promptSummaryAction"))
-                            setTimeout(() => {
-                              const textarea = document.querySelector('textarea')
-                              if (textarea) {
-                                textarea.focus()
-                                textarea.scrollIntoView({ behavior: 'smooth', block: 'center' })
-                              }
-                            }, 100)
+                            handleOpenGenerationDialog("summary")
                           }}
                           size="sm"
                           className="rounded-lg"
@@ -1121,6 +1216,7 @@ export function CollectionView({ collection, onBack, onSelectDocument }: Collect
                 order_index: fc.order_index || 0,
               }))}
               onClose={() => setSelectedFlashcardCollectionId(null)}
+              studyCollectionId={selectedFlashcardCollectionId}
             />
           )
         ) : selectedQuizCollection && selectedQuizCollection.quizQuestions && selectedQuizCollection.quizQuestions.length > 0 ? (
@@ -1250,13 +1346,7 @@ export function CollectionView({ collection, onBack, onSelectDocument }: Collect
                   <div className="flex flex-wrap justify-center gap-2">
                     <button
                       onClick={() => {
-                        setChatInput(t("promptFlashcardsAction"))
-                        setTimeout(() => {
-                          const textarea = document.querySelector('textarea')
-                          if (textarea) {
-                            textarea.focus()
-                          }
-                        }, 50)
+                        handleOpenGenerationDialog("flashcards")
                       }}
                       className="px-3 py-1.5 text-xs rounded-full border border-border/60 bg-background/80 backdrop-blur-md hover:bg-muted hover:border-primary/50 transition-all flex items-center gap-2 text-foreground shadow-sm"
                     >
@@ -1265,13 +1355,7 @@ export function CollectionView({ collection, onBack, onSelectDocument }: Collect
                     </button>
                     <button
                       onClick={() => {
-                        setChatInput(t("promptQuizAction"))
-                        setTimeout(() => {
-                          const textarea = document.querySelector('textarea')
-                          if (textarea) {
-                            textarea.focus()
-                          }
-                        }, 50)
+                        handleOpenGenerationDialog("quiz")
                       }}
                       className="px-3 py-1.5 text-xs rounded-full border border-border/60 bg-background/80 backdrop-blur-md hover:bg-muted hover:border-primary/50 transition-all flex items-center gap-2 text-foreground shadow-sm"
                     >
@@ -1280,13 +1364,7 @@ export function CollectionView({ collection, onBack, onSelectDocument }: Collect
                     </button>
                     <button
                       onClick={() => {
-                        setChatInput(t("promptSummaryAction"))
-                        setTimeout(() => {
-                          const textarea = document.querySelector('textarea')
-                          if (textarea) {
-                            textarea.focus()
-                          }
-                        }, 50)
+                        handleOpenGenerationDialog("summary")
                       }}
                       className="px-3 py-1.5 text-xs rounded-full border border-border/60 bg-background/80 backdrop-blur-md hover:bg-muted hover:border-primary/50 transition-all flex items-center gap-2 text-foreground shadow-sm"
                     >
@@ -1334,6 +1412,14 @@ export function CollectionView({ collection, onBack, onSelectDocument }: Collect
         )
       }
 
+      <GenerationDialog
+        open={isGenerationDialogOpen}
+        onOpenChange={setIsGenerationDialogOpen}
+        documents={documents}
+        intent={generationIntent}
+        onConfirm={handleConfirmGeneration}
+      />
+
       {/* Modal/Viewer pour le PDF */}
       {
         showPdfViewer && pdfUrl && (
@@ -1368,7 +1454,9 @@ export function CollectionView({ collection, onBack, onSelectDocument }: Collect
       }
 
 
-    </div >
+
+
+    </div>
   )
 }
 

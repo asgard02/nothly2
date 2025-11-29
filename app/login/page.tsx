@@ -5,10 +5,9 @@ import { useState, useEffect } from "react"
 import { createClient } from "@/lib/supabase-client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
-import { Eye, EyeOff } from "lucide-react"
+import { Eye, EyeOff, Sparkles, Mail, Lock, ArrowRight } from "lucide-react"
 
 type LoginMode = "password" | "magic-link"
 
@@ -21,12 +20,23 @@ export default function LoginPage() {
   const [message, setMessage] = useState("")
   const [isSuccess, setIsSuccess] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
+  const [emailError, setEmailError] = useState("")
+  const [passwordError, setPasswordError] = useState("")
+
 
   const supabase = createClient()
   const router = useRouter()
   const searchParams = useSearchParams()
 
-  // Vérifier les erreurs OAuth dans l'URL
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      setMousePosition({ x: e.clientX, y: e.clientY })
+    }
+    window.addEventListener("mousemove", handleMouseMove, { passive: true })
+    return () => window.removeEventListener("mousemove", handleMouseMove)
+  }, [])
+
   useEffect(() => {
     const error = searchParams.get('error')
     const errorDescription = searchParams.get('error_description')
@@ -34,7 +44,6 @@ export default function LoginPage() {
     if (error) {
       let errorMessage = errorDescription || "An authentication error occurred"
 
-      // Messages d'erreur plus conviviaux
       if (error === 'invalid_grant') {
         errorMessage = "The authentication session has expired or is invalid. Please try signing in again."
       } else if (error === 'auth_failed') {
@@ -47,8 +56,6 @@ export default function LoginPage() {
 
       setMessage(`Error: ${errorMessage}`)
       setIsSuccess(false)
-
-      // Nettoyer l'URL
       router.replace('/login', { scroll: false })
     }
   }, [searchParams, router])
@@ -56,14 +63,30 @@ export default function LoginPage() {
   const handlePasswordLogin = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!email || !password) {
-      setMessage("Please fill in all fields")
-      setIsSuccess(false)
-      return
+    // Reset errors
+    setEmailError("")
+    setPasswordError("")
+    setMessage("")
+
+    // Validation
+    let hasError = false
+
+    if (!email) {
+      setEmailError("Email address is required")
+      hasError = true
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setEmailError("Please enter a valid email address")
+      hasError = true
     }
 
+    if (!password) {
+      setPasswordError("Password is required")
+      hasError = true
+    }
+
+    if (hasError) return
+
     setIsLoading(true)
-    setMessage("")
 
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -90,14 +113,20 @@ export default function LoginPage() {
   const handleMagicLinkLogin = async (e: React.FormEvent) => {
     e.preventDefault()
 
+    // Reset errors
+    setEmailError("")
+    setMessage("")
+
+    // Validation
     if (!email) {
-      setMessage("Please enter your email")
-      setIsSuccess(false)
+      setEmailError("Email address is required")
+      return
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setEmailError("Please enter a valid email address")
       return
     }
 
     setIsLoading(true)
-    setMessage("")
 
     try {
       const { error } = await supabase.auth.signInWithOtp({
@@ -111,7 +140,6 @@ export default function LoginPage() {
         setMessage(`Error: ${error.message}`)
         setIsSuccess(false)
       } else {
-        setMessage("✉️ Check your mailbox to complete login!")
         setIsSuccess(true)
       }
     } catch (error) {
@@ -127,7 +155,6 @@ export default function LoginPage() {
     setMessage("")
 
     try {
-      // Utiliser l'origine actuelle (localhost en dev, production en prod)
       const redirectUrl = `${window.location.origin}/auth/callback`
 
       const { error } = await supabase.auth.signInWithOAuth({
@@ -139,7 +166,6 @@ export default function LoginPage() {
 
       if (error) {
         let errorMessage = error.message
-        // Message plus clair si le provider n'est pas activé
         if (error.message.includes('not enabled') || error.message.includes('Unsupported provider')) {
           errorMessage = "Google sign-in is not enabled. Please configure it in Supabase Dashboard → Authentication → Providers → Google"
         }
@@ -147,7 +173,6 @@ export default function LoginPage() {
         setIsSuccess(false)
         setIsLoading(false)
       }
-      // Le navigateur sera redirigé automatiquement vers Google si tout va bien
     } catch (error: any) {
       let errorMessage = "An error occurred"
       if (error?.message?.includes('not enabled') || error?.message?.includes('Unsupported provider')) {
@@ -160,26 +185,55 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <div className="flex items-center justify-center mb-2">
-            <Logo size={40} showText={true} href={null} className="justify-center" />
-          </div>
-          <CardDescription className="text-base">
-            Log in to access your notes
-          </CardDescription>
-        </CardHeader>
+    <div className="min-h-screen bg-gradient-to-br from-background via-muted/10 to-background text-foreground relative overflow-hidden flex items-center justify-center p-4">
+      {/* Grille de fond subtile */}
+      <div className="fixed inset-0 z-0" style={{
+        backgroundImage: `
+          linear-gradient(to right, hsl(var(--border)) 1px, transparent 1px),
+          linear-gradient(to bottom, hsl(var(--border)) 1px, transparent 1px)
+        `,
+        backgroundSize: '100px 100px',
+        opacity: 0.3
+      }} />
 
-        <CardContent>
-          {/* Tabs to choose login method */}
-          <div className="flex gap-2 mb-6">
+      {/* Gradient suivant la souris */}
+      <div
+        className="fixed inset-0 z-0 opacity-20 transition-opacity duration-700"
+        style={{
+          background: `radial-gradient(600px circle at ${mousePosition.x}px ${mousePosition.y}px, hsl(var(--primary) / 0.08), transparent 50%)`,
+        }}
+      />
+
+      {/* Blobs animés subtils */}
+      <div className="fixed inset-0 z-0 opacity-5">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-gradient-to-br from-nothly-blue to-nothly-violet rounded-full blur-[100px] animate-blob" />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-gradient-to-br from-nothly-violet to-nothly-blue rounded-full blur-[100px] animate-blob animation-delay-2000" />
+      </div>
+
+      {/* Card de login */}
+      <div className="relative z-10 w-full max-w-md">
+        <div className="rounded-3xl border-2 border-border bg-card/80 backdrop-blur-xl p-6 md:p-8 shadow-2xl">
+          {/* Header */}
+          <div className="text-center mb-6">
+            <div className="flex items-center justify-center mb-4">
+              <Logo size={40} showText={true} href="/" className="justify-center" />
+            </div>
+            <h1 className="text-2xl font-black mb-1 text-foreground">
+              Welcome back
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              Sign in to access your workspace
+            </p>
+          </div>
+
+          {/* Tabs */}
+          <div className="flex gap-2 mb-6 p-1 bg-muted/30 rounded-2xl border border-border/50">
             <button
               type="button"
               onClick={() => setMode("password")}
-              className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors ${mode === "password"
-                ? "bg-primary text-primary-foreground"
-                : "bg-muted text-muted-foreground hover:bg-muted/80"
+              className={`flex-1 py-3 px-4 rounded-xl font-semibold transition-all duration-300 ${mode === "password"
+                ? "bg-gradient-to-r from-nothly-blue to-nothly-violet text-white shadow-lg"
+                : "text-muted-foreground hover:text-foreground"
                 }`}
             >
               Password
@@ -187,35 +241,24 @@ export default function LoginPage() {
             <button
               type="button"
               onClick={() => setMode("magic-link")}
-              className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors ${mode === "magic-link"
-                ? "bg-primary text-primary-foreground"
-                : "bg-muted text-muted-foreground hover:bg-muted/80"
+              className={`flex-1 py-3 px-4 rounded-xl font-semibold transition-all duration-300 ${mode === "magic-link"
+                ? "bg-gradient-to-r from-nothly-blue to-nothly-violet text-white shadow-lg"
+                : "text-muted-foreground hover:text-foreground"
                 }`}
             >
-              Magic link
+              Magic Link
             </button>
           </div>
 
-          {/* Google Sign In Button */}
+          {/* Google Login */}
           <div className="mb-6">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t border-border" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-card px-2 text-muted-foreground">Or continue with</span>
-              </div>
-            </div>
-
             <Button
               type="button"
-              variant="outline"
               onClick={handleGoogleLogin}
               disabled={isLoading}
-              className="w-full mt-4"
-              size="lg"
+              className="w-full py-4 rounded-2xl bg-muted/30 border-2 border-border hover:bg-muted/50 hover:border-border/80 transition-all duration-300 text-foreground font-semibold"
             >
-              <svg className="mr-2 h-5 w-5" viewBox="0 0 24 24">
+              <svg className="mr-3 h-5 w-5" viewBox="0 0 24 24">
                 <path
                   fill="currentColor"
                   d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -235,51 +278,73 @@ export default function LoginPage() {
               </svg>
               Continue with Google
             </Button>
+
+            <div className="relative my-6">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-border" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-card px-3 text-muted-foreground font-semibold">Or</span>
+              </div>
+            </div>
           </div>
 
-          {/* Password form */}
+          {/* Forms */}
           {mode === "password" ? (
             <form onSubmit={handlePasswordLogin} className="space-y-4">
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-foreground mb-2">
+                <label className="block text-sm font-semibold text-foreground mb-2">
                   Email address
                 </label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="you@email.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  disabled={isLoading}
-                  required
-                  className="w-full"
-                />
+                <div className="relative">
+                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                  <Input
+                    type="email"
+                    placeholder="you@email.com"
+                    value={email}
+                    onChange={(e) => { setEmail(e.target.value); setEmailError("") }}
+                    disabled={isLoading}
+                    className={`w-full pl-12 py-4 rounded-2xl bg-muted/20 border-2 text-foreground placeholder:text-muted-foreground focus:bg-muted/30 transition-all ${emailError ? "border-red-500 focus:border-red-500" : "border-border focus:border-primary"
+                      }`}
+                  />
+                </div>
+                {emailError && (
+                  <p className="mt-2 text-sm text-red-400 flex items-center gap-1.5">
+                    <span className="inline-block w-1 h-1 bg-red-400 rounded-full" />
+                    {emailError}
+                  </p>
+                )}
               </div>
 
               <div>
-                <label htmlFor="password" className="block text-sm font-medium text-foreground mb-2">
+                <label className="block text-sm font-semibold text-foreground mb-2">
                   Password
                 </label>
                 <div className="relative">
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                   <Input
-                    id="password"
                     type={showPassword ? "text" : "password"}
-                    placeholder="••••••••"
+                    placeholder="Enter your password"
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={(e) => { setPassword(e.target.value); setPasswordError("") }}
                     disabled={isLoading}
-                    required
-                    className="w-full pr-12"
+                    className={`w-full pl-12 pr-12 py-4 rounded-2xl bg-muted/20 border-2 text-foreground placeholder:text-muted-foreground focus:bg-muted/30 transition-all ${passwordError ? "border-red-500 focus:border-red-500" : "border-border focus:border-primary"
+                      }`}
                   />
                   <button
                     type="button"
-                    onClick={() => setShowPassword((value) => !value)}
-                    className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground transition hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-r-md"
-                    aria-label={showPassword ? "Hide password" : "Show password"}
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition"
                   >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                   </button>
                 </div>
+                {passwordError && (
+                  <p className="mt-2 text-sm text-red-400 flex items-center gap-1.5">
+                    <span className="inline-block w-1 h-1 bg-red-400 rounded-full" />
+                    {passwordError}
+                  </p>
+                )}
               </div>
 
               <div className="flex items-center">
@@ -288,18 +353,18 @@ export default function LoginPage() {
                   type="checkbox"
                   checked={rememberMe}
                   onChange={(e) => setRememberMe(e.target.checked)}
-                  className="h-4 w-4 text-primary focus:ring-primary border-border rounded"
+                  className="h-4 w-4 rounded border-border bg-muted text-primary focus:ring-primary focus:ring-offset-card"
                 />
-                <label htmlFor="remember" className="ml-2 block text-sm text-foreground">
-                  Stay signed in
+                <label htmlFor="remember" className="ml-2 text-sm text-foreground">
+                  Keep me signed in
                 </label>
               </div>
 
               {message && (
                 <div
-                  className={`p-3 rounded-lg text-sm ${isSuccess
-                    ? "bg-primary/10 text-primary border border-primary/20"
-                    : "bg-destructive/10 text-destructive border border-destructive/20"
+                  className={`p-4 rounded-2xl text-sm font-medium ${isSuccess
+                    ? "bg-emerald-500/10 text-emerald-400 border-2 border-emerald-500/20"
+                    : "bg-red-500/10 text-red-400 border-2 border-red-500/20"
                     }`}
                 >
                   {message}
@@ -309,74 +374,75 @@ export default function LoginPage() {
               <Button
                 type="submit"
                 disabled={isLoading}
-                className="w-full"
-                size="lg"
+                className="w-full py-5 rounded-2xl bg-gradient-to-r from-nothly-blue to-nothly-violet text-white font-bold text-base shadow-lg shadow-nothly-blue/30 hover:shadow-xl hover:shadow-nothly-violet/40 hover:scale-105 transition-all duration-300"
               >
                 {isLoading ? (
                   <span className="flex items-center gap-2">
-                    <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <div className="h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                     Signing in...
                   </span>
                 ) : (
-                  "Sign in"
+                  <span className="flex items-center gap-2">
+                    Sign in
+                    <ArrowRight className="h-5 w-5" />
+                  </span>
                 )}
               </Button>
-
-              <div className="text-center mt-4">
-                <p className="text-sm text-muted-foreground">
-                  Don't have an account yet?{" "}
-                  <Link href="/register" className="text-primary hover:text-primary/80 font-medium">
-                    Create an account
-                  </Link>
-                </p>
-              </div>
             </form>
           ) : (
-            /* Magic link form */
             isSuccess ? (
-              <div className="text-center space-y-4">
-                <div className="text-6xl">📧</div>
-                <p className="text-lg font-medium text-primary">
-                  Email sent!
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Check your inbox and click the magic link to sign in.
-                </p>
+              <div className="text-center space-y-4 py-6">
+                <div className="w-16 h-16 mx-auto bg-gradient-to-r from-nothly-blue to-nothly-violet rounded-full flex items-center justify-center">
+                  <Mail className="h-8 w-8 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold mb-1 text-foreground">Check your email</h3>
+                  <p className="text-muted-foreground">
+                    We've sent a magic link to <span className="text-primary font-semibold">{email}</span>
+                  </p>
+                </div>
                 <Button
-                  variant="outline"
                   onClick={() => {
                     setIsSuccess(false)
                     setMessage("")
                     setEmail("")
                   }}
-                  className="mt-4"
+                  className="bg-muted/20 border-2 border-border hover:bg-muted/50 text-foreground rounded-2xl px-6 py-4"
                 >
-                  Resend email
+                  Send another link
                 </Button>
               </div>
             ) : (
               <form onSubmit={handleMagicLinkLogin} className="space-y-4">
                 <div>
-                  <label htmlFor="email-magic" className="block text-sm font-medium text-foreground mb-2">
+                  <label className="block text-sm font-semibold text-foreground mb-2">
                     Email address
                   </label>
-                  <Input
-                    id="email-magic"
-                    type="email"
-                    placeholder="you@email.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    disabled={isLoading}
-                    required
-                    className="w-full"
-                  />
+                  <div className="relative">
+                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                    <Input
+                      type="email"
+                      placeholder="you@email.com"
+                      value={email}
+                      onChange={(e) => { setEmail(e.target.value); setEmailError("") }}
+                      disabled={isLoading}
+                      className={`w-full pl-12 py-4 rounded-2xl bg-muted/20 border-2 text-foreground placeholder:text-muted-foreground focus:bg-muted/30 transition-all ${emailError ? "border-red-500 focus:border-red-500" : "border-border focus:border-primary"
+                        }`}
+                    />
+                  </div>
+                  {emailError && (
+                    <p className="mt-2 text-sm text-red-400 flex items-center gap-1.5">
+                      <span className="inline-block w-1 h-1 bg-red-400 rounded-full" />
+                      {emailError}
+                    </p>
+                  )}
                 </div>
 
                 {message && (
                   <div
-                    className={`p-3 rounded-lg text-sm ${isSuccess
-                      ? "bg-primary/10 text-primary border border-primary/20"
-                      : "bg-destructive/10 text-destructive border border-destructive/20"
+                    className={`p-4 rounded-2xl text-sm font-medium ${isSuccess
+                      ? "bg-emerald-500/10 text-emerald-400 border-2 border-emerald-500/20"
+                      : "bg-red-500/10 text-red-400 border-2 border-red-500/20"
                       }`}
                   >
                     {message}
@@ -386,28 +452,46 @@ export default function LoginPage() {
                 <Button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full"
-                  size="lg"
+                  className="w-full py-5 rounded-2xl bg-gradient-to-r from-nothly-blue to-nothly-violet text-white font-bold text-base shadow-lg shadow-nothly-blue/30 hover:shadow-xl hover:shadow-nothly-violet/40 hover:scale-105 transition-all duration-300"
                 >
                   {isLoading ? (
                     <span className="flex items-center gap-2">
-                      <div className="h-4 w-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
+                      <div className="h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                       Sending link...
                     </span>
                   ) : (
-                    "Send magic link"
+                    <span className="flex items-center gap-2">
+                      <Sparkles className="h-5 w-5" />
+                      Send magic link
+                    </span>
                   )}
                 </Button>
 
-                <p className="text-xs text-center text-muted-foreground mt-4">
-                  We'll send you a login link by email. No password needed!
+                <p className="text-xs text-center text-muted-foreground">
+                  We'll email you a secure link — no password needed!
                 </p>
               </form>
             )
           )}
-        </CardContent>
-      </Card>
+
+          {/* Footer */}
+          <div className="mt-8 text-center">
+            <p className="text-sm text-muted-foreground">
+              Don't have an account?{" "}
+              <Link href="/register" className="text-primary hover:text-cyan-300 font-semibold transition">
+                Create one now
+              </Link>
+            </p>
+          </div>
+        </div>
+
+        {/* Back to home */}
+        <div className="mt-6 text-center">
+          <Link href="/" className="text-sm text-muted-foreground hover:text-foreground transition inline-flex items-center gap-2">
+            ← Back to homepage
+          </Link>
+        </div>
+      </div>
     </div>
   )
 }
-

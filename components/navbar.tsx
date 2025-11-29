@@ -45,11 +45,10 @@ export default function Navbar() {
 
   return (
     <nav
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled
-          ? "bg-background/80 backdrop-blur-md border-b border-border shadow-sm"
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled
+          ? "bg-background/95 backdrop-blur-xl border-b border-border shadow-lg"
           : "bg-transparent"
-      }`}
+        }`}
     >
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
         <div className="flex h-20 items-center justify-between">
@@ -61,34 +60,34 @@ export default function Navbar() {
             <a
               href="#flow"
               onClick={(event) => handleAnchorNavigation(event, "flow")}
-              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200 cursor-pointer"
+              className="text-sm font-medium text-foreground hover:text-primary transition-colors duration-200 cursor-pointer"
             >
               {t("links.flow")}
             </a>
             <a
               href="#value"
               onClick={(event) => handleAnchorNavigation(event, "value")}
-              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200 cursor-pointer"
+              className="text-sm font-medium text-foreground hover:text-primary transition-colors duration-200 cursor-pointer"
             >
               {t("links.value")}
             </a>
             <a
               href="#audience"
               onClick={(event) => handleAnchorNavigation(event, "audience")}
-              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200 cursor-pointer"
+              className="text-sm font-medium text-foreground hover:text-primary transition-colors duration-200 cursor-pointer"
             >
               {t("links.targets")}
             </a>
             <Link
               href="/login"
-              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200"
+              className="text-sm font-medium text-foreground hover:text-primary transition-colors duration-200"
             >
               {t("links.login")}
             </Link>
             <Link href="/register">
               <Button
                 size="sm"
-                className="bg-gradient-to-r from-nothly-blue to-nothly-violet text-white rounded-full px-6 transition-all duration-200 hover:scale-105 shadow-sm hover:shadow-md"
+                className="bg-gradient-to-r from-nothly-blue to-nothly-violet text-white rounded-full px-6 transition-all duration-200 hover:scale-105 shadow-lg hover:shadow-nothly-blue/50"
               >
                 {t("cta.primary")}
               </Button>

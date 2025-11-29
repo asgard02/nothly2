@@ -29,7 +29,7 @@ export default function Sidebar() {
 
   const menuItems = [
     { icon: HardDrive, label: t("library"), path: "/workspace" },
-    { icon: Calendar, label: t("calendar"), path: "/calendar" }
+    { icon: Calendar, label: t("calendar"), path: "/calendar", badge: "New" }
   ]
 
   const isActive = (path: string) => pathname === path
@@ -77,11 +77,23 @@ export default function Sidebar() {
                   {isActive(item.path) && (
                     <span className={`absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-primary rounded-r-full ${!isOpen && "left-0 h-4"}`} />
                   )}
-                  <Icon className={`h-5 w-5 flex-shrink-0 ${isActive(item.path) ? "text-primary" : "text-muted-foreground group-hover:text-foreground"}`} />
+
+                  <div className="relative">
+                    <Icon className={`h-5 w-5 flex-shrink-0 ${isActive(item.path) ? "text-primary" : "text-muted-foreground group-hover:text-foreground"}`} />
+                    {item.badge && !isOpen && (
+                      <span className="absolute -top-1 -right-1 w-2 h-2 bg-primary rounded-full ring-2 ring-background animate-pulse" />
+                    )}
+                  </div>
 
                   <span className={`text-sm whitespace-nowrap transition-all duration-300 ${isOpen ? "opacity-100" : "w-0 opacity-0 hidden"}`}>
                     {item.label}
                   </span>
+
+                  {item.badge && isOpen && (
+                    <span className="ml-auto px-2 py-0.5 text-[10px] font-bold bg-gradient-to-r from-primary/20 to-primary/10 text-primary rounded-full border border-primary/20 shadow-sm">
+                      {item.badge}
+                    </span>
+                  )}
                 </button>
               )
             })}

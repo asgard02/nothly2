@@ -415,7 +415,11 @@
     "successQuiz": "✅ {quizCount} questions de quiz créées avec succès sur le sujet \"{topic}\"!\n\nVoulez-vous les consulter maintenant ?",
     "promptFlashcardsAction": "Crée-moi des flashcards sur les concepts clés en utilisant UNIQUEMENT le contenu des documents de cette collection. Base-toi sur le texte réel des PDFs, ne rien inventer.",
     "promptQuizAction": "Crée-moi un quiz avec des questions QCM en utilisant UNIQUEMENT le contenu des documents de cette collection. Base-toi sur le texte réel des PDFs, ne rien inventer.",
-    "promptSummaryAction": "Résume-moi les points importants en utilisant UNIQUEMENT le contenu des documents de cette collection"
+    "promptSummaryAction": "Résume-moi les points importants en utilisant UNIQUEMENT le contenu des documents de cette collection",
+    "generatingContent": "Génération en cours...",
+    "generatingContentDesc": "L'IA analyse vos documents pour créer du contenu pertinent. Cela peut prendre quelques instants.",
+    "viewResult": "Voir le résultat",
+    "generationSuccessTitle": "Contenu généré !"
   },
   "Library": {
     "title": "Collections",

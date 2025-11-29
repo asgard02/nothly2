@@ -65,8 +65,8 @@ export async function POST(request: NextRequest) {
     // Vérifier si la collection contient des documents
     if (documentIds.length === 0) {
       return NextResponse.json({ 
-        error: "Aucun document dans cette collection.",
-        response: "Veuillez d'abord ajouter des documents PDF à cette collection avant de poser des questions ou de créer des flashcards/quiz."
+        error: "No documents in this collection.",
+        response: "Please add PDF documents to this collection before asking questions or creating flashcards/quizzes."
       }, { status: 400 })
     }
 
@@ -89,26 +89,26 @@ export async function POST(request: NextRequest) {
           messages: [
             {
               role: "system",
-              content: `Analyse le message de l'utilisateur et détermine son intention. Réponds UNIQUEMENT avec un JSON de cette forme:
+              content: `Analyze the user's message and determine their intent. Respond ONLY with a JSON in this format:
 {
   "intent": "flashcard" | "quiz" | "summary" | "question",
-  "topic": "sujet extrait ou null"
+  "topic": "extracted topic or null"
 }
 
-Règles:
-- "flashcard" si l'utilisateur veut créer des cartes de révision, mémoriser, réviser, apprendre par cœur, étudier
-- "quiz" si l'utilisateur veut tester ses connaissances, faire un test, un examen, des questions, évaluer
-- "summary" si l'utilisateur veut un résumé, une synthèse, un récapitulatif, résumer le contenu
-- "question" pour toute autre demande (explication, définition, etc.)
-- "topic" : extrait le sujet principal si mentionné, sinon null
+Rules:
+- "flashcard" if the user wants to create revision cards, memorize, review, learn by heart, study
+- "quiz" if the user wants to test their knowledge, take a test, an exam, questions, evaluate
+- "summary" if the user wants a summary, a synthesis, a recap, summarize content
+- "question" for any other request (explanation, definition, etc.)
+- "topic" : extract the main topic if mentioned, otherwise null
 
-Exemples:
-- "fais des flashcards sur les limites" -> {"intent": "flashcard", "topic": "limites"}
-- "je veux réviser les fonctions" -> {"intent": "flashcard", "topic": "fonctions"}
-- "crée un quiz sur les dérivées" -> {"intent": "quiz", "topic": "dérivées"}
-- "résume-moi ce cours" -> {"intent": "summary", "topic": null}
-- "fais une synthèse sur la guerre froide" -> {"intent": "summary", "topic": "guerre froide"}
-- "explique-moi les limites" -> {"intent": "question", "topic": "limites"}`
+Examples:
+- "make flashcards on limits" -> {"intent": "flashcard", "topic": "limits"}
+- "i want to review functions" -> {"intent": "flashcard", "topic": "functions"}
+- "create a quiz on derivatives" -> {"intent": "quiz", "topic": "derivatives"}
+- "summarize this course" -> {"intent": "summary", "topic": null}
+- "make a synthesis on the cold war" -> {"intent": "summary", "topic": "cold war"}
+- "explain limits" -> {"intent": "question", "topic": "limits"}`
             },
             {
               role: "user",
@@ -135,18 +135,18 @@ Exemples:
             searchTopic = parsed.topic || null
           }
         } catch (parseError) {
-          console.warn("[POST /api/chat/collection] Erreur parsing intention:", parseError)
+          console.warn("[POST /api/chat/collection] Error parsing intent:", parseError)
         }
       }
     } catch (error) {
-      console.warn("[POST /api/chat/collection] Erreur détection intention IA:", error)
+      console.warn("[POST /api/chat/collection] Error detecting AI intent:", error)
     }
 
     // Fallback: détection par mots-clés si l'IA n'a pas fonctionné
     if (!isFlashcardRequest && !isQuizRequest && !isSummaryRequest) {
-      const flashcardKeywords = ["flashcard", "carte", "cartes", "révision", "mémorisation", "apprendre", "étudier", "réviser", "mémoriser"]
-      const quizKeywords = ["quiz", "question", "questions", "test", "examen", "évaluation", "interro", "qcm", "teste", "tester"]
-      const summaryKeywords = ["résumé", "résumer", "synthèse", "synthétiser", "récapitulatif", "récapituler", "resumer", "synthese"]
+      const flashcardKeywords = ["flashcard", "carte", "cartes", "révision", "mémorisation", "apprendre", "étudier", "réviser", "mémoriser", "card", "cards", "study", "memorize", "review"]
+      const quizKeywords = ["quiz", "question", "questions", "test", "examen", "évaluation", "interro", "qcm", "teste", "tester", "exam", "evaluation"]
+      const summaryKeywords = ["résumé", "résumer", "synthèse", "synthétiser", "récapitulatif", "récapituler", "resumer", "synthese", "summary", "summarize", "synthesis", "recap"]
       
       isFlashcardRequest = flashcardKeywords.some(keyword => message.toLowerCase().includes(keyword))
       isQuizRequest = quizKeywords.some(keyword => message.toLowerCase().includes(keyword))
@@ -157,7 +157,7 @@ Exemples:
     // Si c'est une demande de flashcards/quiz/résumé, on cherche les sections pertinentes
     const documentContents: Array<{ id: string; title: string; content: string; sections?: Array<{ content: string; order_index: number }> }> = []
     
-    console.log(`[POST /api/chat/collection] 🔍 Traitement de ${documentIds.length} document(s) pour la collection ${collectionId}`)
+    console.log(`[POST /api/chat/collection] 🔍 Processing ${documentIds.length} document(s) for collection ${collectionId}`)
     console.log(`[POST /api/chat/collection] 📋 Document IDs:`, documentIds)
     
     const skippedDocs: Array<{ id: string; title: string; reason: string }> = []
@@ -172,8 +172,8 @@ Exemples:
         .single()
 
       if (docError || !doc) {
-        console.warn(`[POST /api/chat/collection] Document ${docId} non trouvé:`, docError)
-        skippedDocs.push({ id: docId, title: "Inconnu", reason: "Document non trouvé" })
+        console.warn(`[POST /api/chat/collection] Document ${docId} not found:`, docError)
+        skippedDocs.push({ id: docId, title: "Unknown", reason: "Document not found" })
         continue
       }
 
@@ -196,8 +196,8 @@ Exemples:
       }
 
       if (!versionId) {
-        console.warn(`[POST /api/chat/collection] Aucune version trouvée pour le document ${docId} (titre: ${doc.title})`)
-        skippedDocs.push({ id: docId, title: doc.title, reason: "Aucune version trouvée" })
+        console.warn(`[POST /api/chat/collection] No version found for document ${docId} (title: ${doc.title})`)
+        skippedDocs.push({ id: docId, title: doc.title, reason: "No version found" })
         continue
       }
       
@@ -211,8 +211,8 @@ Exemples:
         .single()
 
       if (versionError) {
-        console.warn(`[POST /api/chat/collection] Erreur récupération version pour ${docId}:`, versionError)
-        skippedDocs.push({ id: docId, title: doc.title, reason: `Erreur récupération version: ${versionError.message}` })
+        console.warn(`[POST /api/chat/collection] Error fetching version for ${docId}:`, versionError)
+        skippedDocs.push({ id: docId, title: doc.title, reason: `Error fetching version: ${versionError.message}` })
         continue
       }
 
@@ -220,9 +220,9 @@ Exemples:
       if (version) {
         const rawTextLength = version.raw_text ? version.raw_text.length : 0
         const hasRawText = version.raw_text && version.raw_text.trim().length > 0
-        console.log(`[POST /api/chat/collection] Document ${docId} - raw_text: ${rawTextLength} caractères, hasContent: ${hasRawText}`)
+        console.log(`[POST /api/chat/collection] Document ${docId} - raw_text: ${rawTextLength} chars, hasContent: ${hasRawText}`)
       } else {
-        console.warn(`[POST /api/chat/collection] Document ${docId} - Version ${versionId} non trouvée`)
+        console.warn(`[POST /api/chat/collection] Document ${docId} - Version ${versionId} not found`)
         continue
       }
 
@@ -234,7 +234,7 @@ Exemples:
         .order("order_index", { ascending: true })
 
       if (sectionsError) {
-        console.warn(`[POST /api/chat/collection] Erreur récupération sections pour ${docId}:`, sectionsError)
+        console.warn(`[POST /api/chat/collection] Error fetching sections for ${docId}:`, sectionsError)
         // Ne pas continuer, on peut utiliser raw_text à la place
       }
 
@@ -244,7 +244,7 @@ Exemples:
 
       if (sections && sections.length > 0) {
         // Utiliser les sections si disponibles
-        console.log(`[POST /api/chat/collection] Document ${docId} (${doc.title}) - ${sections.length} sections trouvées`)
+        console.log(`[POST /api/chat/collection] Document ${docId} (${doc.title}) - ${sections.length} sections found`)
         
         if ((isFlashcardRequest || isQuizRequest || isSummaryRequest) && searchTopic) {
           // Rechercher les sections pertinentes au sujet
@@ -280,26 +280,26 @@ Exemples:
         }
       } else if (version && version.raw_text && version.raw_text.trim().length > 0) {
         // Utiliser raw_text comme fallback si pas de sections
-        console.log(`[POST /api/chat/collection] Document ${docId} (${doc.title}) - Utilisation du raw_text (${version.raw_text.length} caractères)`)
+        console.log(`[POST /api/chat/collection] Document ${docId} (${doc.title}) - Using raw_text (${version.raw_text.length} chars)`)
         relevantContent = version.raw_text.trim()
         relevantSections = []
       } else {
         // Aucun contenu disponible - log détaillé pour debug
         const rawTextStatus = version?.raw_text 
-          ? (version.raw_text.trim().length > 0 ? `raw_text existe mais vide (${version.raw_text.length} chars)` : `raw_text null/undefined`)
-          : "version non trouvée"
-        console.warn(`[POST /api/chat/collection] Aucun contenu disponible pour le document ${docId} (${doc.title}, version ${versionId}) - ${rawTextStatus}`)
+          ? (version.raw_text.trim().length > 0 ? `raw_text exists but empty (${version.raw_text.length} chars)` : `raw_text null/undefined`)
+          : "version not found"
+        console.warn(`[POST /api/chat/collection] No content available for document ${docId} (${doc.title}, version ${versionId}) - ${rawTextStatus}`)
         skippedDocs.push({ 
           id: docId, 
           title: doc.title, 
-          reason: version?.raw_text ? `raw_text vide (${version.raw_text.length} chars)` : "raw_text manquant" 
+          reason: version?.raw_text ? `raw_text empty (${version.raw_text.length} chars)` : "raw_text missing" 
         })
         continue
       }
 
       if (!relevantContent || relevantContent.trim().length === 0) {
-        console.warn(`[POST /api/chat/collection] Contenu vide pour le document ${docId}`)
-        skippedDocs.push({ id: docId, title: doc.title, reason: "Contenu vide après traitement" })
+        console.warn(`[POST /api/chat/collection] Empty content for document ${docId}`)
+        skippedDocs.push({ id: docId, title: doc.title, reason: "Empty content after processing" })
         continue
       }
 
@@ -312,9 +312,9 @@ Exemples:
     }
 
     // Log pour debug
-    console.log(`[POST /api/chat/collection] Documents récupérés: ${documentContents.length}, Total contenu: ${documentContents.reduce((sum, d) => sum + d.content.length, 0)} caractères`)
+    console.log(`[POST /api/chat/collection] Retrieved documents: ${documentContents.length}, Total content: ${documentContents.reduce((sum, d) => sum + d.content.length, 0)} chars`)
     if (skippedDocs.length > 0) {
-      console.warn(`[POST /api/chat/collection] Documents ignorés (${skippedDocs.length}):`, skippedDocs.map(d => `${d.title} (${d.reason})`).join(", "))
+      console.warn(`[POST /api/chat/collection] Skipped documents (${skippedDocs.length}):`, skippedDocs.map(d => `${d.title} (${d.reason})`).join(", "))
     }
 
     // Construire le contexte pour l'IA
@@ -322,7 +322,7 @@ Exemples:
     contextParts.push(`Collection: ${collection.title}`)
     
     if (documentContents.length > 0) {
-      contextParts.push("\nDocuments disponibles:")
+      contextParts.push("\nAvailable documents:")
       documentContents.forEach((doc) => {
         contextParts.push(`\n--- Document: ${doc.title} (ID: ${doc.id}) ---`)
         contextParts.push(doc.content)
@@ -341,22 +341,22 @@ Exemples:
       if (processingDocs.length > 0) {
         // Des documents sont en cours de traitement
         return NextResponse.json({ 
-          error: "Les documents sont en cours de traitement. Veuillez patienter quelques instants et réessayer.",
-          response: `Les documents suivants sont en cours de traitement : ${processingDocs.map((d: any) => d.title).join(", ")}. Veuillez attendre qu'ils soient prêts avant de créer des flashcards ou quiz.`
+          error: "Documents are being processed. Please wait a few moments and try again.",
+          response: `The following documents are being processed: ${processingDocs.map((d: any) => d.title).join(", ")}. Please wait until they are ready before creating flashcards or quizzes.`
         }, { status: 400 })
       } else if (readyDocs.length === 0) {
         // Aucun document dans la collection
         return NextResponse.json({ 
-          error: "Aucun document dans cette collection.",
-          response: "Veuillez d'abord ajouter des documents PDF à cette collection."
+          error: "No documents in this collection.",
+          response: "Please add PDF documents to this collection first."
         }, { status: 400 })
       } else {
         // Documents prêts mais pas de contenu extrait
-        console.warn(`[POST /api/chat/collection] Aucun contenu trouvé pour la collection ${collectionId} malgré ${readyDocs.length} document(s) prêt(s)`)
+        console.warn(`[POST /api/chat/collection] No content found for collection ${collectionId} despite ${readyDocs.length} ready document(s)`)
         
         // Construire un message d'erreur détaillé avec les documents problématiques
         const docTitles = readyDocs.map((d: any) => d.title).join(", ")
-        let errorDetails = `Les documents suivants n'ont pas de contenu texte extrait:\n${docTitles}\n\n`
+        let errorDetails = `The following documents have no extracted text content:\n${docTitles}\n\n`
         
         // Vérifier les versions des documents pour diagnostiquer le problème
         const docIds = readyDocs.map((d: any) => d.id)
@@ -388,18 +388,18 @@ Exemples:
         
         if (docsWithoutContent.length > 0) {
           const problematicTitles = docsWithoutContent.map((d: any) => d.title).join(", ")
-          console.warn(`[POST /api/chat/collection] Documents sans contenu: ${problematicTitles}`)
-          errorDetails = `Les documents suivants n'ont pas de contenu texte:\n${problematicTitles}\n\n`
+          console.warn(`[POST /api/chat/collection] Documents without content: ${problematicTitles}`)
+          errorDetails = `The following documents have no text content:\n${problematicTitles}\n\n`
         }
         
         // Construire un message d'erreur détaillé avec instructions
-        const errorMessage = `${errorDetails}Causes possibles:\n- Les documents ont été uploadés avant que l'extraction de texte soit activée\n- Les PDFs sont des images scannées (sans texte extractible)\n- L'extraction de texte a échoué lors de l'upload\n\nSolutions:\n1. Exécuter le script de ré-extraction:\n   npx tsx scripts/re-extract-pdf-text.ts\n\n2. Vérifier les logs serveur pour voir quels documents sont ignorés\n\n3. Si le script ne fonctionne pas, re-uploader les documents`
+        const errorMessage = `${errorDetails}Possible causes:\n- Documents were uploaded before text extraction was enabled\n- PDFs are scanned images (no extractable text)\n- Text extraction failed during upload\n\nSolutions:\n1. Run the re-extraction script:\n   npx tsx scripts/re-extract-pdf-text.ts\n\n2. Check server logs to see which documents are ignored\n\n3. If the script doesn't work, re-upload the documents`
         
-        console.error(`[POST /api/chat/collection] ❌ Aucun contenu trouvé - ${readyDocs.length} document(s) prêt(s) mais aucun contenu texte`)
-        console.error(`[POST /api/chat/collection] Documents sans contenu:`, docsWithoutContent.map((d: any) => d.title))
+        console.error(`[POST /api/chat/collection] ❌ No content found - ${readyDocs.length} ready document(s) but no text content`)
+        console.error(`[POST /api/chat/collection] Documents without content:`, docsWithoutContent.map((d: any) => d.title))
         
         return NextResponse.json({ 
-          error: "Aucun contenu texte n'a pu être extrait des documents.",
+          error: "No text content could be extracted from the documents.",
           response: errorMessage
         }, { status: 400 })
       }
@@ -408,13 +408,13 @@ Exemples:
     const context = contextParts.join("\n")
     
     // Log pour debug
-    console.log(`[POST /api/chat/collection] Contexte construit: ${context.length} caractères, ${documentContents.length} documents`)
+    console.log(`[POST /api/chat/collection] Context built: ${context.length} chars, ${documentContents.length} documents`)
 
     // Appeler l'API OpenAI avec le contexte
     if (!process.env.OPENAI_API_KEY) {
       return NextResponse.json({ 
-        error: "Configuration OpenAI manquante",
-        response: "Je ne peux pas répondre car l'API OpenAI n'est pas configurée. Voici le contexte que j'aurais utilisé:\n\n" + context.substring(0, 500) + "..."
+        error: "OpenAI configuration missing",
+        response: "I cannot answer because the OpenAI API is not configured. Here is the context I would have used:\n\n" + context.substring(0, 500) + "..."
       }, { status: 500 })
     }
 

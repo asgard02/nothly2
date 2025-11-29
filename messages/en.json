@@ -401,12 +401,16 @@
     "summarize": "Summarize",
     "aiDisclaimer": "AI can make mistakes. Check important information.",
     "pdfViewerTitle": "PDF Viewer",
-    "successFlashcardsQuiz": "✅ {flashcardCount} flashcards and {quizCount} quiz questions successfully created on topic \"{topic}\"!\n\nDo you want to view them now?",
+      "successFlashcardsQuiz": "✅ {flashcardCount} flashcards and {quizCount} quiz questions successfully created on topic \"{topic}\"!\n\nDo you want to view them now?",
     "successFlashcards": "✅ {flashcardCount} flashcards successfully created on topic \"{topic}\"!\n\nDo you want to view them now?",
     "successQuiz": "✅ {quizCount} quiz questions successfully created on topic \"{topic}\"!\n\nDo you want to view them now?",
     "promptFlashcardsAction": "Create flashcards on key concepts using ONLY content from documents in this collection. Base yourself on the actual text of the PDFs, do not invent anything.",
     "promptQuizAction": "Create a quiz with multiple choice questions using ONLY content from documents in this collection. Base yourself on the actual text of the PDFs, do not invent anything.",
-    "promptSummaryAction": "Summarize key points using ONLY content from documents in this collection"
+    "promptSummaryAction": "Summarize key points using ONLY content from documents in this collection",
+    "generatingContent": "Generating content...",
+    "generatingContentDesc": "AI is analyzing your documents to create relevant content. This may take a few moments.",
+    "viewResult": "View result",
+    "generationSuccessTitle": "Content generated!"
   },
   "Library": {
     "title": "Collections",
