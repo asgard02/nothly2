@@ -50,6 +50,24 @@ export async function POST(req: Request) {
       return new NextResponse("Missing required fields", { status: 400 })
     }
 
+    // Check if an event with the same title already exists for this user
+    const { data: existingEvent } = await supabase
+      .from("calendar_events")
+      .select("id")
+      .eq("user_id", user.id)
+      .eq("title", title)
+      .maybeSingle()
+
+    if (existingEvent) {
+      return new NextResponse(
+        JSON.stringify({ error: "Un événement avec ce titre existe déjà" }), 
+        { 
+          status: 409,
+          headers: { 'Content-Type': 'application/json' }
+        }
+      )
+    }
+
     const { data: event, error } = await supabase
       .from("calendar_events")
       .insert({
@@ -66,6 +84,16 @@ export async function POST(req: Request) {
 
     if (error) {
       console.error("Error creating event:", error)
+      // Check if it's a unique constraint violation
+      if (error.code === '23505') {
+        return new NextResponse(
+          JSON.stringify({ error: "Un événement avec ce titre existe déjà" }), 
+          { 
+            status: 409,
+            headers: { 'Content-Type': 'application/json' }
+          }
+        )
+      }
       return new NextResponse(error.message, { status: 500 })
     }
 

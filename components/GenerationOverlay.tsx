@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { CheckCircle2, Loader2, Sparkles, FileText, Brain, Database } from "lucide-react"
+import { CheckCircle2, Loader2, Sparkles, FileText, Brain, Database, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useTranslations } from "next-intl"
 
@@ -57,6 +57,17 @@ export function GenerationOverlay({ isVisible, currentStep, onClose }: Generatio
     // Si c'est terminé, on montre la dernière étape ou un message de fin
     const currentStepData = isComplete ? steps[steps.length - 1] : steps[activeStepIndex] || steps[0]
 
+    // Auto-dismiss après 20s quand la génération est terminée
+    useEffect(() => {
+        if (isComplete && onClose) {
+            const timer = setTimeout(() => {
+                onClose()
+            }, 20000) // 20 secondes
+
+            return () => clearTimeout(timer)
+        }
+    }, [isComplete, onClose])
+
     return (
         <AnimatePresence>
             {isVisible && (
@@ -79,6 +90,14 @@ export function GenerationOverlay({ isVisible, currentStep, onClose }: Generatio
                                     {isComplete ? t("completeTitle") : t("workingTitle")}
                                 </span>
                             </div>
+                            {/* Bouton X pour fermer */}
+                            <button
+                                onClick={onClose}
+                                className="p-1 rounded-md hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+                                aria-label="Close"
+                            >
+                                <X className="h-4 w-4" />
+                            </button>
                         </div>
 
                         {/* Content - Sequential Animation */}

@@ -34,6 +34,9 @@ CREATE POLICY "Users can delete their own calendar events"
     FOR DELETE
     USING (auth.uid() = user_id);
 
+-- Create unique constraint to prevent duplicate titles per user
+ALTER TABLE public.calendar_events ADD CONSTRAINT unique_user_event_title UNIQUE (user_id, title);
+
 -- Create index for faster queries
 CREATE INDEX IF NOT EXISTS calendar_events_user_id_idx ON public.calendar_events(user_id);
 CREATE INDEX IF NOT EXISTS calendar_events_date_idx ON public.calendar_events(date);

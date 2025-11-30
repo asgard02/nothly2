@@ -197,15 +197,36 @@ Réponds UNIQUEMENT avec le JSON, sans texte avant ou après.`
 
       const generatedItems = JSON.parse(jsonMatch[0])
 
+      const collectionTitle = type === "quiz" 
+        ? `Quiz ciblé: ${topTags.join(", ")}`
+        : `Flashcards ciblées: ${topTags.join(", ")}`
+      const collectionType = type === "quiz" ? "quiz" : "flashcard"
+      
+      // Vérifier si une collection avec ce titre et type existe déjà
+      const { data: existingCollection } = await admin
+        .from("study_collections")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("title", collectionTitle)
+        .eq("type", collectionType)
+        .maybeSingle()
+      
+      if (existingCollection) {
+        return NextResponse.json({ 
+          success: false,
+          error: `Un ${type === "quiz" ? "quiz" : "ensemble de flashcards"} avec ce titre existe déjà`,
+          message: `Vous avez déjà créé un ${type === "quiz" ? "quiz" : "ensemble de flashcards"} intitulé "${collectionTitle}". Veuillez supprimer l'ancien ou modifier les tags.`
+        }, { status: 409 })
+      }
+
       // Créer une nouvelle study_collection pour les questions ciblées
       const { data: studyCollection, error: createError } = await admin
         .from("study_collections")
         .insert({
           user_id: user.id,
           collection_id: targetId,
-          title: type === "quiz" 
-            ? `Quiz ciblé: ${topTags.join(", ")}`
-            : `Flashcards ciblées: ${topTags.join(", ")}`,
+          title: collectionTitle,
+          type: collectionType,
           tags: topTags,
           status: "ready",
           total_sources: sources.length,
@@ -216,6 +237,14 @@ Réponds UNIQUEMENT avec le JSON, sans texte avant ou après.`
         .single()
 
       if (createError || !studyCollection) {
+        // Gérer les erreurs de contrainte unique (code 23505)
+        if (createError?.code === '23505') {
+          return NextResponse.json({ 
+            success: false,
+            error: `Un ${type === "quiz" ? "quiz" : "ensemble de flashcards"} avec ce titre existe déjà`,
+            message: "Un élément avec ce titre existe déjà. Veuillez supprimer l'ancien."
+          }, { status: 409 })
+        }
         throw new Error("Erreur lors de la création de la collection")
       }
 

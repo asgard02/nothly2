@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Dialog, DialogContent } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -30,6 +30,9 @@ export function GenerationDialog({
     const [selectedDocIds, setSelectedDocIds] = useState<string[]>([])
     const [topic, setTopic] = useState("")
     const [searchQuery, setSearchQuery] = useState("")
+    const [isCheckingTitle, setIsCheckingTitle] = useState(false)
+    const [titleExists, setTitleExists] = useState(false)
+    const [titleError, setTitleError] = useState<string | null>(null)
 
     // Reset state when opening
     useEffect(() => {
@@ -38,15 +41,52 @@ export function GenerationDialog({
             setSelectedDocIds([]) // Will be auto-filled in step 2 if needed
             setTopic("")
             setSearchQuery("")
+            setTitleExists(false)
+            setTitleError(null)
         }
     }, [open])
 
+    // Vérifier l'unicité du titre quand l'utilisateur valide
+    const checkTitleUniqueness = async () => {
+        if (!topic.trim() || !intent) {
+            return true // Pas de topic = OK (génération globale)
+        }
+
+        const generatedTitle = intent === "flashcards"
+            ? `Flashcards: ${topic}`
+            : intent === "quiz"
+                ? `Quiz: ${topic}`
+                : `Résumé: ${topic}`
+
+        setIsCheckingTitle(true)
+        setTitleError(null)
+
+        try {
+            const response = await fetch(`/api/study-collections/check-title?title=${encodeURIComponent(generatedTitle)}&type=${intent === "flashcards" ? "flashcard" : intent}`)
+            if (response.ok) {
+                const data = await response.json()
+                setTitleExists(data.exists)
+                if (data.exists) {
+                    setTitleError(`Un ${intent === "flashcards" ? "ensemble de flashcards" : intent === "quiz" ? "quiz" : "résumé"} avec ce titre existe déjà`)
+                    return false
+                }
+                return true
+            }
+            return true
+        } catch (error) {
+            console.error("Error checking title:", error)
+            return true // En cas d'erreur, on laisse passer
+        } finally {
+            setIsCheckingTitle(false)
+        }
+    }
+
     // Pre-select all docs when entering step 2 if none selected
     useEffect(() => {
-        if (step === 2 && selectedDocIds.length === 0) {
+        if (step === 2 && selectedDocIds.length === 0 && documents.length > 0) {
             setSelectedDocIds(documents.map(d => d.id))
         }
-    }, [step, documents])
+    }, [step, documents, selectedDocIds.length])
 
     const filteredDocs = documents.filter(doc =>
         doc.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -69,8 +109,12 @@ export function GenerationDialog({
         }
     }
 
-    const handleNext = () => {
-        setStep(2)
+    const handleNext = async () => {
+        const isUnique = await checkTitleUniqueness()
+        if (isUnique) {
+            setStep(2)
+        }
+        // Si non unique, l'erreur est déjà affichée par checkTitleUniqueness
     }
 
     const handleSubmit = () => {
@@ -117,8 +161,8 @@ export function GenerationDialog({
                                 {getIntentIcon()}
                             </div>
                             <div>
-                                <h2 className="text-xl font-bold tracking-tight">{getIntentTitle()}</h2>
-                                <p className="text-xs text-muted-foreground font-medium">Étape {step} sur 2</p>
+                                <DialogTitle className="text-xl font-bold tracking-tight">{getIntentTitle()}</DialogTitle>
+                                <DialogDescription className="text-xs text-muted-foreground font-medium">Étape {step} sur 2</DialogDescription>
                             </div>
                         </div>
                         {/* Progress dots */}
@@ -148,27 +192,69 @@ export function GenerationDialog({
                                             </p>
                                         </div>
 
-                                        <div className="relative">
-                                            <Input
-                                                autoFocus
-                                                placeholder="Ex: La Guerre Froide, Les limites..."
-                                                value={topic}
-                                                onChange={(e) => setTopic(e.target.value)}
-                                                className="h-14 text-lg px-6 rounded-2xl bg-muted/30 border-border/60 focus:ring-primary/30 transition-all shadow-sm"
-                                                onKeyDown={(e) => {
-                                                    if (e.key === "Enter") handleNext()
-                                                }}
-                                            />
+                                        <div className="space-y-3">
+                                            <div className="relative">
+                                                <Input
+                                                    autoFocus
+                                                    placeholder="Ex: La Guerre Froide, Les limites..."
+                                                    value={topic}
+                                                    onChange={(e) => {
+                                                        setTopic(e.target.value)
+                                                        // Réinitialiser l'erreur quand l'utilisateur modifie
+                                                        if (titleError) {
+                                                            setTitleError(null)
+                                                            setTitleExists(false)
+                                                        }
+                                                    }}
+                                                    className={cn(
+                                                        "h-14 text-lg px-6 rounded-2xl bg-muted/30 border-border/60 focus:ring-primary/30 transition-all shadow-sm",
+                                                        titleExists && "border-destructive/50 focus:ring-destructive/20"
+                                                    )}
+                                                    onKeyDown={(e) => {
+                                                        if (e.key === "Enter" && !isCheckingTitle) handleNext()
+                                                    }}
+                                                />
+                                                {/* Indicateur de vérification */}
+                                                {isCheckingTitle && (
+                                                    <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                                                        <div className="h-4 w-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Message d'erreur */}
+                                            {titleError && !isCheckingTitle && (
+                                                <motion.div
+                                                    initial={{ opacity: 0, y: -10 }}
+                                                    animate={{ opacity: 1, y: 0 }}
+                                                    className="flex items-start gap-2 p-3 rounded-xl bg-destructive/10 border border-destructive/20"
+                                                >
+                                                    <svg className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                    </svg>
+                                                    <p className="text-sm text-destructive font-medium">{titleError}</p>
+                                                </motion.div>
+                                            )}
                                         </div>
 
                                         <div className="flex flex-col gap-3 pt-4">
                                             <Button
                                                 onClick={handleNext}
                                                 size="lg"
-                                                className="w-full rounded-xl h-12 text-base font-medium shadow-md hover:shadow-lg transition-all"
+                                                disabled={isCheckingTitle}
+                                                className="w-full rounded-xl h-12 text-base font-medium shadow-md hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                             >
-                                                {topic ? "Continuer avec ce sujet" : "Je n'ai pas de sujet précis"}
-                                                <ArrowRight className="ml-2 h-4 w-4" />
+                                                {isCheckingTitle ? (
+                                                    <>
+                                                        <div className="h-4 w-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin mr-2" />
+                                                        Vérification...
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        {topic ? "Continuer avec ce sujet" : "Je n'ai pas de sujet précis"}
+                                                        <ArrowRight className="ml-2 h-4 w-4" />
+                                                    </>
+                                                )}
                                             </Button>
                                             {!topic && (
                                                 <p className="text-xs text-center text-muted-foreground">

@@ -548,14 +548,34 @@ ${context.substring(0, 15000)}`
           
           // Créer une study_collection liée à la collection principale
           if ((flashcards && flashcards.length > 0) || (quizQuestions && quizQuestions.length > 0)) {
+            const collectionTitle = isFlashcardRequest 
+              ? `Flashcards: ${searchTopic || collection.title}`
+              : `Quiz: ${searchTopic || collection.title}`
+            const collectionType = isFlashcardRequest ? 'flashcard' : 'quiz'
+            
+            // Vérifier si une collection avec ce titre et type existe déjà
+            const { data: existingCollection } = await admin
+              .from("study_collections")
+              .select("id")
+              .eq("user_id", user.id)
+              .eq("title", collectionTitle)
+              .eq("type", collectionType)
+              .maybeSingle()
+            
+            if (existingCollection) {
+              return NextResponse.json({ 
+                error: `Un ${isFlashcardRequest ? 'ensemble de flashcards' : 'quiz'} avec ce titre existe déjà`,
+                response: `Vous avez déjà créé un ${isFlashcardRequest ? 'ensemble de flashcards' : 'quiz'} intitulé "${collectionTitle}". Veuillez choisir un nom différent ou supprimer l'ancien.`
+              }, { status: 409 })
+            }
+            
             const { data: studyCollection, error: createError } = await admin
               .from("study_collections")
               .insert({
                 user_id: user.id,
                 collection_id: targetId, // Lier à la matière principale
-                title: isFlashcardRequest 
-                  ? `Flashcards: ${searchTopic || collection.title}`
-                  : `Quiz: ${searchTopic || collection.title}`,
+                title: collectionTitle,
+                type: collectionType,
                 tags: searchTopic ? [searchTopic] : [],
                 status: "ready",
                 total_sources: documentContents.length,
@@ -602,6 +622,15 @@ ${context.substring(0, 15000)}`
                   .from("study_collection_quiz_questions")
                   .insert(quizInserts)
               }
+            } else if (createError) {
+              // Gérer les erreurs de contrainte unique (code 23505)
+              if (createError.code === '23505') {
+                return NextResponse.json({ 
+                  error: `Un ${isFlashcardRequest ? 'ensemble de flashcards' : 'quiz'} avec ce titre existe déjà`,
+                  response: `Un ${isFlashcardRequest ? 'ensemble de flashcards' : 'quiz'} avec ce titre existe déjà. Veuillez choisir un nom différent.`
+                }, { status: 409 })
+              }
+              console.error("[POST /api/chat/subject] Erreur lors de la création:", createError)
             }
           }
         }
@@ -612,12 +641,31 @@ ${context.substring(0, 15000)}`
     } else if (isSummaryRequest) {
       // Pour les résumés, on crée aussi une study_collection pour le sauvegarder
       try {
+        const summaryTitle = `Résumé: ${searchTopic || collection.title}`
+        
+        // Vérifier si un résumé avec ce titre existe déjà
+        const { data: existingSummary } = await admin
+          .from("study_collections")
+          .select("id")
+          .eq("user_id", user.id)
+          .eq("title", summaryTitle)
+          .eq("type", "summary")
+          .maybeSingle()
+        
+        if (existingSummary) {
+          return NextResponse.json({ 
+            error: "Un résumé avec ce titre existe déjà",
+            response: `Vous avez déjà créé un résumé intitulé "${summaryTitle}". Veuillez choisir un nom différent ou supprimer l'ancien.`
+          }, { status: 409 })
+        }
+        
         const { data: studyCollection, error: createError } = await admin
           .from("study_collections")
           .insert({
             user_id: user.id,
             collection_id: targetId,
-            title: `Résumé: ${searchTopic || collection.title}`,
+            title: summaryTitle,
+            type: "summary",
             tags: searchTopic ? [searchTopic] : ["résumé"],
             status: "ready",
             total_sources: documentContents.length,
@@ -634,6 +682,15 @@ ${context.substring(0, 15000)}`
         if (!createError && studyCollection) {
           studyCollectionId = studyCollection.id
           console.log(`[POST /api/chat/subject] Résumé sauvegardé dans study_collection ${studyCollectionId}`)
+        } else if (createError) {
+          // Gérer les erreurs de contrainte unique (code 23505)
+          if (createError.code === '23505') {
+            return NextResponse.json({ 
+              error: "Un résumé avec ce titre existe déjà",
+              response: "Un résumé avec ce titre existe déjà. Veuillez choisir un nom différent."
+            }, { status: 409 })
+          }
+          console.error("[POST /api/chat/subject] Erreur lors de la sauvegarde du résumé:", createError)
         }
       } catch (error) {
         console.error("[POST /api/chat/subject] Erreur lors de la sauvegarde du résumé:", error)

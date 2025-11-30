@@ -3,7 +3,7 @@
 import { useState, useTransition, useMemo } from "react"
 import { motion } from "framer-motion"
 import { useRouter } from "next/navigation"
-import { ArrowLeft, ArrowRight, FileText, Plus, Search, Sparkles, BookOpen, MessageSquare, Send, Loader2, X, Brain, ListChecks, ChevronDown, ChevronUp, Calendar, Trash2, Pencil, Check } from "lucide-react"
+import { ArrowLeft, ArrowRight, FileText, Plus, Search, Sparkles, BookOpen, MessageSquare, Send, Loader2, X, Brain, ListChecks, ChevronDown, ChevronUp, Calendar, Trash2, Pencil, Check, Zap } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -711,8 +711,8 @@ export function SubjectView({ subject, onBack, onSelectDocument, onUpdate }: Sub
                           </div>
 
                           <div className="flex-1 min-w-0 pt-1">
-                            <div className="flex items-start justify-between gap-4">
-                              <div>
+                            <div className="flex items-center justify-between gap-4">
+                              <div className="flex-shrink">
                                 <h3 className="font-semibold text-foreground text-base mb-1 group-hover:text-primary transition-colors">
                                   {doc.title}
                                 </h3>
@@ -729,7 +729,43 @@ export function SubjectView({ subject, onBack, onSelectDocument, onUpdate }: Sub
                                 </div>
                               </div>
 
-                              <div className="flex items-center gap-2">
+                              {/* AI Generation Suggestions - center-right */}
+                              {doc.status === "ready" && (
+                                <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      handleOpenGenerationDialog("flashcards")
+                                    }}
+                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-white dark:bg-card text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-500/10 transition-colors border border-border shadow-sm"
+                                  >
+                                    <Brain className="h-3.5 w-3.5" />
+                                    {t("generateFlashcards")}
+                                  </button>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      handleOpenGenerationDialog("quiz")
+                                    }}
+                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-white dark:bg-card text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-500/10 transition-colors border border-border shadow-sm"
+                                  >
+                                    <ListChecks className="h-3.5 w-3.5" />
+                                    {t("generateQuiz")}
+                                  </button>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      handleOpenGenerationDialog("summary")
+                                    }}
+                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-white dark:bg-card text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-colors border border-border shadow-sm"
+                                  >
+                                    <FileText className="h-3.5 w-3.5" />
+                                    {t("summarize")}
+                                  </button>
+                                </div>
+                              )}
+
+                              <div className="flex items-center gap-2 flex-shrink-0">
                                 <span className={cn(
                                   "px-2.5 py-1 rounded-full text-xs font-medium border",
                                   doc.status === "ready"
@@ -738,6 +774,7 @@ export function SubjectView({ subject, onBack, onSelectDocument, onUpdate }: Sub
                                 )}>
                                   {doc.status === "ready" ? tStatus("ready") : tStatus("analyzing")}
                                 </span>
+
                                 <button
                                   onClick={(e) => handleDeleteDocument(doc.id, e, doc.title)}
                                   className="p-2 rounded-full hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors opacity-0 group-hover:opacity-100"
