@@ -11,7 +11,7 @@ import MainContent from "@/components/MainContent"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { useCollections } from "@/lib/hooks/useCollections"
+import { useSubjects } from "@/lib/hooks/useSubjects"
 import { toast } from "sonner"
 import { useTranslations, useLocale } from "next-intl"
 
@@ -68,12 +68,12 @@ export default function CalendarPage() {
     // Generation State
     const [isGenerateOpen, setIsGenerateOpen] = useState(false)
     const [isGenerating, setIsGenerating] = useState(false)
-    const [selectedCollectionId, setSelectedCollectionId] = useState("")
+    const [selectedSubjectId, setSelectedSubjectId] = useState("")
     const [planStartDate, setPlanStartDate] = useState(format(new Date(), "yyyy-MM-dd"))
     const [planEndDate, setPlanEndDate] = useState(format(addDays(new Date(), 7), "yyyy-MM-dd"))
     const [planIntensity, setPlanIntensity] = useState("Moyenne")
 
-    const { data: collections } = useCollections()
+    const { data: subjects } = useSubjects()
 
     // Form state
     const [newEventTitle, setNewEventTitle] = useState("")
@@ -178,7 +178,7 @@ export default function CalendarPage() {
     }
 
     const handleGeneratePlan = async () => {
-        if (!selectedCollectionId) return
+        if (!selectedSubjectId) return
 
         setIsGenerating(true)
         try {
@@ -186,7 +186,7 @@ export default function CalendarPage() {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    collectionId: selectedCollectionId,
+                    subjectId: selectedSubjectId,
                     startDate: planStartDate,
                     endDate: planEndDate,
                     intensity: planIntensity
@@ -660,11 +660,11 @@ export default function CalendarPage() {
                                 <label className="text-sm font-medium">{t("labelCollection")}</label>
                                 <select
                                     className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm"
-                                    value={selectedCollectionId}
-                                    onChange={(e) => setSelectedCollectionId(e.target.value)}
+                                    value={selectedSubjectId}
+                                    onChange={(e) => setSelectedSubjectId(e.target.value)}
                                 >
                                     <option value="">{t("selectCollection")}</option>
-                                    {collections?.map(c => (
+                                    {subjects?.map(c => (
                                         <option key={c.id} value={c.id}>{c.title}</option>
                                     ))}
                                 </select>
@@ -711,7 +711,7 @@ export default function CalendarPage() {
                             <Button variant="outline" onClick={() => setIsGenerateOpen(false)}>{t("cancel")}</Button>
                             <Button
                                 onClick={handleGeneratePlan}
-                                disabled={!selectedCollectionId || isGenerating}
+                                disabled={!selectedSubjectId || isGenerating}
                                 className="bg-indigo-600 hover:bg-indigo-700 text-white"
                             >
                                 {isGenerating ? (

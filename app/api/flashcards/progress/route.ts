@@ -118,17 +118,17 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url)
-    const studyCollectionId = searchParams.get("studyCollectionId")
+    const studySubjectId = searchParams.get("studySubjectId") || searchParams.get("studyCollectionId")
 
-    if (!studyCollectionId) {
-      return NextResponse.json({ error: "studyCollectionId manquant" }, { status: 400 })
+    if (!studySubjectId) {
+      return NextResponse.json({ error: "studySubjectId manquant" }, { status: 400 })
     }
 
     // 1. Récupérer les IDs des flashcards de cette collection
     const { data: flashcards } = await admin
       .from("study_collection_flashcards")
       .select("id")
-      .eq("collection_id", studyCollectionId)
+      .eq("collection_id", studySubjectId)
 
     const flashcardIds = flashcards?.map(f => f.id) || []
 

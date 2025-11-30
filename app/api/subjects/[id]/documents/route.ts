@@ -4,7 +4,7 @@ import { getSupabaseAdmin } from "@/lib/db"
 
 export const dynamic = "force-dynamic"
 
-// GET /api/collections/[id]/documents - Récupérer les documents d'une collection
+// GET /api/subjects/[id]/documents - Récupérer les documents d'une matière
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -29,7 +29,7 @@ export async function GET(
       return NextResponse.json({ error: "Configuration Supabase manquante" }, { status: 500 })
     }
 
-    // Vérifier que la collection appartient à l'utilisateur
+    // Vérifier que la matière appartient à l'utilisateur
     const { data: collection, error: collectionError } = await admin
       .from("collections")
       .select("id")
@@ -38,10 +38,10 @@ export async function GET(
       .single()
 
     if (collectionError || !collection) {
-      return NextResponse.json({ error: "Collection non trouvée" }, { status: 404 })
+      return NextResponse.json({ error: "Matière non trouvée" }, { status: 404 })
     }
 
-    // Récupérer les documents de la collection
+    // Récupérer les documents de la matière
     const { data: documents, error } = await admin
       .from("documents")
       .select("id, title, original_filename, status, created_at, updated_at")
@@ -50,7 +50,7 @@ export async function GET(
       .order("created_at", { ascending: false })
 
     if (error) {
-      console.error("[GET /api/collections/:id/documents] ❌ Erreur Supabase:", error)
+      console.error("[GET /api/subjects/:id/documents] ❌ Erreur Supabase:", error)
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
@@ -118,7 +118,7 @@ export async function GET(
 
         // Log pour debug
         if (summaries.length > 0) {
-          console.log(`[GET /api/collections/:id/documents] Document ${doc.title} a ${summaries.length} résumé(s)`)
+          console.log(`[GET /api/subjects/:id/documents] Document ${doc.title} a ${summaries.length} résumé(s)`)
         }
 
         return {
@@ -135,7 +135,7 @@ export async function GET(
 
     return NextResponse.json(formattedDocuments)
   } catch (err: any) {
-    console.error("[GET /api/collections/:id/documents] ❌ Exception:", err)
+    console.error("[GET /api/subjects/:id/documents] ❌ Exception:", err)
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 })
   }
 }

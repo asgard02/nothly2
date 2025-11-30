@@ -1,10 +1,10 @@
 "use client"
 
 import { useState } from "react"
-import { 
-  Sparkles, 
-  BookOpen, 
-  GraduationCap, 
+import {
+  Sparkles,
+  BookOpen,
+  GraduationCap,
   Zap,
   Brain,
   X
@@ -14,7 +14,7 @@ import AIChat from "@/components/AIChat"
 
 interface ContextActionsProps {
   activeContext: {
-    type: "collection" | "pdf" | "note" | "quiz" | "graph"
+    type: "subject" | "pdf" | "note" | "quiz" | "graph"
     data: any
   }
   onGenerateQuiz?: (quiz: any) => void
@@ -24,8 +24,8 @@ export function ContextActions({ activeContext, onGenerateQuiz }: ContextActions
   const [isExpanded, setIsExpanded] = useState(false)
   const [showChat, setShowChat] = useState(false)
 
-  // Ne pas afficher si on est sur la vue graph/library ou collection (le chat est intégré dans CollectionView)
-  if (activeContext.type === "graph" || activeContext.type === "collection" || !activeContext.data) {
+  // Ne pas afficher si on est sur la vue graph/library ou sujet (le chat est intégré dans SubjectView)
+  if (activeContext.type === "graph" || activeContext.type === "subject" || !activeContext.data) {
     return null
   }
 

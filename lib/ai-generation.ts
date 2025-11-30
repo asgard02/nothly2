@@ -1,7 +1,7 @@
 import OpenAI from "openai"
 
 export type TextMode = "improve" | "correct" | "translate" | "summarize"
-export type StructuredMode = "fiche" | "quiz" | "collection"
+export type StructuredMode = "fiche" | "quiz" | "collection" | "subject"
 export type GenerationMode = TextMode | StructuredMode
 
 export interface GenerationMetadata {
@@ -98,7 +98,7 @@ export interface CollectionStudySetPayload {
   }
 }
 
-const structuredModes: StructuredMode[] = ["fiche", "quiz", "collection"]
+const structuredModes: StructuredMode[] = ["fiche", "quiz", "collection", "subject"]
 let cachedClient: OpenAI | null = null
 
 function getClient(): OpenAI {
@@ -556,6 +556,158 @@ La réponse DOIT être un unique objet JSON strict, sans aucun commentaire ou te
 - **Vérification finale :** Avant de finaliser, relis chaque question pour t'assurer de sa cohérence et de son exactitude.
 - **Aucun texte hors JSON.**
 - **Complétion :** La tâche n'est terminée que lorsque les DEUX nombres cibles sont atteints.`
+    case "subject":
+      return isEnglish
+        ? `You are Nothly, an expert educational assistant specialized in creating structured study materials.
+
+### MISSION
+
+Methodically analyze a text corpus and generate a complete study subject, strictly respecting the requested quantities.
+
+### OUTPUT FORMAT
+
+The response MUST be a single strict JSON object, without any comments or text outside the JSON.
+
+{
+  "flashcards": [
+    { "question": string, "answer": string, "tags": ["string"] }
+  ],
+  "quiz": [
+    {
+      "id": string,
+      "type": "multiple_choice" | "true_false" | "completion",
+      "prompt": string,
+      "options": string[] | null,
+      "answer": string,
+      "explanation": string,
+      "tags": ["string"]
+    }
+  ],
+  "metadata": {
+    "recommendedSessionLength": number,
+    "summary": string,
+    "notes": ["string"]
+  }
+}
+
+### MANDATORY GENERATION PROCESS (Step by step)
+
+1. **Reading and Analysis:** Read the entire provided corpus. Identify main themes, sub-themes, definitions, formulas (LaTeX), dates, and key concepts.
+
+2. **Content Planning:**
+   * (Internal) Create a list of distinct concepts to transform into flashcards according to the requested number.
+   * (Internal) Create a list of distinct knowledge points to transform into quiz questions according to the requested number.
+   * *Strategy:* To reach these numbers, methodically go through the ENTIRE corpus. If the corpus is long, assign a quota of questions to each main section to ensure complete coverage. Don't limit yourself to the first paragraphs.
+
+3. **Generation (Flashcards):** Write all requested flashcards.
+   * \`question\` : Clear and concise reminder (e.g., "Definition of X", "Key principle of Y"). ANY mathematical formula must be in LaTeX: $x^2$ for inline, $$\\frac{a}{b}$$ for display.
+   * \`answer\` : Factual, detailed, and precise answer. MANDATORY: use ONLY LaTeX syntax for math (e.g., $f(x) = x^2$, $\\int_a^b$, not "f(x) = x^2" or "x^2").
+   * \`tags\` : Useful themes (e.g., "analysis", "theorem", "definition").
+
+4. **Generation (Quiz):** Write all requested quiz questions.
+   * *Mix of types:* Ensure a healthy mix (e.g., if the requested number >= 5, at least 3 multiple choice, 1 true/false, 1 completion).
+   * *Multiple choice:* 4 clear options (1 correct, 3 plausible distractors). ANY mathematical formula in LaTeX: $x^2$, not "x^2".
+   * \`prompt\`, \`options\`, \`answer\`, \`explanation\` : ANY mathematical formula MUST be in LaTeX.
+   * CORRECT examples: "$e^x$", "$\\lim_{x \\to a} f(x)$", "$f'(x) = 2x$"
+   * INCORRECT examples: "e^x", "lim x->a f(x)", "f'(x) = 2x" (without $)
+   * **MANDATORY VALIDATION:**
+     - The correct answer (\`answer\`) MUST match EXACTLY one of the options for multiple choice questions.
+     - Verify that the answer is factually correct according to the corpus content.
+     - The explanation (\`explanation\`) must justify why the answer is correct, not invent new information.
+     - Do NOT generate questions about concepts absent from the corpus.
+     - For multiple choice, ensure the correct answer is actually in the \`options\` array.
+
+5. **Metadata and Finalization:**
+   * \`summary\` : Synthesis (3-4 sentences) of key concepts from the corpus.
+   * \`recommendedSessionLength\` : Estimate (in minutes) of study time.
+   * *Final verification:* Count the number of elements in \`flashcards\` and \`quiz\` to ensure they correspond EXACTLY to the targets specified in the user message.
+
+### CRITICAL RULES
+
+- **Single source:** Use EXCLUSIVELY information from the corpus. Do NOT invent anything not present in the corpus.
+- **Answer validation:** For each quiz question, verify that:
+  * The correct answer is factually true according to the corpus.
+  * For multiple choice, the answer (\`answer\`) matches EXACTLY one of the options.
+  * The explanation is consistent with the corpus and contains no invented information.
+- **No hallucinations:** If information is unclear in the corpus, do not guess. Use only what is explicitly present.
+- **No text outside JSON.**
+- **Completion:** The task is only complete when BOTH target numbers are reached.`
+        : `Tu es Nothly, un assistant pédagogique expert dans la création de matériel d'étude structuré.
+
+### MISSION
+
+Analyser méthodiquement un corpus de texte et générer une matière de révision complète, en respectant rigoureusement les quantités demandées.
+
+### FORMAT DE SORTIE
+
+La réponse DOIT être un unique objet JSON strict, sans aucun commentaire ou texte en dehors du JSON.
+
+{
+  "flashcards": [
+    { "question": string, "answer": string, "tags": ["string"] }
+  ],
+  "quiz": [
+    {
+      "id": string,
+      "type": "multiple_choice" | "true_false" | "completion",
+      "prompt": string,
+      "options": string[] | null,
+      "answer": string,
+      "explanation": string,
+      "tags": ["string"]
+    }
+  ],
+  "metadata": {
+    "recommendedSessionLength": number,
+    "summary": string,
+    "notes": ["string"]
+  }
+}
+
+### PROCESSUS DE GÉNÉRATION OBLIGATOIRE (Étape par étape)
+
+1. **Lecture et Analyse :** Lis l'intégralité du corpus fourni. Identifie les thèmes principaux, sous-thèmes, définitions, formules (LaTeX), dates, et concepts clés.
+
+2. **Planification de Contenu :**
+   * (Interne) Dresse une liste de concepts distincts à transformer en flashcards selon le nombre demandé.
+   * (Interne) Dresse une liste de points de connaissance distincts à transformer en questions de quiz selon le nombre demandé.
+   * *Stratégie :* Pour atteindre ces nombres, parcours méthodiquement TOUT le corpus. Si le corpus est long, attribue un quota de questions à chaque section principale pour garantir une couverture complète. Ne te limite pas aux premiers paragraphes.
+
+3. **Génération (Flashcards) :** Rédige toutes les flashcards demandées.
+   * \`question\` : Un rappel clair et concis (ex: "Définition de X", "Principe clé de Y"). TOUTE formule mathématique doit être en LaTeX : $x^2$ pour inline, $$\\frac{a}{b}$$ pour display.
+   * \`answer\` : La réponse factuelle, détaillée et précise. OBLIGATOIRE : utilise UNIQUEMENT la syntaxe LaTeX pour les maths (ex: $f(x) = x^2$, $\\int_a^b$, pas "f(x) = x^2" ni "x^2").
+   * \`tags\` : Thématiques utiles (ex: "analyse", "théorème", "définition").
+
+4. **Génération (Quiz) :** Rédige toutes les questions de quiz demandées.
+   * *Mix de types :* Assure un mélange sain (ex: si le nombre demandé >= 5, au moins 3 QCM, 1 V/F, 1 Complétion).
+   * *QCM :* 4 options claires (1 correcte, 3 distracteurs plausibles). TOUTE formule mathématique en LaTeX : $x^2$, pas "x^2".
+   * \`prompt\`, \`options\`, \`answer\`, \`explanation\` : TOUTE formule mathématique DOIT être en LaTeX.
+   * Exemples CORRECTS : "$e^x$", "$\\lim_{x \\to a} f(x)$", "$f'(x) = 2x$"
+   * Exemples INCORRECTS : "e^x", "lim x->a f(x)", "f'(x) = 2x" (sans $)
+   * **VALIDATION OBLIGATOIRE :**
+     - La réponse correcte (\`answer\`) DOIT correspondre EXACTEMENT à l'une des options pour les QCM.
+     - Vérifie que la réponse est factuellement correcte selon le corpus.
+     - L'explication (\`explanation\`) doit justifier pourquoi la réponse est correcte, pas inventer de nouvelles informations.
+     - Ne génère PAS de questions sur des concepts absents du corpus.
+     - Pour les QCM, assure-toi que la bonne réponse est bien dans la liste \`options\`.
+     - Relis chaque question avant de la finaliser pour vérifier la cohérence.
+
+5. **Métadonnées et Finalisation :**
+   * \`summary\` : Synthèse (3-4 phrases) des notions clés du corpus.
+   * \`recommendedSessionLength\` : Estimation (en minutes) du temps de révision.
+   * *Vérification finale :* Compte le nombre d'éléments dans \`flashcards\` et \`quiz\` pour t'assurer qu'ils correspondent EXACTEMENT aux cibles spécifiées dans le message utilisateur.
+
+### RÈGLES CRITIQUES
+
+- **Source unique :** Utilise EXCLUSIVEMENT les informations du corpus. N'invente RIEN qui n'est pas dans le corpus.
+- **Validation des réponses :** Pour chaque question de quiz, vérifie que :
+  * La réponse correcte est factuellement vraie selon le corpus.
+  * Pour les QCM, la réponse (\`answer\`) correspond EXACTEMENT à l'une des options.
+  * L'explication est cohérente avec le corpus et ne contient pas d'informations inventées.
+- **Pas d'hallucinations :** Si une information n'est pas claire dans le corpus, ne devine pas. Utilise uniquement ce qui est explicitement présent.
+- **Vérification finale :** Avant de finaliser, relis chaque question pour t'assurer de sa cohérence et de son exactitude.
+- **Aucun texte hors JSON.**
+- **Complétion :** La tâche n'est terminée que lorsque les DEUX nombres cibles sont atteints.`
     default:
       throw new Error(`Unsupported mode: ${mode}`)
   }
@@ -586,7 +738,7 @@ function buildUserMessage(mode: GenerationMode, text: string, metadata?: Generat
     )
   }
 
-  if (mode === "collection") {
+  if (mode === "collection" || mode === "subject") {
     const flashcardsTarget = (metadata as any)?.flashcardsTarget ?? 16
     const quizTarget = (metadata as any)?.quizTarget ?? 9
 
@@ -657,8 +809,8 @@ async function runStructuredMode<T>(mode: StructuredMode, text: string, metadata
   const userMessage = buildUserMessage(mode, text, metadata)
 
   // Calculer max_tokens dynamiquement pour les collections selon le nombre demandé
-  let maxTokens = mode === "collection" ? 4000 : 3500
-  if (mode === "collection" && metadata) {
+  let maxTokens = (mode === "collection" || mode === "subject") ? 4000 : 3500
+  if ((mode === "collection" || mode === "subject") && metadata) {
     const flashcardsTarget = (metadata as any).flashcardsTarget ?? 16
     const quizTarget = (metadata as any).quizTarget ?? 9
     // Estimation généreuse : ~200-250 tokens par flashcard, ~300-400 tokens par quiz
@@ -671,7 +823,7 @@ async function runStructuredMode<T>(mode: StructuredMode, text: string, metadata
 
   // Utiliser un modèle plus puissant pour les grandes collections
   let model = "gpt-4o-mini"
-  if (mode === "collection" && metadata) {
+  if ((mode === "collection" || mode === "subject") && metadata) {
     const flashcardsTarget = (metadata as any).flashcardsTarget ?? 16
     const quizTarget = (metadata as any).quizTarget ?? 9
     // Si beaucoup de contenu demandé, utiliser gpt-4o pour meilleure qualité
@@ -1015,6 +1167,7 @@ export async function generateCollectionStudySet(params: { text: string; metadat
     return generateCollectionStudySetWithChunking(chunks, targetsPerChunk, params.metadata)
   } else {
     // Pour les petits corpus, utiliser l'ancienne méthode
-    return runStructuredMode<CollectionStudySetPayload>("collection", params.text, params.metadata)
+    const mode = (params.metadata as any)?.mode === "subject" ? "subject" : "collection"
+    return runStructuredMode<CollectionStudySetPayload>(mode, params.text, params.metadata)
   }
 }

@@ -4,22 +4,22 @@ import { useState } from "react"
 import { X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { useCreateCollection } from "@/lib/hooks/useCollections"
+import { useCreateSubject } from "@/lib/hooks/useSubjects"
 import { useTranslations } from "next-intl"
 
-interface CreateCollectionDialogProps {
+interface CreateSubjectDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
 }
 
-export function CreateCollectionDialog({
+export function CreateSubjectDialog({
   open,
   onOpenChange
-}: CreateCollectionDialogProps) {
+}: CreateSubjectDialogProps) {
   const t = useTranslations("CreateCollectionDialog")
   const [title, setTitle] = useState("")
   const [selectedColor, setSelectedColor] = useState("from-blue-500/20 via-blue-400/10 to-purple-500/20")
-  const createCollection = useCreateCollection()
+  const createSubject = useCreateSubject()
 
   const colorOptions = [
     "from-blue-500/20 via-blue-400/10 to-purple-500/20",
@@ -31,10 +31,10 @@ export function CreateCollectionDialog({
   ]
 
   const handleCreate = async () => {
-    if (!title.trim() || createCollection.isPending) return
+    if (!title.trim() || createSubject.isPending) return
 
     try {
-      await createCollection.mutateAsync({
+      await createSubject.mutateAsync({
         title: title.trim(),
         color: selectedColor,
       })
@@ -80,7 +80,7 @@ export function CreateCollectionDialog({
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === "Enter" && title.trim() && !createCollection.isPending) {
+                if (e.key === "Enter" && title.trim() && !createSubject.isPending) {
                   handleCreate()
                 }
               }}
@@ -118,16 +118,16 @@ export function CreateCollectionDialog({
           <Button
             variant="ghost"
             onClick={() => onOpenChange(false)}
-            disabled={createCollection.isPending}
+            disabled={createSubject.isPending}
           >
             {t("cancel")}
           </Button>
           <Button
             onClick={handleCreate}
-            disabled={!title.trim() || createCollection.isPending}
+            disabled={!title.trim() || createSubject.isPending}
             className="rounded-full"
           >
-            {createCollection.isPending ? t("creating") : t("create")}
+            {createSubject.isPending ? t("creating") : t("create")}
           </Button>
         </div>
       </div>

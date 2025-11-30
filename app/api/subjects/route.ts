@@ -4,7 +4,7 @@ import { getSupabaseAdmin } from "@/lib/db"
 
 export const dynamic = "force-dynamic"
 
-// GET /api/collections - Récupérer toutes les collections de l'utilisateur
+// GET /api/subjects - Récupérer toutes les matières de l'utilisateur
 export async function GET() {
   try {
     const supabase = await createServerClient()
@@ -26,17 +26,17 @@ export async function GET() {
       return NextResponse.json({ error: "Configuration Supabase manquante" }, { status: 500 })
     }
 
-    // Récupérer les collections
+    // Récupérer les matières
     const { data: collections, error } = await admin
       .from("collections")
       .select("id, title, color, created_at, updated_at")
       .eq("user_id", user.id)
       .order("updated_at", { ascending: false })
 
-    console.log("[GET /api/collections] ✅ Collections trouvées:", collections?.length || 0, "pour user:", user.id)
+    console.log("[GET /api/subjects] ✅ Matières trouvées:", collections?.length || 0, "pour user:", user.id)
 
     if (error) {
-      console.error("[GET /api/collections] ❌ Erreur Supabase:", error)
+      console.error("[GET /api/subjects] ❌ Erreur Supabase:", error)
       
       // Si la table n'existe pas, donner des instructions claires
       if (error.message?.includes("does not exist") || error.message?.includes("schema cache")) {
@@ -54,11 +54,11 @@ export async function GET() {
     }
 
     if (!collections || collections.length === 0) {
-      console.log("[GET /api/collections] ⚠️ Aucune collection trouvée pour l'utilisateur")
+      console.log("[GET /api/subjects] ⚠️ Aucune matière trouvée pour l'utilisateur")
       return NextResponse.json([])
     }
 
-    // Transformer les données pour correspondre à l'interface Collection
+    // Transformer les données pour correspondre à l'interface Subject
     const formattedCollections = await Promise.all(
       collections.map(async (collection: any) => {
         // Compter les documents
@@ -123,15 +123,15 @@ export async function GET() {
       })
     )
 
-    console.log("[GET /api/collections] ✅ Collections formatées:", formattedCollections.length)
+    console.log("[GET /api/subjects] ✅ Matières formatées:", formattedCollections.length)
     return NextResponse.json(formattedCollections)
   } catch (err: any) {
-    console.error("[GET /api/collections] ❌ Exception:", err)
+    console.error("[GET /api/subjects] ❌ Exception:", err)
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 })
   }
 }
 
-// POST /api/collections - Créer une nouvelle collection
+// POST /api/subjects - Créer une nouvelle matière
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createServerClient()
@@ -160,7 +160,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Le titre est requis" }, { status: 400 })
     }
 
-    console.log("[POST /api/collections] 📝 Création collection:", { title: title.trim(), color, user_id: user.id })
+    console.log("[POST /api/subjects] 📝 Création matière:", { title: title.trim(), color, user_id: user.id })
 
     const { data: collection, error } = await admin
       .from("collections")
@@ -173,7 +173,7 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (error) {
-      console.error("[POST /api/collections] ❌ Erreur Supabase:", error)
+      console.error("[POST /api/subjects] ❌ Erreur Supabase:", error)
       
       // Si la table n'existe pas, donner des instructions claires
       if (error.message?.includes("does not exist") || error.message?.includes("schema cache")) {
@@ -190,7 +190,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    // Retourner au format Collection
+    // Retourner au format Subject
     const response = {
       id: collection.id,
       title: collection.title,
@@ -200,10 +200,10 @@ export async function POST(request: NextRequest) {
       last_active: collection.created_at,
     }
     
-    console.log("[POST /api/collections] ✅ Collection créée avec succès:", response.id)
+    console.log("[POST /api/subjects] ✅ Matière créée avec succès:", response.id)
     return NextResponse.json(response)
   } catch (err: any) {
-    console.error("[POST /api/collections] ❌ Exception:", err)
+    console.error("[POST /api/subjects] ❌ Exception:", err)
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 })
   }
 }

@@ -4,7 +4,7 @@ import { getSupabaseAdmin } from "@/lib/db"
 
 export const dynamic = "force-dynamic"
 
-// GET /api/study-collections - Récupérer toutes les study_collections de l'utilisateur
+// GET /api/study-subjects - Récupérer toutes les study_collections de l'utilisateur
 export async function GET() {
   try {
     const supabase = await createServerClient()
@@ -33,10 +33,10 @@ export async function GET() {
       .eq("user_id", user.id)
       .order("updated_at", { ascending: false })
 
-    console.log("[GET /api/study-collections] ✅ Study collections trouvées:", collections?.length || 0)
+    console.log("[GET /api/study-subjects] ✅ Study collections trouvées:", collections?.length || 0)
 
     if (error) {
-      console.error("[GET /api/study-collections] ❌ Erreur Supabase:", error)
+      console.error("[GET /api/study-subjects] ❌ Erreur Supabase:", error)
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
@@ -46,7 +46,7 @@ export async function GET() {
 
     return NextResponse.json(collections)
   } catch (err: any) {
-    console.error("[GET /api/study-collections] ❌ Exception:", err)
+    console.error("[GET /api/study-subjects] ❌ Exception:", err)
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 })
   }
 }

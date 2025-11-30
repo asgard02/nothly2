@@ -4,7 +4,7 @@ import { getSupabaseAdmin } from "@/lib/db"
 
 export const dynamic = "force-dynamic"
 
-// GET /api/collections/[id]/study - Récupérer les flashcards et quiz d'une collection
+// GET /api/subjects/[id]/study - Récupérer les flashcards et quiz d'une matière
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -31,7 +31,7 @@ export async function GET(
 
     const collectionId = params.id
 
-    // Vérifier que la collection appartient à l'utilisateur
+    // Vérifier que la matière appartient à l'utilisateur
     const { data: collection, error: collectionError } = await admin
       .from("collections")
       .select("id, title")
@@ -40,10 +40,10 @@ export async function GET(
       .single()
 
     if (collectionError || !collection) {
-      return NextResponse.json({ error: "Collection non trouvée" }, { status: 404 })
+      return NextResponse.json({ error: "Matière non trouvée" }, { status: 404 })
     }
 
-    // Récupérer toutes les study_collections liées à cette collection
+    // Récupérer toutes les study_collections liées à cette matière
     // Note: Si la colonne collection_id n'existe pas encore, on retourne un tableau vide
     let studyCollections: any[] = []
     try {
@@ -57,10 +57,10 @@ export async function GET(
       if (studyError) {
         // Si l'erreur est due à une colonne manquante, on retourne un tableau vide
         if (studyError.message?.includes("column") || studyError.message?.includes("does not exist")) {
-          console.warn("[GET /api/collections/:id/study] Colonne collection_id non trouvée, retour d'un tableau vide. Exécutez le script SQL pour ajouter la colonne.")
+          console.warn("[GET /api/subjects/:id/study] Colonne collection_id non trouvée, retour d'un tableau vide. Exécutez le script SQL pour ajouter la colonne.")
           studyCollections = []
         } else {
-          console.error("[GET /api/collections/:id/study] Erreur:", studyError)
+          console.error("[GET /api/subjects/:id/study] Erreur:", studyError)
           return NextResponse.json({ error: "Erreur lors de la récupération", details: studyError.message }, { status: 500 })
         }
       } else {
@@ -69,7 +69,7 @@ export async function GET(
     } catch (err: any) {
       // Si c'est une erreur de colonne manquante, on retourne un tableau vide
       if (err.message?.includes("column") || err.message?.includes("does not exist")) {
-        console.warn("[GET /api/collections/:id/study] Colonne collection_id non trouvée, retour d'un tableau vide.")
+        console.warn("[GET /api/subjects/:id/study] Colonne collection_id non trouvée, retour d'un tableau vide.")
         studyCollections = []
       } else {
         throw err
@@ -131,8 +131,8 @@ export async function GET(
       studyCollections: studyCollectionsWithContent,
     })
   } catch (err: any) {
-    console.error("[GET /api/collections/:id/study] ❌ Exception:", err)
-    console.error("[GET /api/collections/:id/study] Stack:", err.stack)
+    console.error("[GET /api/subjects/:id/study] ❌ Exception:", err)
+    console.error("[GET /api/subjects/:id/study] Stack:", err.stack)
     return NextResponse.json({ 
       error: "Erreur serveur", 
       details: err.message,

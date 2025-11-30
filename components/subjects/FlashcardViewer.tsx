@@ -18,10 +18,10 @@ export interface FlashcardItem {
 interface FlashcardViewerProps {
   cards: FlashcardItem[]
   onClose?: () => void
-  studyCollectionId?: string
+  studySubjectId?: string
 }
 
-export default function FlashcardViewer({ cards, onClose, studyCollectionId }: FlashcardViewerProps) {
+export default function FlashcardViewer({ cards, onClose, studySubjectId }: FlashcardViewerProps) {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isFlipped, setIsFlipped] = useState(false)
   const [showButtons, setShowButtons] = useState(false)
@@ -31,8 +31,8 @@ export default function FlashcardViewer({ cards, onClose, studyCollectionId }: F
 
   // Charger les stats
   useEffect(() => {
-    if (studyCollectionId) {
-      fetch(`/api/flashcards/progress?studyCollectionId=${studyCollectionId}`)
+    if (studySubjectId) {
+      fetch(`/api/flashcards/progress?studySubjectId=${studySubjectId}`)
         .then(res => res.json())
         .then(data => {
           if (data.stats) {
@@ -45,7 +45,7 @@ export default function FlashcardViewer({ cards, onClose, studyCollectionId }: F
         })
         .catch(err => console.error("Erreur chargement stats flashcards:", err))
     }
-  }, [studyCollectionId])
+  }, [studySubjectId])
 
   // Filtrer les cartes en mode Smart
   useEffect(() => {
@@ -115,7 +115,7 @@ export default function FlashcardViewer({ cards, onClose, studyCollectionId }: F
 
   const handleStatus = async (status: "difficile" | "moyen" | "acquis") => {
     // Sauvegarder le progrès
-    if (studyCollectionId) {
+    if (studySubjectId) {
       const quality = status === "acquis" ? "easy" : status === "moyen" ? "medium" : "hard"
       try {
         const res = await fetch("/api/flashcards/progress", {
@@ -124,7 +124,7 @@ export default function FlashcardViewer({ cards, onClose, studyCollectionId }: F
           body: JSON.stringify({
             flashcardId: current.id,
             quality,
-            studyCollectionId
+            studySubjectId
           })
         })
         const data = await res.json()

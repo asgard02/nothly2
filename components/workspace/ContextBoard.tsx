@@ -4,17 +4,17 @@ import { useState } from "react"
 import { FileText, BrainCircuit, BookOpen, LayoutGrid, GraduationCap, FolderOpen } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { LibraryView } from "./LibraryView"
-import { CollectionView } from "./CollectionView"
+import { SubjectView } from "./SubjectView"
 
-import type { Collection } from "@/lib/hooks/useCollections"
+import type { Subject } from "@/lib/hooks/useSubjects"
 import { useTranslations } from "next-intl"
 
 interface ContextBoardProps {
   activeContext: {
-    type: "collection" | "pdf" | "note" | "quiz" | "graph"
+    type: "subject" | "pdf" | "note" | "quiz" | "graph"
     data: any
   }
-  onContextChange: (type: "collection" | "pdf" | "note" | "quiz" | "graph", data?: any) => void
+  onContextChange: (type: "subject" | "pdf" | "note" | "quiz" | "graph", data?: any) => void
 }
 
 export function ContextBoard({ activeContext, onContextChange }: ContextBoardProps) {
@@ -23,16 +23,16 @@ export function ContextBoard({ activeContext, onContextChange }: ContextBoardPro
   if (activeContext.type === "graph" || !activeContext.data) {
     return (
       <LibraryView
-        onSelectCollection={(collection: Collection) => onContextChange("collection", collection)}
+        onSelectSubject={(subject: Subject) => onContextChange("subject", subject)}
       />
     )
   }
 
-  // Si une collection est sélectionnée, afficher la vue de la collection
-  if (activeContext.type === "collection") {
+  // Si un sujet est sélectionné, afficher la vue du sujet
+  if (activeContext.type === "subject") {
     return (
-      <CollectionView
-        collection={activeContext.data}
+      <SubjectView
+        subject={activeContext.data}
         onBack={() => onContextChange("graph")}
         onSelectDocument={(doc) => onContextChange("pdf", doc)}
       />

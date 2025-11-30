@@ -4,43 +4,43 @@ import React, { useState, useEffect, useMemo } from "react"
 import { Search, Plus, FolderOpen, Sparkles, ArrowRight, FileText, Layers, Trash2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { CreateCollectionDialog } from "./CreateCollectionDialog"
-import { useCollections, useDeleteCollection, type Collection } from "@/lib/hooks/useCollections"
-import DeleteCollectionDialog from "@/components/DeleteCollectionDialog"
+import { CreateSubjectDialog } from "./CreateSubjectDialog"
+import { useSubjects, useDeleteSubject, type Subject } from "@/lib/hooks/useSubjects"
+import DeleteSubjectDialog from "@/components/DeleteSubjectDialog"
 
 import { useDebounce } from "@/lib/hooks/useDebounce"
 import { useTranslations } from "next-intl"
 
 interface LibraryViewProps {
-  onSelectCollection?: (collection: Collection) => void
+  onSelectSubject?: (subject: Subject) => void
 }
 
-export function LibraryView({ onSelectCollection }: LibraryViewProps) {
+export function LibraryView({ onSelectSubject }: LibraryViewProps) {
   const t = useTranslations("Library")
   const [searchQuery, setSearchQuery] = useState("")
   const debouncedSearchQuery = useDebounce(searchQuery, 300) // Debounce de 300ms
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
-  const [collectionToDelete, setCollectionToDelete] = useState<Collection | null>(null)
-  const { data: collections = [], isLoading, error, refetch } = useCollections()
-  const deleteCollection = useDeleteCollection()
+  const [subjectToDelete, setSubjectToDelete] = useState<Subject | null>(null)
+  const { data: subjects = [], isLoading, error, refetch } = useSubjects()
+  const deleteSubject = useDeleteSubject()
 
   // Log pour debug (seulement en dev)
   useEffect(() => {
     if (process.env.NODE_ENV === "development") {
-      console.log("[LibraryView] Collections chargées:", collections.length)
+      console.log("[LibraryView] Sujets chargés:", subjects.length)
     }
-  }, [collections])
+  }, [subjects])
 
   // Filtrer avec la valeur debouncée pour éviter les re-renders fréquents
-  const filteredCollections = useMemo(() => {
+  const filteredSubjects = useMemo(() => {
     if (!debouncedSearchQuery.trim()) {
-      return collections
+      return subjects
     }
     const query = debouncedSearchQuery.toLowerCase()
-    return collections.filter(collection =>
-      collection.title.toLowerCase().includes(query)
+    return subjects.filter(subject =>
+      subject.title.toLowerCase().includes(query)
     )
-  }, [collections, debouncedSearchQuery])
+  }, [subjects, debouncedSearchQuery])
 
   if (isLoading) {
     return (
@@ -69,7 +69,7 @@ export function LibraryView({ onSelectCollection }: LibraryViewProps) {
             <p className="font-medium mb-2">{t("sqlErrorHelp")}</p>
             <ol className="list-decimal list-inside space-y-1 text-muted-foreground">
               <li>Ouvrez Supabase Dashboard → SQL Editor</li>
-              <li>Ouvrez le fichier <code className="bg-background px-1 rounded">supabase-create-collections-table.sql</code></li>
+              <li>Ouvrez le fichier <code className="bg-background px-1 rounded">supabase-create-subjects-table.sql</code></li>
               <li>Copiez-collez le contenu dans l'éditeur SQL</li>
               <li>Exécutez la requête (Run ou Ctrl+Enter)</li>
             </ol>
@@ -120,7 +120,7 @@ export function LibraryView({ onSelectCollection }: LibraryViewProps) {
               {t("title")}
             </h1>
             <p className="text-xs text-muted-foreground">
-              {filteredCollections.length} collection{filteredCollections.length > 1 ? "s" : ""}
+              {filteredSubjects.length} {filteredSubjects.length > 1 ? t("title").toLowerCase() : t("title").slice(0, -1).toLowerCase()}
             </p>
           </div>
 
@@ -151,7 +151,7 @@ export function LibraryView({ onSelectCollection }: LibraryViewProps) {
 
       {/* Contenu - Grille moderne */}
       <div className="relative z-10 flex-1 overflow-y-auto p-6">
-        {filteredCollections.length === 0 ? (
+        {filteredSubjects.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full relative z-10">
             {/* Decorative background elements */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -210,15 +210,15 @@ export function LibraryView({ onSelectCollection }: LibraryViewProps) {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 max-w-[1600px] mx-auto">
-            {filteredCollections.map((collection, index) => (
-              <CollectionCard
-                key={collection.id}
-                collection={collection}
+            {filteredSubjects.map((subject, index) => (
+              <SubjectCard
+                key={subject.id}
+                subject={subject}
                 index={Math.min(index, 20)} // Limiter le delay d'animation pour éviter les lags
-                onClick={() => onSelectCollection?.(collection)}
+                onClick={() => onSelectSubject?.(subject)}
                 onDelete={(e) => {
                   e.stopPropagation()
-                  setCollectionToDelete(collection)
+                  setSubjectToDelete(subject)
                 }}
                 formatLastActive={formatLastActive}
               />
@@ -228,20 +228,20 @@ export function LibraryView({ onSelectCollection }: LibraryViewProps) {
       </div>
 
       {/* Dialog de création */}
-      <CreateCollectionDialog
+      <CreateSubjectDialog
         open={isCreateDialogOpen}
         onOpenChange={setIsCreateDialogOpen}
       />
 
       {/* Dialog de suppression */}
-      <DeleteCollectionDialog
-        isOpen={!!collectionToDelete}
-        onClose={() => setCollectionToDelete(null)}
+      <DeleteSubjectDialog
+        isOpen={!!subjectToDelete}
+        onClose={() => setSubjectToDelete(null)}
         onConfirm={() => {
-          if (collectionToDelete) {
-            deleteCollection.mutate(collectionToDelete.id, {
+          if (subjectToDelete) {
+            deleteSubject.mutate(subjectToDelete.id, {
               onSuccess: () => {
-                setCollectionToDelete(null)
+                setSubjectToDelete(null)
               },
               onError: (error) => {
                 console.error("Erreur lors de la suppression:", error)
@@ -250,16 +250,16 @@ export function LibraryView({ onSelectCollection }: LibraryViewProps) {
             })
           }
         }}
-        collectionTitle={collectionToDelete?.title || ""}
-        isDeleting={deleteCollection.isPending}
+        subjectTitle={subjectToDelete?.title || ""}
+        isDeleting={deleteSubject.isPending}
       />
     </div>
   )
 }
 
-// Composant CollectionCard
-interface CollectionCardProps {
-  collection: Collection
+// Composant SubjectCard
+interface SubjectCardProps {
+  subject: Subject
   index: number
   onClick: () => void
   onDelete: (e: React.MouseEvent) => void
@@ -267,7 +267,7 @@ interface CollectionCardProps {
 }
 
 // Memoize le composant pour éviter les re-renders inutiles
-const CollectionCard = React.memo(function CollectionCard({ collection, index, onClick, onDelete, formatLastActive }: CollectionCardProps) {
+const SubjectCard = React.memo(function SubjectCard({ subject, index, onClick, onDelete, formatLastActive }: SubjectCardProps) {
   const t = useTranslations("Library")
   return (
     <div
@@ -287,7 +287,7 @@ const CollectionCard = React.memo(function CollectionCard({ collection, index, o
         {/* Header compact avec gradient */}
         <div className={cn(
           "h-24 bg-gradient-to-br relative overflow-hidden",
-          collection.color
+          subject.color
         )}>
           {/* Overlay subtil */}
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(255,255,255,0.1)_0%,transparent_60%)]" />
@@ -300,16 +300,16 @@ const CollectionCard = React.memo(function CollectionCard({ collection, index, o
               </div>
               <div>
                 <h3 className="text-base font-semibold text-foreground line-clamp-1 group-hover:text-primary transition-colors">
-                  {collection.title}
+                  {subject.title}
                 </h3>
                 <div className="flex items-center gap-3 mt-1">
                   <span className="text-xs text-muted-foreground/80 flex items-center gap-1">
                     <FileText className="h-3 w-3" />
-                    {collection.doc_count}
+                    {subject.doc_count}
                   </span>
                   <span className="text-xs text-muted-foreground/80 flex items-center gap-1">
                     <Sparkles className="h-3 w-3" />
-                    {collection.artifact_count}
+                    {subject.artifact_count}
                   </span>
                 </div>
               </div>
@@ -329,7 +329,7 @@ const CollectionCard = React.memo(function CollectionCard({ collection, index, o
         {/* Footer compact */}
         <div className="px-4 py-3 bg-card/40 border-t border-border/30 flex items-center justify-between">
           <span className="text-xs text-muted-foreground">
-            {formatLastActive(collection.last_active)}
+            {formatLastActive(subject.last_active)}
           </span>
           <div className="flex items-center gap-1.5 text-primary opacity-0 group-hover:opacity-100 transition-opacity">
             <span className="text-xs font-medium">{t("open")}</span>

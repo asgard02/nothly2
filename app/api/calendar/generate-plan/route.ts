@@ -26,33 +26,33 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { collectionId, startDate, endDate, intensity } = body
+    const { subjectId, startDate, endDate, intensity } = body
 
-    if (!collectionId) {
-      return NextResponse.json({ error: "collectionId est requis" }, { status: 400 })
+    if (!subjectId) {
+      return NextResponse.json({ error: "subjectId est requis" }, { status: 400 })
     }
 
-    // Récupérer la collection
-    const { data: collection, error: collectionError } = await admin
+    // Récupérer le sujet
+    const { data: subject, error: subjectError } = await admin
       .from("collections")
       .select("id, title")
-      .eq("id", collectionId)
+      .eq("id", subjectId)
       .eq("user_id", user.id)
       .single()
 
-    if (collectionError || !collection) {
-      return NextResponse.json({ error: "Collection non trouvée" }, { status: 404 })
+    if (subjectError || !subject) {
+      return NextResponse.json({ error: "Matière non trouvée" }, { status: 404 })
     }
 
-    // Récupérer les documents de la collection
+    // Récupérer les documents du sujet
     const { data: documents } = await admin
       .from("documents")
       .select("id, title")
-      .eq("collection_id", collectionId)
+      .eq("collection_id", subjectId)
       .eq("user_id", user.id)
 
     if (!documents || documents.length === 0) {
-      return NextResponse.json({ error: "Aucun document dans cette collection" }, { status: 400 })
+      return NextResponse.json({ error: "Aucun document dans cette matière" }, { status: 400 })
     }
 
     // Construire le prompt pour l'IA
@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
 Ton but est de créer un planning de révision structuré et réaliste pour un étudiant.
 
 Paramètres:
-- Sujet: Collection "${collection.title}" contenant les documents: ${docTitles}
+- Sujet: Matière "${subject.title}" contenant les documents: ${docTitles}
 - Période: Du ${start} au ${end}
 - Intensité: ${intensity || "Moyenne"}
 

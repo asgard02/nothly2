@@ -2,7 +2,7 @@
   "Sidebar": {
     "tagline": "Organize and transform your study materials into smart resources",
     "library": "Library",
-    "collectionsBadge": "AI Collections",
+    "collectionsBadge": "AI Subjects",
     "collectionsHint": "Generate flashcards and quizzes from your documents",
     "pricing": "Pricing",
     "settings": "Settings",
@@ -78,11 +78,11 @@
     }
   },
   "Collections": {
-    "title": "Revision Collections",
+    "title": "Revision Subjects",
     "description": "Combine your tagged materials to automatically generate flashcards and quizzes.",
-    "createButton": "Create a collection",
+    "createButton": "Create a subject",
     "dialog": {
-      "title": "New collection",
+      "title": "New subject",
       "description": "Select the tags corresponding to the materials you want to group. We'll notify you if the context window is likely to be exceeded.",
       "titleLabel": "Title",
       "titlePlaceholder": "e.g. Analysis revision - chapters 1 to 3",
@@ -102,17 +102,17 @@
       "failed": "Failed"
     },
     "card": {
-      "deleteTitle": "Delete collection",
+      "deleteTitle": "Delete subject",
       "noTags": "No tags",
       "flashcards": "flashcards",
       "questions": "questions"
     },
     "empty": {
-      "title": "No collections yet",
-      "description": "Create your first collection to automatically transform your materials into flashcards and quizzes.",
-      "cta": "Create a collection"
+      "title": "No subjects yet",
+      "description": "Create your first subject to automatically transform your materials into flashcards and quizzes.",
+      "cta": "Create a subject"
     },
-    "footer": "Click on a collection to open the detailed study view with flashcards and quizzes."
+    "footer": "Click on a subject to open the detailed study view with flashcards and quizzes."
   },
   "Settings": {
     "Language": {
@@ -344,10 +344,10 @@
     "addDocument": "Add a document",
     "artifact": "artifact",
     "artifacts": "artifacts",
-    "searchPlaceholder": "Search in collection...",
+    "searchPlaceholder": "Search in subject...",
     "loadingDocuments": "Loading documents...",
     "noDocuments": "No documents",
-    "noDocumentsDesc": "Add your first PDF document to this collection. Once added, you can:",
+    "noDocumentsDesc": "Add your first PDF document to this subject. Once added, you can:",
     "featurePdf": "View PDF directly",
     "featureFlashcards": "Ask AI to create flashcards",
     "featureQuiz": "Generate quizzes for revision",
@@ -388,15 +388,15 @@
     "loadingSummaries": "Loading summaries...",
     "noSummaries": "No summaries",
     "noSummariesDesc": "To create a summary, use the chat at the bottom of the page.",
-    "promptSummary1": "Summarize key points of this collection",
+    "promptSummary1": "Summarize key points of this subject",
     "promptSummary2": "Make a synthesis of document @document-name",
     "generateSummaryNow": "Generate summary now",
-    "collectionSummaries": "Collection summaries",
+    "collectionSummaries": "Subject summaries",
     "summaryPrefix": "Summary:",
     "loadingFlashcards": "Loading flashcards...",
     "ofQuiz": "of quiz",
     "aiGeneratedSummary": "AI generated summary",
-    "noDocsInCollection": "No documents in this collection",
+    "noDocsInCollection": "No documents in this subject",
     "noDocsInCollectionDesc": "Add PDF documents to be able to ask questions, create flashcards or generate quizzes.",
     "generateFlashcards": "Generate flashcards",
     "generateQuiz": "Generate quiz",
@@ -406,18 +406,18 @@
       "successFlashcardsQuiz": "✅ {flashcardCount} flashcards and {quizCount} quiz questions successfully created on topic \"{topic}\"!\n\nDo you want to view them now?",
     "successFlashcards": "✅ {flashcardCount} flashcards successfully created on topic \"{topic}\"!\n\nDo you want to view them now?",
     "successQuiz": "✅ {quizCount} quiz questions successfully created on topic \"{topic}\"!\n\nDo you want to view them now?",
-    "promptFlashcardsAction": "Create flashcards on key concepts using ONLY content from documents in this collection. Base yourself on the actual text of the PDFs, do not invent anything.",
-    "promptQuizAction": "Create a quiz with multiple choice questions using ONLY content from documents in this collection. Base yourself on the actual text of the PDFs, do not invent anything.",
-    "promptSummaryAction": "Summarize key points using ONLY content from documents in this collection",
+    "promptFlashcardsAction": "Create flashcards on key concepts using ONLY content from documents in this subject. Base yourself on the actual text of the PDFs, do not invent anything.",
+    "promptQuizAction": "Create a quiz with multiple choice questions using ONLY content from documents in this subject. Base yourself on the actual text of the PDFs, do not invent anything.",
+    "promptSummaryAction": "Summarize key points using ONLY content from documents in this subject",
     "generatingContent": "Generating content...",
     "generatingContentDesc": "AI is analyzing your documents to create relevant content. This may take a few moments.",
     "viewResult": "View result",
     "generationSuccessTitle": "Content generated!",
-    "editCollection": "Edit collection",
-    "editCollectionDesc": "Edit the title and color of your collection.",
+    "editCollection": "Edit subject",
+    "editCollectionDesc": "Edit the title and color of your subject.",
     "title": "Title",
     "color": "Color",
-    "collectionTitlePlaceholder": "Collection name",
+    "collectionTitlePlaceholder": "Subject name",
     "deleteDocumentTitle": "Delete this document?",
     "deleteDocumentDesc": "Are you sure you want to delete this document? This action cannot be undone.",
     "deleteFlashcardsTitle": "Delete these flashcards?",
@@ -430,15 +430,15 @@
     "itemDeleted": "Item deleted"
   },
   "Library": {
-    "title": "Collections",
+    "title": "Subjects",
     "searchPlaceholder": "Search...",
     "newCollection": "New",
-    "noCollections": "No collections",
-    "noCollectionsDesc": "Create your first collection to organize your documents.",
-    "createCollection": "Create a collection",
+    "noCollections": "No subjects",
+    "noCollectionsDesc": "Create your first subject to organize your documents.",
+    "createCollection": "Create a subject",
     "deleteTooltip": "Delete",
     "open": "Open",
-    "loading": "Loading collections...",
+    "loading": "Loading subjects...",
     "sqlErrorTitle": "SQL Migration Required",
     "sqlErrorMessage": "The 'collections' table does not exist in the database.",
     "sqlErrorHelp": "To resolve this issue:",
@@ -446,11 +446,11 @@
     "today": "Today",
     "yesterday": "Yesterday",
     "daysAgo": "{days} days ago",
-    "deleteError": "Error deleting collection"
+    "deleteError": "Error deleting subject"
   },
   "CreateCollectionDialog": {
-    "title": "New Collection",
-    "nameLabel": "Collection Name",
+    "title": "New Subject",
+    "nameLabel": "Subject Name",
     "namePlaceholder": "Ex: Constitutional Law",
     "colorLabel": "Color",
     "cancel": "Cancel",
@@ -458,7 +458,7 @@
     "create": "Create"
   },
   "ContextBoard": {
-    "myCollections": "My Collections",
+    "myCollections": "My Subjects",
     "sourceDocument": "Source Document",
     "studySheet": "Study Sheet",
     "quizPractice": "Quiz & Practice",
@@ -501,8 +501,8 @@
     "add": "Add",
     "dialogGenerateTitle": "Generate AI Plan",
     "dialogGenerateDesc": "AI will analyze your documents and create a custom revision schedule.",
-    "labelCollection": "Collection to study",
-    "selectCollection": "Select a collection...",
+    "labelCollection": "Subject to study",
+    "selectCollection": "Select a subject...",
     "labelStart": "Start",
     "labelEnd": "End",
     "labelIntensity": "Intensity",
@@ -517,7 +517,7 @@
   },
   "UploadDialog": {
     "title": "Add Document",
-    "inCollection": "In collection:",
+    "inCollection": "In subject:",
     "errorPdfOnly": "Only PDF files are accepted.",
     "errorNoFile": "Please select a file.",
     "errorNoTitle": "Please enter a title.",

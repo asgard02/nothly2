@@ -57,7 +57,7 @@ interface QuestionStats {
 
 interface QuizViewerProps {
   questions: QuizQuestionItem[]
-  studyCollectionId?: string
+  studySubjectId?: string
   mode?: SessionMode
   title?: string
   onClose?: () => void
@@ -94,7 +94,7 @@ const MASTERY_COLORS: Record<MasteryLevel, { bg: string; text: string; border: s
   },
 }
 
-export default function QuizViewer({ questions, studyCollectionId, mode = "practice", title, onClose }: QuizViewerProps) {
+export default function QuizViewer({ questions, studySubjectId, mode = "practice", title, onClose }: QuizViewerProps) {
   const [currentQuestionId, setCurrentQuestionId] = useState<string | null>(null)
   const [selectedOption, setSelectedOption] = useState<number | null>(null)
   const [revealAnswer, setRevealAnswer] = useState(false)
@@ -113,8 +113,8 @@ export default function QuizViewer({ questions, studyCollectionId, mode = "pract
 
   // Charger les zones de difficulté
   useEffect(() => {
-    if (studyCollectionId) {
-      fetch(`/api/quiz/generate-targeted?studyCollectionId=${studyCollectionId}`)
+    if (studySubjectId) {
+      fetch(`/api/quiz/generate-targeted?studySubjectId=${studySubjectId}`)
         .then((res) => {
           if (!res.ok) {
             if (res.status === 400) {
@@ -138,12 +138,12 @@ export default function QuizViewer({ questions, studyCollectionId, mode = "pract
     } else {
       setWeakAreas([])
     }
-  }, [studyCollectionId])
+  }, [studySubjectId])
 
   // Charger les statistiques au démarrage
   useEffect(() => {
-    if (studyCollectionId && questions.length > 0) {
-      fetch(`/api/quiz/progress?studyCollectionId=${studyCollectionId}`)
+    if (studySubjectId && questions.length > 0) {
+      fetch(`/api/quiz/progress?studySubjectId=${studySubjectId}`)
         .then((res) => res.json())
         .then((data) => {
           if (data.stats) {
@@ -161,7 +161,7 @@ export default function QuizViewer({ questions, studyCollectionId, mode = "pract
         })
         .catch((err) => console.error("Erreur chargement stats:", err))
     }
-  }, [studyCollectionId, questions])
+  }, [studySubjectId, questions])
 
   const [filterMode, setFilterMode] = useState<"all" | "mistakes">("all")
 
@@ -334,7 +334,7 @@ export default function QuizViewer({ questions, studyCollectionId, mode = "pract
 
   const saveAnswer = useCallback(
     async (questionId: string, isCorrect: boolean, userAnswer: string) => {
-      if (!studyCollectionId || isSaving) return
+      if (!studySubjectId || isSaving) return
 
       setIsSaving(true)
       try {
@@ -347,7 +347,7 @@ export default function QuizViewer({ questions, studyCollectionId, mode = "pract
             userAnswer,
             isCorrect,
             timeSpentSeconds: timeSpent,
-            studyCollectionId,
+            studySubjectId,
           }),
         })
 
@@ -391,7 +391,7 @@ export default function QuizViewer({ questions, studyCollectionId, mode = "pract
         setIsSaving(false)
       }
     },
-    [studyCollectionId, sessionId, timeSpent, currentStats, isSaving]
+    [studySubjectId, sessionId, timeSpent, currentStats, isSaving]
   )
 
   const handleReveal = () => {

@@ -191,7 +191,7 @@ export default function NoteEditorPage() {
     }
 
     setIsGenerating(true)
-    
+
     // 1. Déclencher le toast visuel
     triggerGenerationToast(() => {
       // Callback appelée quand l'animation du toast est finie (succès)
@@ -205,7 +205,7 @@ export default function NoteEditorPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           text: content,
-          mode: "collection",
+          mode: "subject",
           metadata: {
             noteId: noteId,
             title: title || "Sans titre"
@@ -216,9 +216,9 @@ export default function NoteEditorPage() {
       if (!res.ok) {
         throw new Error("Erreur lors du lancement de la génération")
       }
-      
+
       // Le toast gère la redirection à la fin de son animation
-      
+
     } catch (error) {
       console.error("Erreur génération:", error)
       toast.error("Impossible de lancer la génération. Réessayez.")

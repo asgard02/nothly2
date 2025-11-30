@@ -61,7 +61,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: documentsError.message }, { status: 500 })
     }
 
-    // Récupérer les résumés de collections (study_collections)
+    // Récupérer les résumés de matières (study_collections)
     const { data: collectionSummariesData, error: collectionError } = await admin
       .from("study_collections")
       .select(`
@@ -80,8 +80,8 @@ export async function GET(request: NextRequest) {
       .order("created_at", { ascending: false })
 
     if (collectionError) {
-      console.error("[GET /api/documents/summaries] Erreur collections:", collectionError)
-      // On continue même si erreur sur les collections
+      console.error("[GET /api/documents/summaries] Erreur subjects:", collectionError)
+      // On continue même si erreur sur les subjects
     }
 
     // Formater les résumés de documents
@@ -129,20 +129,20 @@ export async function GET(request: NextRequest) {
       })
       .filter((item) => item.hasSummary) || []
 
-    // Formater les résumés de collections
+    // Formater les résumés de matières
     const collSummaries = collectionSummariesData
       ?.filter((item: any) => item.metadata?.summary && typeof item.metadata.summary === 'string' && item.metadata.summary.trim().length > 0)
       .map((item: any) => ({
-        documentId: item.collection?.id || item.collection_id, // ID de la collection comme "documentId"
-        documentTitle: item.collection?.title || "Collection sans titre",
-        documentFilename: "Collection",
+        documentId: item.collection?.id || item.collection_id, // ID de la matière comme "documentId"
+        documentTitle: item.collection?.title || "Matière sans titre",
+        documentFilename: "Matière",
         sectionId: item.id, // ID du study_collection
-        sectionHeading: item.title || "Résumé de la collection",
+        sectionHeading: item.title || "Résumé de la matière",
         sectionOrder: 0,
         summary: item.metadata.summary,
         generatedAt: item.created_at,
         hasSummary: true,
-        type: "collection"
+        type: "subject"
       })) || []
 
     // Combiner et trier

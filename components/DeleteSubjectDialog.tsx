@@ -6,21 +6,21 @@ import { AlertTriangle, X } from "lucide-react"
 
 import MarkdownRenderer from "@/components/MarkdownRenderer"
 
-interface DeleteCollectionDialogProps {
+interface DeleteSubjectDialogProps {
   isOpen: boolean
   onClose: () => void
   onConfirm: () => void
-  collectionTitle: string
+  subjectTitle: string
   isDeleting: boolean
 }
 
-export default function DeleteCollectionDialog({
+export default function DeleteSubjectDialog({
   isOpen,
   onClose,
   onConfirm,
-  collectionTitle,
+  subjectTitle,
   isDeleting,
-}: DeleteCollectionDialogProps) {
+}: DeleteSubjectDialogProps) {
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
@@ -54,16 +54,16 @@ export default function DeleteCollectionDialog({
 
         {/* Title */}
         <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 text-center mb-2">
-          Supprimer cette collection ?
+          Supprimer cette matière ?
         </h3>
 
         {/* Description */}
         <p className="text-gray-600 dark:text-gray-400 text-center mb-6">
           Êtes-vous sûr de vouloir supprimer{" "}
           <span className="font-semibold text-gray-900 dark:text-gray-100">
-            "{collectionTitle || "Sans titre"}"
+            "{subjectTitle || "Sans titre"}"
           </span>{" "}
-          ? Cette action est irréversible et supprimera tous les documents associés à cette collection.
+          ? Cette action est irréversible et supprimera tous les documents associés à cette matière.
         </p>
 
         {/* Actions */}

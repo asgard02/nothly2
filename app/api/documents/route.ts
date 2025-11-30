@@ -203,7 +203,7 @@ export async function POST(req: NextRequest) {
     const manualTitle = formData.get("title")?.toString()
     const manualText = formData.get("text")?.toString()
     const tagsInput = formData.get("tags")?.toString() ?? ""
-    const collectionId = formData.get("collection_id")?.toString()
+    const collectionId = formData.get("collection_id")?.toString() || formData.get("subject_id")?.toString()
     const tags =
       tagsInput
         .split(",")

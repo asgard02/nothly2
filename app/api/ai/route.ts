@@ -13,6 +13,7 @@ const VALID_MODES: GenerationMode[] = [
   "fiche",
   "quiz",
   "collection",
+  "subject",
 ]
 
 function isRecord(value: unknown): value is Record<string, unknown> {

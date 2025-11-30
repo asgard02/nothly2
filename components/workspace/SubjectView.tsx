@@ -11,13 +11,13 @@ import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog"
 import { Progress } from "@/components/ui/progress"
 import { cn } from "@/lib/utils"
-import type { Collection } from "@/lib/hooks/useCollections"
+import type { Subject } from "@/lib/hooks/useSubjects"
 import { UploadDialog } from "./UploadDialog"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { MentionInput, extractMentionedDocumentIds } from "./MentionInput"
-import QuizViewer, { type QuizQuestionItem } from "@/components/collections/QuizViewer"
-import FlashcardViewer from "@/components/collections/FlashcardViewer"
-import type { FlashcardItem } from "@/components/collections/FlashcardViewer"
+import QuizViewer, { type QuizQuestionItem } from "@/components/subjects/QuizViewer"
+import FlashcardViewer from "@/components/subjects/FlashcardViewer"
+import type { FlashcardItem } from "@/components/subjects/FlashcardViewer"
 import ReactMarkdown from "react-markdown"
 import { GenerationOverlay, type GenerationStep } from "@/components/GenerationOverlay"
 import { GenerationDialog, type GenerationIntent } from "./GenerationDialog"
@@ -26,14 +26,14 @@ import DeleteConfirmationDialog from "@/components/DeleteConfirmationDialog"
 import remarkGfm from "remark-gfm"
 import { useTranslations } from "next-intl"
 
-interface CollectionViewProps {
-  collection: Collection
+interface SubjectViewProps {
+  subject: Subject
   onBack: () => void
   onSelectDocument?: (doc: any) => void
-  onUpdate?: (collection: Collection) => void
+  onUpdate?: (subject: Subject) => void
 }
 
-export function CollectionView({ collection, onBack, onSelectDocument, onUpdate }: CollectionViewProps) {
+export function SubjectView({ subject, onBack, onSelectDocument, onUpdate }: SubjectViewProps) {
   // Refresh translations
   const t = useTranslations("CollectionView")
   const tCommon = useTranslations("Common")
@@ -73,8 +73,8 @@ export function CollectionView({ collection, onBack, onSelectDocument, onUpdate 
 
   // États pour l'édition de la collection
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
-  const [editTitle, setEditTitle] = useState(collection.title)
-  const [editColor, setEditColor] = useState(collection.color || "from-blue-500/20 via-blue-400/10 to-purple-500/20")
+  const [editTitle, setEditTitle] = useState(subject.title)
+  const [editColor, setEditColor] = useState(subject.color || "from-blue-500/20 via-blue-400/10 to-purple-500/20")
   const [isUpdating, setIsUpdating] = useState(false)
 
   // État pour la boîte de dialogue de suppression
@@ -105,7 +105,7 @@ export function CollectionView({ collection, onBack, onSelectDocument, onUpdate 
     queryKey: ["study-collection", selectedFlashcardCollectionId],
     queryFn: async () => {
       if (!selectedFlashcardCollectionId) return null
-      const response = await fetch(`/api/study-collections/${selectedFlashcardCollectionId}`)
+      const response = await fetch(`/api/study-subjects/${selectedFlashcardCollectionId}`)
       if (!response.ok) {
         throw new Error(t("errorLoadingFlashcards"))
       }
@@ -117,19 +117,19 @@ export function CollectionView({ collection, onBack, onSelectDocument, onUpdate 
 
   // Récupérer les documents de la collection
   const { data: documents = [], isLoading, refetch } = useQuery({
-    queryKey: ["collection-documents", collection.id],
+    queryKey: ["subject-documents", subject.id],
     queryFn: async () => {
-      const response = await fetch(`/api/collections/${collection.id}/documents`)
+      const response = await fetch(`/api/subjects/${subject.id}/documents`)
       if (!response.ok) {
         throw new Error(t("errorLoadingDocuments"))
       }
       const data = await response.json()
       // Log pour debug
       if (process.env.NODE_ENV === "development") {
-        console.log("[CollectionView] Documents chargés:", data)
+        console.log("[SubjectView] Documents chargés:", data)
         data.forEach((doc: any) => {
           if (doc.summaries && doc.summaries.length > 0) {
-            console.log(`[CollectionView] Document ${doc.title} a ${doc.summaries.length} résumé(s)`)
+            console.log(`[SubjectView] Document ${doc.title} a ${doc.summaries.length} résumé(s)`)
           }
         })
       }
@@ -146,9 +146,9 @@ export function CollectionView({ collection, onBack, onSelectDocument, onUpdate 
 
   // Précharger les flashcards/quiz en arrière-plan pour éviter les lags au switch
   const { data: studyData, isLoading: isLoadingStudy, error: studyError } = useQuery({
-    queryKey: ["collection-study", collection.id],
+    queryKey: ["subject-study", subject.id],
     queryFn: async () => {
-      const response = await fetch(`/api/collections/${collection.id}/study`)
+      const response = await fetch(`/api/subjects/${subject.id}/study`)
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}))
         // Si c'est une erreur de colonne manquante, on retourne un tableau vide
@@ -242,7 +242,7 @@ export function CollectionView({ collection, onBack, onSelectDocument, onUpdate 
       }
 
       // Rafraîchir la liste des documents
-      queryClient.invalidateQueries({ queryKey: ["collection-documents", collection.id] })
+      queryClient.invalidateQueries({ queryKey: ["subject-documents", subject.id] })
       setDeleteConfirmation(prev => ({ ...prev, isOpen: false }))
       toast.success(t("documentDeleted"))
     } catch (error) {
@@ -284,12 +284,12 @@ export function CollectionView({ collection, onBack, onSelectDocument, onUpdate 
         mentionedDocumentIds = explicitDocIds
       }
 
-      // Appel API pour envoyer le message avec contexte de la collection et documents mentionnés
-      const response = await fetch("/api/chat/collection", {
+      // Appel API pour envoyer le message avec contexte du sujet et documents mentionnés
+      const response = await fetch("/api/chat/subject", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          collectionId: collection.id,
+          subjectId: subject.id,
           message: messageToSend.trim(),
           mentionedDocumentIds: mentionedDocumentIds.length > 0 ? mentionedDocumentIds : undefined
         })
@@ -312,8 +312,8 @@ export function CollectionView({ collection, onBack, onSelectDocument, onUpdate 
 
       // Invalider les queries pour rafraîchir les données
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["collection-study", collection.id] }),
-        queryClient.invalidateQueries({ queryKey: ["collection-documents", collection.id] })
+        queryClient.invalidateQueries({ queryKey: ["subject-study", subject.id] }),
+        queryClient.invalidateQueries({ queryKey: ["subject-documents", subject.id] })
       ])
 
       // Marquer comme terminé
@@ -380,7 +380,7 @@ export function CollectionView({ collection, onBack, onSelectDocument, onUpdate 
 
     setIsDeletingItem(true)
     try {
-      const response = await fetch(`/api/study-collections/${deleteConfirmation.id}`, {
+      const response = await fetch(`/api/study-subjects/${deleteConfirmation.id}`, {
         method: "DELETE",
       })
 
@@ -389,7 +389,7 @@ export function CollectionView({ collection, onBack, onSelectDocument, onUpdate 
       }
 
       // Rafraîchir les données
-      queryClient.invalidateQueries({ queryKey: ["collection-study", collection.id] })
+      queryClient.invalidateQueries({ queryKey: ["subject-study", subject.id] })
       setDeleteConfirmation(prev => ({ ...prev, isOpen: false }))
       toast.success(t("itemDeleted"))
     } catch (error) {
@@ -448,7 +448,7 @@ export function CollectionView({ collection, onBack, onSelectDocument, onUpdate 
 
     setIsUpdating(true)
     try {
-      const response = await fetch(`/api/collections/${collection.id}`, {
+      const response = await fetch(`/api/subjects/${subject.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -461,27 +461,27 @@ export function CollectionView({ collection, onBack, onSelectDocument, onUpdate 
         throw new Error("Erreur lors de la mise à jour")
       }
 
-      const updatedCollection = await response.json()
+      const updatedSubject = await response.json()
 
-      toast.success("Collection mise à jour")
+      toast.success("Matière mise à jour")
       setIsEditDialogOpen(false)
 
-      // Mettre à jour la collection dans le parent
+      // Mettre à jour le sujet dans le parent
       if (onUpdate) {
         onUpdate({
-          ...collection,
+          ...subject,
           title: editTitle,
           color: editColor
         })
       }
 
-      // Invalider le cache des collections pour que la vue bibliothèque se mette à jour
-      await queryClient.invalidateQueries({ queryKey: ["collections"] })
+      // Invalider le cache des sujets pour que la vue bibliothèque se mette à jour
+      await queryClient.invalidateQueries({ queryKey: ["subjects"] })
 
       router.refresh()
     } catch (error) {
       console.error("Erreur update:", error)
-      toast.error("Impossible de mettre à jour la collection")
+      toast.error("Impossible de mettre à jour la matière")
     } finally {
       setIsUpdating(false)
     }
@@ -577,11 +577,11 @@ export function CollectionView({ collection, onBack, onSelectDocument, onUpdate 
                 </Button>
                 <div>
                   <h1 className="text-3xl font-bold tracking-tight text-foreground flex items-center gap-3">
-                    {collection.title}
+                    {subject.title}
                     <button
                       onClick={() => {
-                        setEditTitle(collection.title)
-                        setEditColor(collection.color || "from-blue-500/20 via-blue-400/10 to-purple-500/20")
+                        setEditTitle(subject.title)
+                        setEditColor(subject.color || "from-blue-500/20 via-blue-400/10 to-purple-500/20")
                         setIsEditDialogOpen(true)
                       }}
                       className="p-1.5 rounded-full hover:bg-muted text-muted-foreground/50 hover:text-foreground transition-colors"
@@ -589,7 +589,7 @@ export function CollectionView({ collection, onBack, onSelectDocument, onUpdate 
                       <Pencil className="h-4 w-4" />
                     </button>
                     <span className="text-sm font-normal text-muted-foreground bg-muted/50 px-2.5 py-0.5 rounded-full border border-border/50">
-                      {collection.doc_count} doc{collection.doc_count > 1 ? "s" : ""}
+                      {subject.doc_count} doc{subject.doc_count > 1 ? "s" : ""}
                     </span>
                   </h1>
                 </div>
@@ -1173,7 +1173,7 @@ export function CollectionView({ collection, onBack, onSelectDocument, onUpdate 
                 order_index: fc.order_index || 0,
               }))}
               onClose={() => setSelectedFlashcardCollectionId(null)}
-              studyCollectionId={selectedFlashcardCollectionId}
+              studySubjectId={selectedFlashcardCollectionId}
             />
           )
         ) : selectedQuizCollection && selectedQuizCollection.quizQuestions && selectedQuizCollection.quizQuestions.length > 0 ? (
@@ -1190,7 +1190,7 @@ export function CollectionView({ collection, onBack, onSelectDocument, onUpdate 
               tags: q.tags || [],
               order_index: q.order_index || 0,
             }))}
-            studyCollectionId={selectedQuizCollection.id}
+            studySubjectId={selectedQuizCollection.id}
             mode="adaptive"
             title={selectedQuizCollection.title}
             onClose={() => setSelectedQuizCollection(null)}
@@ -1346,8 +1346,8 @@ export function CollectionView({ collection, onBack, onSelectDocument, onUpdate 
           <UploadDialog
             open={isUploadOpen}
             onOpenChange={setIsUploadOpen}
-            collectionId={collection.id}
-            collectionTitle={collection.title}
+            subjectId={subject.id}
+            subjectTitle={subject.title}
           />
         )
       }

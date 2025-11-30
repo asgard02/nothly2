@@ -33,8 +33,11 @@ export async function POST(request: NextRequest) {
       userAnswer,
       isCorrect,
       timeSpentSeconds,
-      studyCollectionId,
+      studySubjectId,
     } = body
+    
+    // Support backward compatibility
+    const targetId = studySubjectId || body.studyCollectionId
 
     if (!quizQuestionId || typeof isCorrect !== "boolean") {
       return NextResponse.json({ error: "Paramètres manquants" }, { status: 400 })
@@ -53,13 +56,13 @@ export async function POST(request: NextRequest) {
       session = existingSession
     }
 
-    if (!session && studyCollectionId) {
+    if (!session && targetId) {
       // Créer une nouvelle session
       const { data: newSession, error: sessionError } = await admin
         .from("user_quiz_sessions")
         .insert({
           user_id: user.id,
-          study_collection_id: studyCollectionId,
+          study_collection_id: targetId,
           quiz_question_ids: [quizQuestionId],
           total_questions: 1,
           correct_answers: isCorrect ? 1 : 0,
@@ -171,7 +174,7 @@ export async function POST(request: NextRequest) {
             .from("user_weak_areas")
             .select("*")
             .eq("user_id", user.id)
-            .eq("study_collection_id", studyCollectionId)
+            .eq("study_collection_id", targetId)
             .eq("tag", tag)
             .single()
 
@@ -191,7 +194,7 @@ export async function POST(request: NextRequest) {
               .from("user_weak_areas")
               .insert({
                 user_id: user.id,
-                study_collection_id: studyCollectionId,
+                study_collection_id: targetId,
                 tag: tag,
                 difficulty_score: 10, // Score initial
                 questions_count: 1,
@@ -256,7 +259,7 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url)
-    const studyCollectionId = searchParams.get("studyCollectionId")
+    const studySubjectId = searchParams.get("studySubjectId") || searchParams.get("studyCollectionId")
     const quizQuestionId = searchParams.get("quizQuestionId")
 
     if (quizQuestionId) {
@@ -271,12 +274,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ stats: stats || null })
     }
 
-    if (studyCollectionId) {
+    if (studySubjectId) {
       // Récupérer toutes les stats pour une collection
       const { data: questions } = await admin
         .from("study_collection_quiz_questions")
         .select("id")
-        .eq("collection_id", studyCollectionId)
+        .eq("collection_id", studySubjectId)
 
       const questionIds = questions?.map(q => q.id) || []
 
@@ -295,7 +298,7 @@ export async function GET(request: NextRequest) {
         .from("user_weak_areas")
         .select("*")
         .eq("user_id", user.id)
-        .eq("study_collection_id", studyCollectionId)
+        .eq("study_collection_id", studySubjectId)
         .order("difficulty_score", { ascending: false })
         .limit(10)
 

@@ -10,15 +10,15 @@ import { useTranslations } from "next-intl"
 interface UploadDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  collectionId?: string // ID de la collection dans laquelle uploader
-  collectionTitle?: string // Titre de la collection (pour affichage)
+  subjectId?: string // ID du sujet dans lequel uploader
+  subjectTitle?: string // Titre du sujet (pour affichage)
 }
 
 export function UploadDialog({
   open,
   onOpenChange,
-  collectionId,
-  collectionTitle
+  subjectId,
+  subjectTitle
 }: UploadDialogProps) {
   const t = useTranslations("UploadDialog")
   const queryClient = useQueryClient()
@@ -105,9 +105,9 @@ export function UploadDialog({
       formData.append("file", file)
       formData.append("title", title.trim() || file.name.replace(/\.[a-z0-9]+$/i, ""))
 
-      // Si on upload dans une collection, ajouter l'ID de la collection
-      if (collectionId) {
-        formData.append("collection_id", collectionId)
+      // Si on upload dans un sujet, ajouter l'ID du sujet
+      if (subjectId) {
+        formData.append("subject_id", subjectId)
       }
 
       const response = await fetch("/api/documents", {
@@ -125,10 +125,10 @@ export function UploadDialog({
     onSuccess: async () => {
       // Invalider les queries appropriées
       await queryClient.invalidateQueries({ queryKey: ["documents"] })
-      if (collectionId) {
-        // Invalider les queries de la collection et des collections
-        await queryClient.invalidateQueries({ queryKey: ["collection-documents", collectionId] })
-        await queryClient.invalidateQueries({ queryKey: ["collections"] })
+      if (subjectId) {
+        // Invalider les queries du sujet et des sujets
+        await queryClient.invalidateQueries({ queryKey: ["subject-documents", subjectId] })
+        await queryClient.invalidateQueries({ queryKey: ["subjects"] })
       }
       resetForm()
       onOpenChange(false)
@@ -155,9 +155,9 @@ export function UploadDialog({
         <div className="flex items-center justify-between mb-6">
           <div>
             <h2 className="text-2xl font-semibold">{t("title")}</h2>
-            {collectionTitle && (
+            {subjectTitle && (
               <p className="text-sm text-muted-foreground mt-1">
-                {t("inCollection")} <span className="font-medium">{collectionTitle}</span>
+                {t("inCollection")} <span className="font-medium">{subjectTitle}</span>
               </p>
             )}
           </div>

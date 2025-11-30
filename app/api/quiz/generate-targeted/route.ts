@@ -27,10 +27,13 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { studyCollectionId, type = "quiz" } = body // type: "quiz" ou "flashcards"
+    const { studySubjectId, type = "quiz" } = body // type: "quiz" ou "flashcards"
+    
+    // Support backward compatibility
+    const targetId = studySubjectId || body.studyCollectionId
 
-    if (!studyCollectionId) {
-      return NextResponse.json({ error: "studyCollectionId requis" }, { status: 400 })
+    if (!targetId) {
+      return NextResponse.json({ error: "studySubjectId requis" }, { status: 400 })
     }
 
     // Récupérer les zones de difficulté pour cette collection
@@ -38,7 +41,7 @@ export async function POST(request: NextRequest) {
       .from("user_weak_areas")
       .select("*")
       .eq("user_id", user.id)
-      .eq("study_collection_id", studyCollectionId)
+      .eq("study_collection_id", targetId)
       .order("difficulty_score", { ascending: false })
       .limit(5) // Top 5 zones de difficulté
 
@@ -58,7 +61,7 @@ export async function POST(request: NextRequest) {
     const { data: sources } = await admin
       .from("study_collection_sources")
       .select("document_id, title")
-      .eq("collection_id", studyCollectionId)
+      .eq("collection_id", targetId)
 
     if (!sources || sources.length === 0) {
       return NextResponse.json({ error: "Aucune source trouvée pour cette collection" }, { status: 400 })
@@ -199,7 +202,7 @@ Réponds UNIQUEMENT avec le JSON, sans texte avant ou après.`
         .from("study_collections")
         .insert({
           user_id: user.id,
-          collection_id: studyCollectionId,
+          collection_id: targetId,
           title: type === "quiz" 
             ? `Quiz ciblé: ${topTags.join(", ")}`
             : `Flashcards ciblées: ${topTags.join(", ")}`,
@@ -301,10 +304,10 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url)
-    const studyCollectionId = searchParams.get("studyCollectionId")
+    const studySubjectId = searchParams.get("studySubjectId") || searchParams.get("studyCollectionId")
 
-    if (!studyCollectionId) {
-      return NextResponse.json({ error: "studyCollectionId requis" }, { status: 400 })
+    if (!studySubjectId) {
+      return NextResponse.json({ error: "studySubjectId requis" }, { status: 400 })
     }
 
     // Récupérer les zones de difficulté
@@ -312,7 +315,7 @@ export async function GET(request: NextRequest) {
       .from("user_weak_areas")
       .select("*")
       .eq("user_id", user.id)
-      .eq("study_collection_id", studyCollectionId)
+      .eq("study_collection_id", studySubjectId)
       .order("difficulty_score", { ascending: false })
 
     if (weakAreasError) {

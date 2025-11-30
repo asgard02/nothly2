@@ -3,25 +3,25 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { LibraryView } from "@/components/workspace/LibraryView"
-import { CollectionView } from "@/components/workspace/CollectionView"
+import { SubjectView } from "@/components/workspace/SubjectView"
 import Sidebar from "@/components/Sidebar"
 import MainContent from "@/components/MainContent"
-import type { Collection } from "@/lib/hooks/useCollections"
+import type { Subject } from "@/lib/hooks/useSubjects"
 
 export default function WorkspacePage() {
   const router = useRouter()
-  const [selectedCollection, setSelectedCollection] = useState<Collection | null>(null)
+  const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null)
 
-  const handleSelectCollection = (collection: Collection) => {
-    setSelectedCollection(collection)
+  const handleSelectSubject = (subject: Subject) => {
+    setSelectedSubject(subject)
   }
 
   const handleBack = () => {
-    setSelectedCollection(null)
+    setSelectedSubject(null)
   }
 
   const handleSelectDocument = (doc: any) => {
-    // Ne plus rediriger vers la page du document, le PDF s'ouvrira directement depuis CollectionView
+    // Ne plus rediriger vers la page du document, le PDF s'ouvrira directement depuis SubjectView
     // Cette fonction n'est plus utilisée car on ouvre directement le PDF
   }
 
@@ -29,15 +29,15 @@ export default function WorkspacePage() {
     <div className="flex h-screen bg-background">
       <Sidebar />
       <MainContent className="bg-background">
-        {selectedCollection ? (
-          <CollectionView
-            collection={selectedCollection}
+        {selectedSubject ? (
+          <SubjectView
+            subject={selectedSubject}
             onBack={handleBack}
             onSelectDocument={handleSelectDocument}
-            onUpdate={(updatedCollection) => setSelectedCollection(updatedCollection)}
+            onUpdate={(updatedSubject) => setSelectedSubject(updatedSubject)}
           />
         ) : (
-          <LibraryView onSelectCollection={handleSelectCollection} />
+          <LibraryView onSelectSubject={handleSelectSubject} />
         )}
       </MainContent>
     </div>

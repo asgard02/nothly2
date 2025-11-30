@@ -2,7 +2,7 @@
   "Sidebar": {
     "tagline": "Organise et transforme tes supports en ressources intelligentes",
     "library": "Bibliothèque",
-    "collectionsBadge": "Collections IA",
+    "collectionsBadge": "Matières IA",
     "collectionsHint": "Génère flashcards et quiz à partir de tes documents",
     "pricing": "Tarifs",
     "settings": "Paramètres",
@@ -78,11 +78,11 @@
     }
   },
   "Collections": {
-    "title": "Collections de révision",
+    "title": "Matières de révision",
     "description": "Combine tes supports taggés pour générer automatiquement flashcards et quiz.",
-    "createButton": "Créer une collection",
+    "createButton": "Créer une matière",
     "dialog": {
-      "title": "Nouvelle collection",
+      "title": "Nouvelle matière",
       "description": "Sélectionne les tags correspondant aux supports que tu souhaites regrouper. Nous te signalons si la fenêtre de contexte risque d'être dépassée.",
       "titleLabel": "Titre",
       "titlePlaceholder": "Ex. Révision Analyse - chapitres 1 à 3",
@@ -102,17 +102,17 @@
       "failed": "Échec"
     },
     "card": {
-      "deleteTitle": "Supprimer la collection",
+      "deleteTitle": "Supprimer la matière",
       "noTags": "Aucun tag",
       "flashcards": "flashcards",
       "questions": "questions"
     },
     "empty": {
-      "title": "Aucune collection pour l'instant",
-      "description": "Crée ta première collection pour transformer automatiquement tes supports en flashcards et quiz.",
-      "cta": "Créer une collection"
+      "title": "Aucune matière pour l'instant",
+      "description": "Crée ta première matière pour transformer automatiquement tes supports en flashcards et quiz.",
+      "cta": "Créer une matière"
     },
-    "footer": "Clique sur une collection pour ouvrir la vue d'étude détaillée avec flashcards et quiz."
+    "footer": "Clique sur une matière pour ouvrir la vue d'étude détaillée avec flashcards et quiz."
   },
   "Settings": {
     "Language": {
@@ -163,11 +163,11 @@
       "deleteAccount": "Supprimer mon compte",
       "deleteConfirm": "⚠️ Êtes-vous sûr de vouloir supprimer votre compte ? Cette action est irréversible et supprimera toutes vos notes.",
       "deleteSuccess": "✅ Compte supprimé avec succès",
-      "deleteError": "Erreur lors de la suppression de la collection"
+      "deleteError": "Erreur lors de la suppression de la matière"
     },
     "CreateCollectionDialog": {
-      "title": "Nouvelle Collection",
-      "nameLabel": "Nom de la collection",
+      "title": "Nouvelle Matière",
+      "nameLabel": "Nom de la matière",
       "namePlaceholder": "Ex: Droit Constitutionnel",
       "colorLabel": "Couleur",
       "cancel": "Annuler",
@@ -353,10 +353,10 @@
     "addDocument": "Ajouter un document",
     "artifact": "artefact",
     "artifacts": "artefacts",
-    "searchPlaceholder": "Rechercher dans la collection...",
+    "searchPlaceholder": "Rechercher dans la matière...",
     "loadingDocuments": "Chargement des documents...",
     "noDocuments": "Aucun document",
-    "noDocumentsDesc": "Ajoutez votre premier document PDF à cette collection. Une fois ajouté, vous pourrez :",
+    "noDocumentsDesc": "Ajoutez votre premier document PDF à cette matière. Une fois ajouté, vous pourrez :",
     "featurePdf": "Consulter le PDF directement",
     "featureFlashcards": "Demander à l'IA de créer des flashcards",
     "featureQuiz": "Générer des quiz pour réviser",
@@ -397,15 +397,15 @@
     "loadingSummaries": "Chargement des résumés...",
     "noSummaries": "Aucun résumé",
     "noSummariesDesc": "Pour créer un résumé, utilisez le chat en bas de la page.",
-    "promptSummary1": "Résume-moi les points importants de cette collection",
+    "promptSummary1": "Résume-moi les points importants de cette matière",
     "promptSummary2": "Fais une synthèse du document @nom-du-document",
     "generateSummaryNow": "Générer un résumé maintenant",
-    "collectionSummaries": "Résumés de la collection",
+    "collectionSummaries": "Résumés de la matière",
     "summaryPrefix": "Résumé :",
     "loadingFlashcards": "Chargement des flashcards...",
     "ofQuiz": "de quiz",
     "aiGeneratedSummary": "Résumé généré par l'IA",
-    "noDocsInCollection": "Aucun document dans cette collection",
+    "noDocsInCollection": "Aucun document dans cette matière",
     "noDocsInCollectionDesc": "Ajoutez des documents PDF pour pouvoir poser des questions, créer des flashcards ou générer des quiz.",
     "generateFlashcards": "Générer des flashcards",
     "generateQuiz": "Générer un quiz",
@@ -415,22 +415,22 @@
     "successFlashcardsQuiz": "✅ {flashcardCount} flashcards et {quizCount} questions de quiz créés avec succès sur le sujet \"{topic}\"!\n\nVoulez-vous les consulter maintenant ?",
     "successFlashcards": "✅ {flashcardCount} flashcards créées avec succès sur le sujet \"{topic}\"!\n\nVoulez-vous les consulter maintenant ?",
     "successQuiz": "✅ {quizCount} questions de quiz créées avec succès sur le sujet \"{topic}\"!\n\nVoulez-vous les consulter maintenant ?",
-    "promptFlashcardsAction": "Crée-moi des flashcards sur les concepts clés en utilisant UNIQUEMENT le contenu des documents de cette collection. Base-toi sur le texte réel des PDFs, ne rien inventer.",
-    "promptQuizAction": "Crée-moi un quiz avec des questions QCM en utilisant UNIQUEMENT le contenu des documents de cette collection. Base-toi sur le texte réel des PDFs, ne rien inventer.",
-    "promptSummaryAction": "Résume-moi les points importants en utilisant UNIQUEMENT le contenu des documents de cette collection",
+    "promptFlashcardsAction": "Crée-moi des flashcards sur les concepts clés en utilisant UNIQUEMENT le contenu des documents de cette matière. Base-toi sur le texte réel des PDFs, ne rien inventer.",
+    "promptQuizAction": "Crée-moi un quiz avec des questions QCM en utilisant UNIQUEMENT le contenu des documents de cette matière. Base-toi sur le texte réel des PDFs, ne rien inventer.",
+    "promptSummaryAction": "Résume-moi les points importants en utilisant UNIQUEMENT le contenu des documents de cette matière",
     "generatingContent": "Génération en cours...",
     "generatingContentDesc": "L'IA analyse vos documents pour créer du contenu pertinent. Cela peut prendre quelques instants.",
     "viewResult": "Voir le résultat",
     "generationSuccessTitle": "Contenu généré !",
-    "editCollection": "Modifier la collection",
-    "editCollectionDesc": "Modifiez le titre et la couleur de votre collection.",
+    "editCollection": "Modifier la matière",
+    "editCollectionDesc": "Modifiez le titre et la couleur de votre matière.",
     "title": "Titre",
     "color": "Couleur",
-    "collectionTitlePlaceholder": "Nom de la collection",
+    "collectionTitlePlaceholder": "Nom de la matière",
     "deleteDocumentTitle": "Supprimer ce document ?",
     "deleteDocumentDesc": "Êtes-vous sûr de vouloir supprimer ce document ? Cette action est irréversible.",
     "deleteFlashcardsTitle": "Supprimer ces flashcards ?",
-    "deleteFlashcardsDesc": "Êtes-vous sûr de vouloir supprimer cette collection de flashcards ? Votre progression sera perdue.",
+    "deleteFlashcardsDesc": "Êtes-vous sûr de vouloir supprimer cette série de flashcards ? Votre progression sera perdue.",
     "deleteQuizTitle": "Supprimer ce quiz ?",
     "deleteQuizDesc": "Êtes-vous sûr de vouloir supprimer ce quiz ? Vos scores seront perdus.",
     "deleteSummaryTitle": "Supprimer ce résumé ?",
@@ -439,15 +439,15 @@
     "itemDeleted": "Élément supprimé"
   },
   "Library": {
-    "title": "Collections",
+    "title": "Matières",
     "searchPlaceholder": "Rechercher...",
     "newCollection": "Nouvelle",
-    "noCollections": "Aucune collection",
-    "noCollectionsDesc": "Créez votre première collection pour organiser vos documents.",
-    "createCollection": "Créer une collection",
+    "noCollections": "Aucune matière",
+    "noCollectionsDesc": "Créez votre première matière pour organiser vos documents.",
+    "createCollection": "Créer une matière",
     "deleteTooltip": "Supprimer",
     "open": "Ouvrir",
-    "loading": "Chargement des collections...",
+    "loading": "Chargement des matières...",
     "sqlErrorTitle": "Migration SQL requise",
     "sqlErrorMessage": "La table 'collections' n'existe pas dans la base de données.",
     "sqlErrorHelp": "Pour résoudre ce problème :",
@@ -455,11 +455,11 @@
     "today": "Aujourd'hui",
     "yesterday": "Hier",
     "daysAgo": "Il y a {days} jours",
-    "deleteError": "Erreur lors de la suppression de la collection"
+    "deleteError": "Erreur lors de la suppression de la matière"
   },
   "CreateCollectionDialog": {
-    "title": "Nouvelle Collection",
-    "nameLabel": "Nom de la collection",
+    "title": "Nouvelle Matière",
+    "nameLabel": "Nom de la matière",
     "namePlaceholder": "Ex: Droit Constitutionnel",
     "colorLabel": "Couleur",
     "cancel": "Annuler",
@@ -467,7 +467,7 @@
     "create": "Créer"
   },
   "ContextBoard": {
-    "myCollections": "Mes Collections",
+    "myCollections": "Mes Matières",
     "sourceDocument": "Document Source",
     "studySheet": "Fiche de Cours",
     "quizPractice": "Quiz & Entraînement",
@@ -510,8 +510,8 @@
     "add": "Ajouter",
     "dialogGenerateTitle": "Générer un planning IA",
     "dialogGenerateDesc": "L'IA va analyser vos documents et créer un planning de révision sur mesure.",
-    "labelCollection": "Collection à étudier",
-    "selectCollection": "Sélectionner une collection...",
+    "labelCollection": "Matière à étudier",
+    "selectCollection": "Sélectionner une matière...",
     "labelStart": "Début",
     "labelEnd": "Fin",
     "labelIntensity": "Intensité",
@@ -526,7 +526,7 @@
   },
   "UploadDialog": {
     "title": "Ajouter un document",
-    "inCollection": "Dans la collection :",
+    "inCollection": "Dans la matière :",
     "errorPdfOnly": "Seuls les fichiers PDF sont acceptés.",
     "errorNoFile": "Veuillez sélectionner un fichier.",
     "errorNoTitle": "Veuillez entrer un titre.",

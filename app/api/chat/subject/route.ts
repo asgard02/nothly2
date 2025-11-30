@@ -4,7 +4,7 @@ import { getSupabaseAdmin } from "@/lib/db"
 
 export const dynamic = "force-dynamic"
 
-// POST /api/chat/collection - Chat avec contexte de collection et documents mentionnés
+// POST /api/chat/subject - Chat avec contexte de matière et documents mentionnés
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createServerClient()
@@ -27,46 +27,49 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { collectionId, message, mentionedDocumentIds } = body
+    const { subjectId, message, mentionedDocumentIds } = body
+    
+    // Support backward compatibility if client sends collectionId
+    const targetId = subjectId || body.collectionId
 
-    if (!collectionId || !message) {
-      return NextResponse.json({ error: "collectionId et message sont requis" }, { status: 400 })
+    if (!targetId || !message) {
+      return NextResponse.json({ error: "subjectId et message sont requis" }, { status: 400 })
     }
 
-    // Vérifier que la collection appartient à l'utilisateur
+    // Vérifier que la matière appartient à l'utilisateur
     const { data: collection, error: collectionError } = await admin
       .from("collections")
       .select("id, title")
-      .eq("id", collectionId)
+      .eq("id", targetId)
       .eq("user_id", user.id)
       .single()
 
     if (collectionError || !collection) {
-      return NextResponse.json({ error: "Collection non trouvée" }, { status: 404 })
+      return NextResponse.json({ error: "Matière non trouvée" }, { status: 404 })
     }
 
-    // Récupérer les documents de la collection (tous ou seulement ceux mentionnés)
+    // Récupérer les documents de la matière (tous ou seulement ceux mentionnés)
     let documentIds: string[] = []
     
     if (mentionedDocumentIds && mentionedDocumentIds.length > 0) {
       // Seulement les documents mentionnés
       documentIds = mentionedDocumentIds
     } else {
-      // Tous les documents de la collection
+      // Tous les documents de la matière
       const { data: allDocs } = await admin
         .from("documents")
         .select("id")
-        .eq("collection_id", collectionId)
+        .eq("collection_id", targetId)
         .eq("user_id", user.id)
       
       documentIds = allDocs?.map((d: any) => d.id) || []
     }
 
-    // Vérifier si la collection contient des documents
+    // Vérifier si la matière contient des documents
     if (documentIds.length === 0) {
       return NextResponse.json({ 
-        error: "No documents in this collection.",
-        response: "Please add PDF documents to this collection before asking questions or creating flashcards/quizzes."
+        error: "No documents in this subject.",
+        response: "Please add PDF documents to this subject before asking questions or creating flashcards/quizzes."
       }, { status: 400 })
     }
 
@@ -135,11 +138,11 @@ Examples:
             searchTopic = parsed.topic || null
           }
         } catch (parseError) {
-          console.warn("[POST /api/chat/collection] Error parsing intent:", parseError)
+          console.warn("[POST /api/chat/subject] Error parsing intent:", parseError)
         }
       }
     } catch (error) {
-      console.warn("[POST /api/chat/collection] Error detecting AI intent:", error)
+      console.warn("[POST /api/chat/subject] Error detecting AI intent:", error)
     }
 
     // Fallback: détection par mots-clés si l'IA n'a pas fonctionné
@@ -157,8 +160,8 @@ Examples:
     // Si c'est une demande de flashcards/quiz/résumé, on cherche les sections pertinentes
     const documentContents: Array<{ id: string; title: string; content: string; sections?: Array<{ content: string; order_index: number }> }> = []
     
-    console.log(`[POST /api/chat/collection] 🔍 Processing ${documentIds.length} document(s) for collection ${collectionId}`)
-    console.log(`[POST /api/chat/collection] 📋 Document IDs:`, documentIds)
+    console.log(`[POST /api/chat/subject] 🔍 Processing ${documentIds.length} document(s) for subject ${targetId}`)
+    console.log(`[POST /api/chat/subject] 📋 Document IDs:`, documentIds)
     
     const skippedDocs: Array<{ id: string; title: string; reason: string }> = []
     
@@ -172,7 +175,7 @@ Examples:
         .single()
 
       if (docError || !doc) {
-        console.warn(`[POST /api/chat/collection] Document ${docId} not found:`, docError)
+        console.warn(`[POST /api/chat/subject] Document ${docId} not found:`, docError)
         skippedDocs.push({ id: docId, title: "Unknown", reason: "Document not found" })
         continue
       }
@@ -196,12 +199,12 @@ Examples:
       }
 
       if (!versionId) {
-        console.warn(`[POST /api/chat/collection] No version found for document ${docId} (title: ${doc.title})`)
+        console.warn(`[POST /api/chat/subject] No version found for document ${docId} (title: ${doc.title})`)
         skippedDocs.push({ id: docId, title: doc.title, reason: "No version found" })
         continue
       }
       
-      console.log(`[POST /api/chat/collection] Document ${docId} (${doc.title}) - Version ID: ${versionId}`)
+      console.log(`[POST /api/chat/subject] Document ${docId} (${doc.title}) - Version ID: ${versionId}`)
       
       // Récupérer le raw_text de la version d'abord (plus fiable que les sections)
       const { data: version, error: versionError } = await admin
@@ -211,7 +214,7 @@ Examples:
         .single()
 
       if (versionError) {
-        console.warn(`[POST /api/chat/collection] Error fetching version for ${docId}:`, versionError)
+        console.warn(`[POST /api/chat/subject] Error fetching version for ${docId}:`, versionError)
         skippedDocs.push({ id: docId, title: doc.title, reason: `Error fetching version: ${versionError.message}` })
         continue
       }
@@ -220,9 +223,9 @@ Examples:
       if (version) {
         const rawTextLength = version.raw_text ? version.raw_text.length : 0
         const hasRawText = version.raw_text && version.raw_text.trim().length > 0
-        console.log(`[POST /api/chat/collection] Document ${docId} - raw_text: ${rawTextLength} chars, hasContent: ${hasRawText}`)
+        console.log(`[POST /api/chat/subject] Document ${docId} - raw_text: ${rawTextLength} chars, hasContent: ${hasRawText}`)
       } else {
-        console.warn(`[POST /api/chat/collection] Document ${docId} - Version ${versionId} not found`)
+        console.warn(`[POST /api/chat/subject] Document ${docId} - Version ${versionId} not found`)
         continue
       }
 
@@ -234,7 +237,7 @@ Examples:
         .order("order_index", { ascending: true })
 
       if (sectionsError) {
-        console.warn(`[POST /api/chat/collection] Error fetching sections for ${docId}:`, sectionsError)
+        console.warn(`[POST /api/chat/subject] Error fetching sections for ${docId}:`, sectionsError)
         // Ne pas continuer, on peut utiliser raw_text à la place
       }
 
@@ -244,7 +247,7 @@ Examples:
 
       if (sections && sections.length > 0) {
         // Utiliser les sections si disponibles
-        console.log(`[POST /api/chat/collection] Document ${docId} (${doc.title}) - ${sections.length} sections found`)
+        console.log(`[POST /api/chat/subject] Document ${docId} (${doc.title}) - ${sections.length} sections found`)
         
         if ((isFlashcardRequest || isQuizRequest || isSummaryRequest) && searchTopic) {
           // Rechercher les sections pertinentes au sujet
@@ -280,7 +283,7 @@ Examples:
         }
       } else if (version && version.raw_text && version.raw_text.trim().length > 0) {
         // Utiliser raw_text comme fallback si pas de sections
-        console.log(`[POST /api/chat/collection] Document ${docId} (${doc.title}) - Using raw_text (${version.raw_text.length} chars)`)
+        console.log(`[POST /api/chat/subject] Document ${docId} (${doc.title}) - Using raw_text (${version.raw_text.length} chars)`)
         relevantContent = version.raw_text.trim()
         relevantSections = []
       } else {
@@ -288,7 +291,7 @@ Examples:
         const rawTextStatus = version?.raw_text 
           ? (version.raw_text.trim().length > 0 ? `raw_text exists but empty (${version.raw_text.length} chars)` : `raw_text null/undefined`)
           : "version not found"
-        console.warn(`[POST /api/chat/collection] No content available for document ${docId} (${doc.title}, version ${versionId}) - ${rawTextStatus}`)
+        console.warn(`[POST /api/chat/subject] No content available for document ${docId} (${doc.title}, version ${versionId}) - ${rawTextStatus}`)
         skippedDocs.push({ 
           id: docId, 
           title: doc.title, 
@@ -298,7 +301,7 @@ Examples:
       }
 
       if (!relevantContent || relevantContent.trim().length === 0) {
-        console.warn(`[POST /api/chat/collection] Empty content for document ${docId}`)
+        console.warn(`[POST /api/chat/subject] Empty content for document ${docId}`)
         skippedDocs.push({ id: docId, title: doc.title, reason: "Empty content after processing" })
         continue
       }
@@ -312,14 +315,14 @@ Examples:
     }
 
     // Log pour debug
-    console.log(`[POST /api/chat/collection] Retrieved documents: ${documentContents.length}, Total content: ${documentContents.reduce((sum, d) => sum + d.content.length, 0)} chars`)
+    console.log(`[POST /api/chat/subject] Retrieved documents: ${documentContents.length}, Total content: ${documentContents.reduce((sum, d) => sum + d.content.length, 0)} chars`)
     if (skippedDocs.length > 0) {
-      console.warn(`[POST /api/chat/collection] Skipped documents (${skippedDocs.length}):`, skippedDocs.map(d => `${d.title} (${d.reason})`).join(", "))
+      console.warn(`[POST /api/chat/subject] Skipped documents (${skippedDocs.length}):`, skippedDocs.map(d => `${d.title} (${d.reason})`).join(", "))
     }
 
     // Construire le contexte pour l'IA
     const contextParts: string[] = []
-    contextParts.push(`Collection: ${collection.title}`)
+    contextParts.push(`Matière: ${collection.title}`)
     
     if (documentContents.length > 0) {
       contextParts.push("\nAvailable documents:")
@@ -332,7 +335,7 @@ Examples:
       const { data: docsStatus } = await admin
         .from("documents")
         .select("id, title, status")
-        .eq("collection_id", collectionId)
+        .eq("collection_id", targetId)
         .eq("user_id", user.id)
       
       const processingDocs = docsStatus?.filter((d: any) => d.status === "processing") || []
@@ -347,12 +350,12 @@ Examples:
       } else if (readyDocs.length === 0) {
         // Aucun document dans la collection
         return NextResponse.json({ 
-          error: "No documents in this collection.",
-          response: "Please add PDF documents to this collection first."
+          error: "No documents in this subject.",
+          response: "Please add PDF documents to this subject first."
         }, { status: 400 })
       } else {
         // Documents prêts mais pas de contenu extrait
-        console.warn(`[POST /api/chat/collection] No content found for collection ${collectionId} despite ${readyDocs.length} ready document(s)`)
+        console.warn(`[POST /api/chat/subject] No content found for subject ${targetId} despite ${readyDocs.length} ready document(s)`)
         
         // Construire un message d'erreur détaillé avec les documents problématiques
         const docTitles = readyDocs.map((d: any) => d.title).join(", ")
@@ -388,15 +391,15 @@ Examples:
         
         if (docsWithoutContent.length > 0) {
           const problematicTitles = docsWithoutContent.map((d: any) => d.title).join(", ")
-          console.warn(`[POST /api/chat/collection] Documents without content: ${problematicTitles}`)
+          console.warn(`[POST /api/chat/subject] Documents without content: ${problematicTitles}`)
           errorDetails = `The following documents have no text content:\n${problematicTitles}\n\n`
         }
         
         // Construire un message d'erreur détaillé avec instructions
         const errorMessage = `${errorDetails}Possible causes:\n- Documents were uploaded before text extraction was enabled\n- PDFs are scanned images (no extractable text)\n- Text extraction failed during upload\n\nSolutions:\n1. Run the re-extraction script:\n   npx tsx scripts/re-extract-pdf-text.ts\n\n2. Check server logs to see which documents are ignored\n\n3. If the script doesn't work, re-upload the documents`
         
-        console.error(`[POST /api/chat/collection] ❌ No content found - ${readyDocs.length} ready document(s) but no text content`)
-        console.error(`[POST /api/chat/collection] Documents without content:`, docsWithoutContent.map((d: any) => d.title))
+        console.error(`[POST /api/chat/subject] ❌ No content found - ${readyDocs.length} ready document(s) but no text content`)
+        console.error(`[POST /api/chat/subject] Documents without content:`, docsWithoutContent.map((d: any) => d.title))
         
         return NextResponse.json({ 
           error: "No text content could be extracted from the documents.",
@@ -408,7 +411,7 @@ Examples:
     const context = contextParts.join("\n")
     
     // Log pour debug
-    console.log(`[POST /api/chat/collection] Context built: ${context.length} chars, ${documentContents.length} documents`)
+    console.log(`[POST /api/chat/subject] Context built: ${context.length} chars, ${documentContents.length} documents`)
 
     // Appeler l'API OpenAI avec le contexte
     if (!process.env.OPENAI_API_KEY) {
@@ -485,7 +488,7 @@ Le résumé doit être bien formaté (Markdown accepté) et mettre en avant les 
 Contexte des documents (UTILISE UNIQUEMENT CE CONTENU):
 ${context.substring(0, 20000)}`
     } else {
-      systemPrompt = `Tu es un assistant IA qui aide l'utilisateur à comprendre et analyser ses documents PDF dans la collection "${collection.title}". 
+      systemPrompt = `Tu es un assistant IA qui aide l'utilisateur à comprendre et analyser ses documents PDF dans la matière "${collection.title}". 
             
 Tu as accès au contenu des documents suivants. Utilise ce contexte pour répondre aux questions de l'utilisateur de manière précise et détaillée.
 
@@ -518,7 +521,7 @@ ${context.substring(0, 15000)}`
 
     if (!openaiResponse.ok) {
       const errorData = await openaiResponse.json().catch(() => ({}))
-      console.error("[POST /api/chat/collection] ❌ Erreur OpenAI:", errorData)
+      console.error("[POST /api/chat/subject] ❌ Erreur OpenAI:", errorData)
       return NextResponse.json({ error: "Erreur lors de l'appel à l'IA" }, { status: 500 })
     }
 
@@ -549,7 +552,7 @@ ${context.substring(0, 15000)}`
               .from("study_collections")
               .insert({
                 user_id: user.id,
-                collection_id: collectionId, // Lier à la collection principale
+                collection_id: targetId, // Lier à la matière principale
                 title: isFlashcardRequest 
                   ? `Flashcards: ${searchTopic || collection.title}`
                   : `Quiz: ${searchTopic || collection.title}`,
@@ -603,7 +606,7 @@ ${context.substring(0, 15000)}`
           }
         }
       } catch (error) {
-        console.error("[POST /api/chat/collection] Erreur lors de la création:", error)
+        console.error("[POST /api/chat/subject] Erreur lors de la création:", error)
         // Continuer même si la création échoue
       }
     } else if (isSummaryRequest) {
@@ -613,7 +616,7 @@ ${context.substring(0, 15000)}`
           .from("study_collections")
           .insert({
             user_id: user.id,
-            collection_id: collectionId,
+            collection_id: targetId,
             title: `Résumé: ${searchTopic || collection.title}`,
             tags: searchTopic ? [searchTopic] : ["résumé"],
             status: "ready",
@@ -630,10 +633,10 @@ ${context.substring(0, 15000)}`
           
         if (!createError && studyCollection) {
           studyCollectionId = studyCollection.id
-          console.log(`[POST /api/chat/collection] Résumé sauvegardé dans study_collection ${studyCollectionId}`)
+          console.log(`[POST /api/chat/subject] Résumé sauvegardé dans study_collection ${studyCollectionId}`)
         }
       } catch (error) {
-        console.error("[POST /api/chat/collection] Erreur lors de la sauvegarde du résumé:", error)
+        console.error("[POST /api/chat/subject] Erreur lors de la sauvegarde du résumé:", error)
       }
     }
 
@@ -649,7 +652,7 @@ ${context.substring(0, 15000)}`
       searchTopic: searchTopic || undefined,
     })
   } catch (err: any) {
-    console.error("[POST /api/chat/collection] ❌ Exception:", err)
+    console.error("[POST /api/chat/subject] ❌ Exception:", err)
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 })
   }
 }
