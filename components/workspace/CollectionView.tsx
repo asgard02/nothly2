@@ -1,10 +1,15 @@
 "use client"
 
 import { useState, useTransition, useMemo } from "react"
+import { motion } from "framer-motion"
 import { useRouter } from "next/navigation"
-import { ArrowLeft, ArrowRight, FileText, Plus, Search, Sparkles, BookOpen, MessageSquare, Send, Loader2, X, Brain, ListChecks, ChevronDown, ChevronUp, Calendar, Trash2 } from "lucide-react"
+import { ArrowLeft, ArrowRight, FileText, Plus, Search, Sparkles, BookOpen, MessageSquare, Send, Loader2, X, Brain, ListChecks, ChevronDown, ChevronUp, Calendar, Trash2, Pencil, Check } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog"
+import { Progress } from "@/components/ui/progress"
 import { cn } from "@/lib/utils"
 import type { Collection } from "@/lib/hooks/useCollections"
 import { UploadDialog } from "./UploadDialog"
@@ -16,6 +21,7 @@ import type { FlashcardItem } from "@/components/collections/FlashcardViewer"
 import ReactMarkdown from "react-markdown"
 import { GenerationOverlay, type GenerationStep } from "@/components/GenerationOverlay"
 import { GenerationDialog, type GenerationIntent } from "./GenerationDialog"
+import DeleteConfirmationDialog from "@/components/DeleteConfirmationDialog"
 
 import remarkGfm from "remark-gfm"
 import { useTranslations } from "next-intl"
@@ -24,9 +30,11 @@ interface CollectionViewProps {
   collection: Collection
   onBack: () => void
   onSelectDocument?: (doc: any) => void
+  onUpdate?: (collection: Collection) => void
 }
 
-export function CollectionView({ collection, onBack, onSelectDocument }: CollectionViewProps) {
+export function CollectionView({ collection, onBack, onSelectDocument, onUpdate }: CollectionViewProps) {
+  // Refresh translations
   const t = useTranslations("CollectionView")
   const tCommon = useTranslations("Common")
   const tStatus = useTranslations("Status")
@@ -62,6 +70,35 @@ export function CollectionView({ collection, onBack, onSelectDocument }: Collect
   // États pour le dialogue de génération
   const [isGenerationDialogOpen, setIsGenerationDialogOpen] = useState(false)
   const [generationIntent, setGenerationIntent] = useState<GenerationIntent | null>(null)
+
+  // États pour l'édition de la collection
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [editTitle, setEditTitle] = useState(collection.title)
+  const [editColor, setEditColor] = useState(collection.color || "from-blue-500/20 via-blue-400/10 to-purple-500/20")
+  const [isUpdating, setIsUpdating] = useState(false)
+
+  // État pour la boîte de dialogue de suppression
+  const [deleteConfirmation, setDeleteConfirmation] = useState<{
+    isOpen: boolean
+    type: "document" | "flashcards" | "quiz" | "summary"
+    id: string
+    title: string
+  }>({
+    isOpen: false,
+    type: "document",
+    id: "",
+    title: "",
+  })
+  const [isDeletingItem, setIsDeletingItem] = useState(false)
+
+  const gradients = [
+    { label: "Blue", value: "from-blue-500/20 via-blue-400/10 to-purple-500/20" },
+    { label: "Emerald", value: "from-emerald-500/20 via-teal-400/10 to-cyan-500/20" },
+    { label: "Amber", value: "from-amber-500/20 via-orange-400/10 to-red-500/20" },
+    { label: "Pink", value: "from-pink-500/20 via-rose-400/10 to-fuchsia-500/20" },
+    { label: "Indigo", value: "from-indigo-500/20 via-purple-400/10 to-pink-500/20" },
+    { label: "Green", value: "from-green-500/20 via-emerald-400/10 to-teal-500/20" },
+  ]
 
   // Charger les détails complets de la study_collection sélectionnée
   const { data: selectedFlashcardCollection, isLoading: isLoadingFlashcards } = useQuery({
@@ -181,12 +218,22 @@ export function CollectionView({ collection, onBack, onSelectDocument }: Collect
     }
   }
 
-  const handleDeleteDocument = async (docId: string, e: React.MouseEvent) => {
+  const handleDeleteDocument = async (docId: string, e: React.MouseEvent, docTitle: string) => {
     e.stopPropagation()
-    if (!confirm(t("confirmDeleteDocument"))) return
+    setDeleteConfirmation({
+      isOpen: true,
+      type: "document",
+      id: docId,
+      title: docTitle,
+    })
+  }
 
+  const confirmDeleteDocument = async () => {
+    if (!deleteConfirmation.id) return
+
+    setIsDeletingItem(true)
     try {
-      const response = await fetch(`/api/documents/${docId}`, {
+      const response = await fetch(`/api/documents/${deleteConfirmation.id}`, {
         method: "DELETE",
       })
 
@@ -196,9 +243,13 @@ export function CollectionView({ collection, onBack, onSelectDocument }: Collect
 
       // Rafraîchir la liste des documents
       queryClient.invalidateQueries({ queryKey: ["collection-documents", collection.id] })
+      setDeleteConfirmation(prev => ({ ...prev, isOpen: false }))
+      toast.success(t("documentDeleted"))
     } catch (error) {
       console.error("Erreur suppression document:", error)
-      alert(t("unableToDeleteDocument"))
+      toast.error(t("unableToDeleteDocument"))
+    } finally {
+      setIsDeletingItem(false)
     }
   }
 
@@ -314,12 +365,22 @@ export function CollectionView({ collection, onBack, onSelectDocument }: Collect
     }
   }
 
-  const handleDeleteStudyCollection = async (id: string, e: React.MouseEvent) => {
+  const handleDeleteStudyCollection = async (id: string, e: React.MouseEvent, title: string, type: "flashcards" | "quiz" | "summary") => {
     e.stopPropagation()
-    if (!confirm(t("confirmDeleteDocument"))) return // Reusing confirm message or add generic confirm
+    setDeleteConfirmation({
+      isOpen: true,
+      type,
+      id,
+      title,
+    })
+  }
 
+  const confirmDeleteStudyCollection = async () => {
+    if (!deleteConfirmation.id) return
+
+    setIsDeletingItem(true)
     try {
-      const response = await fetch(`/api/study-collections/${id}`, {
+      const response = await fetch(`/api/study-collections/${deleteConfirmation.id}`, {
         method: "DELETE",
       })
 
@@ -329,9 +390,21 @@ export function CollectionView({ collection, onBack, onSelectDocument }: Collect
 
       // Rafraîchir les données
       queryClient.invalidateQueries({ queryKey: ["collection-study", collection.id] })
+      setDeleteConfirmation(prev => ({ ...prev, isOpen: false }))
+      toast.success(t("itemDeleted"))
     } catch (error) {
       console.error("Erreur suppression:", error)
-      alert(t("unableToDeleteItem"))
+      toast.error(t("unableToDeleteItem"))
+    } finally {
+      setIsDeletingItem(false)
+    }
+  }
+
+  const handleConfirmDelete = () => {
+    if (deleteConfirmation.type === "document") {
+      confirmDeleteDocument()
+    } else {
+      confirmDeleteStudyCollection()
     }
   }
 
@@ -368,6 +441,50 @@ export function CollectionView({ collection, onBack, onSelectDocument }: Collect
     // Pour l'instant, on va modifier handleSendMessage pour accepter une liste d'IDs explicite
 
     handleSendMessage(prompt, selectedDocIds)
+  }
+
+  const handleUpdateCollection = async () => {
+    if (!editTitle.trim()) return
+
+    setIsUpdating(true)
+    try {
+      const response = await fetch(`/api/collections/${collection.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: editTitle,
+          color: editColor
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error("Erreur lors de la mise à jour")
+      }
+
+      const updatedCollection = await response.json()
+
+      toast.success("Collection mise à jour")
+      setIsEditDialogOpen(false)
+
+      // Mettre à jour la collection dans le parent
+      if (onUpdate) {
+        onUpdate({
+          ...collection,
+          title: editTitle,
+          color: editColor
+        })
+      }
+
+      // Invalider le cache des collections pour que la vue bibliothèque se mette à jour
+      await queryClient.invalidateQueries({ queryKey: ["collections"] })
+
+      router.refresh()
+    } catch (error) {
+      console.error("Erreur update:", error)
+      toast.error("Impossible de mettre à jour la collection")
+    } finally {
+      setIsUpdating(false)
+    }
   }
 
   // Séparer les flashcards et quiz des study collections
@@ -423,157 +540,118 @@ export function CollectionView({ collection, onBack, onSelectDocument }: Collect
           }
         }}
       />
-      {/* Header avec gradient de la collection amélioré - Caché quand on affiche flashcards/quiz */}
-      {!isViewingStudy && (
-        <div className={cn(
-          "relative flex-shrink-0 px-6 pt-4 pb-4 border-b border-border/40",
-          "bg-gradient-to-br",
-          collection.color,
-          "bg-background/95"
-        )}>
-          {/* Overlay pour améliorer le contraste */}
-          <div className="absolute inset-0 bg-background/60 dark:bg-background/80" />
-          {/* Overlays décoratifs */}
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.2)_0%,transparent_60%)]" />
 
-          <div className="relative z-10">
-            <div className="flex items-center justify-between mb-3">
+      <DeleteConfirmationDialog
+        isOpen={deleteConfirmation.isOpen}
+        onClose={() => setDeleteConfirmation(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={handleConfirmDelete}
+        title={
+          deleteConfirmation.type === "document" ? t("deleteDocumentTitle") :
+            deleteConfirmation.type === "flashcards" ? t("deleteFlashcardsTitle") :
+              deleteConfirmation.type === "quiz" ? t("deleteQuizTitle") :
+                t("deleteSummaryTitle")
+        }
+        description={
+          deleteConfirmation.type === "document" ? t("deleteDocumentDesc") :
+            deleteConfirmation.type === "flashcards" ? t("deleteFlashcardsDesc") :
+              deleteConfirmation.type === "quiz" ? t("deleteQuizDesc") :
+                t("deleteSummaryDesc")
+        }
+        itemTitle={deleteConfirmation.title}
+        isDeleting={isDeletingItem}
+      />
+
+      {/* Header avec design premium - Caché quand on affiche flashcards/quiz */}
+      {!isViewingStudy && (
+        <div className="flex-shrink-0 bg-background/80 backdrop-blur-xl border-b border-border/40 z-10 sticky top-0">
+          <div className="max-w-7xl mx-auto px-6 py-6">
+            <div className="flex items-center justify-between mb-8">
               <div className="flex items-center gap-4">
                 <Button
                   variant="ghost"
                   onClick={onBack}
-                  size="sm"
-                  className="hover:bg-background/80 rounded-lg px-3 py-1.5 backdrop-blur-sm border border-border/60 bg-background/70 shadow-sm text-foreground"
+                  size="icon"
+                  className="rounded-full hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  <ArrowLeft className="h-4 w-4 mr-1.5" />
-                  {tCommon("back")}
+                  <ArrowLeft className="h-5 w-5" />
                 </Button>
-                <h1 className="text-2xl font-bold tracking-tight text-foreground">{collection.title}</h1>
+                <div>
+                  <h1 className="text-3xl font-bold tracking-tight text-foreground flex items-center gap-3">
+                    {collection.title}
+                    <button
+                      onClick={() => {
+                        setEditTitle(collection.title)
+                        setEditColor(collection.color || "from-blue-500/20 via-blue-400/10 to-purple-500/20")
+                        setIsEditDialogOpen(true)
+                      }}
+                      className="p-1.5 rounded-full hover:bg-muted text-muted-foreground/50 hover:text-foreground transition-colors"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </button>
+                    <span className="text-sm font-normal text-muted-foreground bg-muted/50 px-2.5 py-0.5 rounded-full border border-border/50">
+                      {collection.doc_count} doc{collection.doc_count > 1 ? "s" : ""}
+                    </span>
+                  </h1>
+                </div>
               </div>
 
-              <Button
-                onClick={() => setIsUploadOpen(true)}
-                size="sm"
-                className="rounded-lg bg-background/95 backdrop-blur-md hover:bg-background shadow-md hover:shadow-lg transition-all px-4 py-2 border border-border/60 text-foreground"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                {t("addDocument")}
-              </Button>
-            </div>
-
-            <div className="flex items-center gap-4 mb-3">
-              <div className="flex items-center gap-2 px-2.5 py-1 rounded-md bg-background/95 backdrop-blur-md border border-border/60 shadow-sm">
-                <FileText className="h-3.5 w-3.5 text-foreground" />
-                <span className="text-xs font-medium text-foreground">{collection.doc_count} document{collection.doc_count > 1 ? "s" : ""}</span>
+              <div className="flex items-center gap-3">
+                <div className="relative group">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                  <input
+                    type="text"
+                    placeholder={t("searchPlaceholder")}
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-64 pl-10 pr-4 py-2 text-sm rounded-full border border-border/60 bg-muted/30 focus:bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all placeholder:text-muted-foreground/60"
+                  />
+                </div>
+                <Button
+                  onClick={() => setIsUploadOpen(true)}
+                  className="rounded-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20 px-6"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  {t("addDocument")}
+                </Button>
               </div>
-              <div className="flex items-center gap-2 px-2.5 py-1 rounded-md bg-background/95 backdrop-blur-md border border-border/60 shadow-sm">
-                <Sparkles className="h-3.5 w-3.5 text-foreground" />
-                <span className="text-xs font-medium text-foreground">{collection.artifact_count} {collection.artifact_count > 1 ? t("artifacts") : t("artifact")}</span>
-              </div>
             </div>
 
-            {/* Onglets PDF | FC | Quiz */}
-            <div className="flex items-center gap-2 mb-3 p-1 rounded-xl bg-background/60 backdrop-blur-md border border-border/40">
-              <button
-                onClick={() => setActiveTab("pdf")}
-                className={cn(
-                  "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all",
-                  activeTab === "pdf"
-                    ? "bg-background shadow-md text-foreground border border-border/60"
-                    : "text-muted-foreground hover:text-foreground hover:bg-background/50"
-                )}
-              >
-                <FileText className="h-4 w-4" />
-                <span>{t("tabPdf")}</span>
-                {filteredDocs.length > 0 && (
-                  <span className={cn(
-                    "px-1.5 py-0.5 rounded-full text-xs font-semibold",
-                    activeTab === "pdf"
-                      ? "bg-primary/10 text-primary"
-                      : "bg-muted text-muted-foreground"
-                  )}>
-                    {filteredDocs.length}
-                  </span>
-                )}
-              </button>
-              <button
-                onClick={() => setActiveTab("flashcards")}
-                className={cn(
-                  "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all",
-                  activeTab === "flashcards"
-                    ? "bg-background shadow-md text-foreground border border-border/60"
-                    : "text-muted-foreground hover:text-foreground hover:bg-background/50"
-                )}
-              >
-                <Brain className="h-4 w-4" />
-                <span>{t("tabFlashcards")}</span>
-                {flashcardsCollections.length > 0 && (
-                  <span className={cn(
-                    "px-1.5 py-0.5 rounded-full text-xs font-semibold",
-                    activeTab === "flashcards"
-                      ? "bg-purple-500/10 text-purple-600 dark:text-purple-400"
-                      : "bg-muted text-muted-foreground"
-                  )}>
-                    {flashcardsCollections.length}
-                  </span>
-                )}
-              </button>
-              <button
-                onClick={() => setActiveTab("quiz")}
-                className={cn(
-                  "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all",
-                  activeTab === "quiz"
-                    ? "bg-background shadow-md text-foreground border border-border/60"
-                    : "text-muted-foreground hover:text-foreground hover:bg-background/50"
-                )}
-              >
-                <ListChecks className="h-4 w-4" />
-                <span>{t("tabQuiz")}</span>
-                {quizCollections.length > 0 && (
-                  <span className={cn(
-                    "px-1.5 py-0.5 rounded-full text-xs font-semibold",
-                    activeTab === "quiz"
-                      ? "bg-green-500/10 text-green-600 dark:text-green-400"
-                      : "bg-muted text-muted-foreground"
-                  )}>
-                    {quizCollections.length}
-                  </span>
-                )}
-              </button>
-              <button
-                onClick={() => setActiveTab("resume")}
-                className={cn(
-                  "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all",
-                  activeTab === "resume"
-                    ? "bg-background shadow-md text-foreground border border-border/60"
-                    : "text-muted-foreground hover:text-foreground hover:bg-background/50"
-                )}
-              >
-                <BookOpen className="h-4 w-4" />
-                <span>{t("tabSummaries")}</span>
-                {totalSummaries > 0 && (
-                  <span className={cn(
-                    "px-1.5 py-0.5 rounded-full text-xs font-semibold",
-                    activeTab === "resume"
-                      ? "bg-amber-500/10 text-amber-600 dark:text-amber-400"
-                      : "bg-muted text-muted-foreground"
-                  )}>
-                    {totalSummaries}
-                  </span>
-                )}
-              </button>
-            </div>
-
-            {/* Barre de recherche améliorée */}
-            <div className="relative max-w-lg">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <input
-                type="text"
-                placeholder={t("searchPlaceholder")}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 text-sm rounded-xl border border-border/60 bg-background/95 backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/60 transition-all placeholder:text-muted-foreground/60 shadow-sm text-foreground"
-              />
+            {/* Onglets Premium */}
+            <div className="flex items-center gap-8 border-b border-border/40">
+              {[
+                { id: "pdf", label: t("tabPdf"), icon: FileText, count: filteredDocs.length, color: "blue" },
+                { id: "flashcards", label: t("tabFlashcards"), icon: Brain, count: flashcardsCollections.length, color: "purple" },
+                { id: "quiz", label: t("tabQuiz"), icon: ListChecks, count: quizCollections.length, color: "green" },
+                { id: "resume", label: t("tabSummaries"), icon: BookOpen, count: totalSummaries, color: "amber" },
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id as any)}
+                  className={cn(
+                    "relative pb-4 px-2 flex items-center gap-2 text-sm font-medium transition-colors",
+                    activeTab === tab.id ? "text-foreground" : "text-muted-foreground hover:text-foreground/80"
+                  )}
+                >
+                  <tab.icon className={cn("h-4 w-4", activeTab === tab.id && `text-${tab.color}-500`)} />
+                  <span>{tab.label}</span>
+                  {tab.count > 0 && (
+                    <span className={cn(
+                      "px-1.5 py-0.5 rounded-full text-[10px] font-bold",
+                      activeTab === tab.id
+                        ? `bg-${tab.color}-500/10 text-${tab.color}-600 dark:text-${tab.color}-400`
+                        : "bg-muted text-muted-foreground"
+                    )}>
+                      {tab.count}
+                    </span>
+                  )}
+                  {activeTab === tab.id && (
+                    <motion.div
+                      layoutId="activeTab"
+                      className={cn("absolute bottom-0 left-0 right-0 h-0.5 rounded-t-full", `bg-${tab.color}-500`)}
+                    />
+                  )}
+                </button>
+              ))}
             </div>
           </div>
         </div>
@@ -593,535 +671,409 @@ export function CollectionView({ collection, onBack, onSelectDocument }: Collect
           <div className="max-w-6xl mx-auto space-y-6">
             {/* Section PDF */}
             {activeTab === "pdf" && (
-              <div className="bg-card/80 backdrop-blur-xl shadow-sm rounded-2xl overflow-hidden border border-border/50">
-
-
-                <div className="px-5 pb-5 space-y-3">
-                  {isLoading ? (
-                    <div className="flex items-center justify-center py-12">
-                      <div className="flex flex-col items-center gap-4">
-                        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                        <p className="text-sm text-muted-foreground font-medium">{t("loadingDocuments")}</p>
-                      </div>
+              <div className="space-y-6">
+                {isLoading ? (
+                  <div className="flex items-center justify-center py-12">
+                    <div className="flex flex-col items-center gap-4">
+                      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                      <p className="text-sm text-muted-foreground font-medium">{t("loadingDocuments")}</p>
                     </div>
-                  ) : filteredDocs.length === 0 ? (
-                    <div className="flex items-center justify-center py-12">
-                      <div className="text-center max-w-md">
-                        <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500/10 to-blue-500/5 mb-4 shadow-lg">
-                          <FileText className="h-8 w-8 text-blue-600 dark:text-blue-400" />
-                        </div>
-                        <h3 className="text-xl font-bold mb-2 text-foreground">{t("noDocuments")}</h3>
-                        <p className="text-muted-foreground mb-4 text-sm">
-                          {t("noDocumentsDesc")}
-                        </p>
-                        <div className="bg-muted/50 rounded-lg p-4 text-left text-sm space-y-2 mb-4">
-                          <ul className="list-disc list-inside space-y-1 text-muted-foreground">
-                            <li>{t("featurePdf")}</li>
-                            <li>{t("featureFlashcards")}</li>
-                            <li>{t("featureQuiz")}</li>
-                            <li>{t("featureQuestions")}</li>
-                          </ul>
-                        </div>
-                        <Button
-                          onClick={() => setIsUploadOpen(true)}
-                          size="sm"
-                          className="rounded-lg"
-                        >
-                          <Plus className="h-4 w-4 mr-2" />
-                          {t("addDocument")}
-                        </Button>
-                      </div>
+                  </div>
+                ) : filteredDocs.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-16 text-center">
+                    <div className="w-20 h-20 rounded-3xl bg-blue-500/10 flex items-center justify-center mb-6">
+                      <FileText className="h-10 w-10 text-blue-500" />
                     </div>
-                  ) : (
-                    <div className="space-y-3">
-                      {filteredDocs.map((doc: any) => (
-                        <div
-                          key={doc.id}
-                          className="group"
-                        >
-                          <div
-                            onClick={() => handleViewPdf(doc.id)}
-                            className="cursor-pointer"
-                          >
-                            <div className="flex items-center gap-4 p-4 rounded-xl border border-border/50 bg-background/50 hover:border-primary/50 hover:bg-background hover:shadow-md transition-all duration-200">
-                              <div className="p-2 rounded-lg bg-gradient-to-br from-blue-500/10 to-blue-500/5 group-hover:from-blue-500/15 group-hover:to-blue-500/10 transition-all flex-shrink-0 border border-blue-500/10">
-                                <FileText className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                              </div>
+                    <h3 className="text-xl font-bold text-foreground mb-2">{t("noDocuments")}</h3>
+                    <p className="text-muted-foreground max-w-md mb-8 leading-relaxed">
+                      {t("noDocumentsDesc")}
+                    </p>
+                    <Button
+                      onClick={() => setIsUploadOpen(true)}
+                      size="lg"
+                      className="rounded-full px-8 shadow-lg shadow-primary/20"
+                    >
+                      <Plus className="h-5 w-5 mr-2" />
+                      {t("addDocument")}
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="grid gap-4">
+                    {filteredDocs.map((doc: any) => (
+                      <div
+                        key={doc.id}
+                        onClick={() => handleViewPdf(doc.id)}
+                        className="group relative bg-card hover:bg-muted/30 border border-border/40 rounded-2xl p-4 transition-all hover:shadow-md cursor-pointer"
+                      >
+                        <div className="flex items-start gap-4">
+                          <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-600 dark:text-blue-400">
+                            <FileText className="h-6 w-6" />
+                          </div>
 
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-3 mb-1">
-                                  <h3 className="font-semibold text-sm line-clamp-1 group-hover:text-primary transition-colors">
-                                    {doc.title}
-                                  </h3>
-                                  <span className={cn(
-                                    "text-xs px-2 py-0.5 rounded-md border font-medium flex-shrink-0",
-                                    doc.status === "ready"
-                                      ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-800"
-                                      : "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950 dark:text-amber-300 dark:border-amber-800"
-                                  )}>
-                                    {doc.status === "ready" ? tStatus("ready") : tStatus("analyzing")}
+                          <div className="flex-1 min-w-0 pt-1">
+                            <div className="flex items-start justify-between gap-4">
+                              <div>
+                                <h3 className="font-semibold text-foreground text-base mb-1 group-hover:text-primary transition-colors">
+                                  {doc.title}
+                                </h3>
+                                <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                                  <span className="flex items-center gap-1.5">
+                                    <Calendar className="h-3.5 w-3.5" />
+                                    {new Date(doc.created_at).toLocaleDateString()}
                                   </span>
-                                </div>
-                                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                  <span className="line-clamp-1">{doc.filename}</span>
-                                  <span className="text-border">•</span>
-                                  <span className="flex items-center gap-1">
-                                    <BookOpen className="h-3 w-3" />
+                                  <span className="w-1 h-1 rounded-full bg-border" />
+                                  <span className="flex items-center gap-1.5">
+                                    <BookOpen className="h-3.5 w-3.5" />
                                     {doc.note_count} {doc.note_count > 1 ? t("notes") : t("note")}
                                   </span>
                                 </div>
                               </div>
 
-                              <div className="flex-shrink-0 flex items-center gap-2">
+                              <div className="flex items-center gap-2">
+                                <span className={cn(
+                                  "px-2.5 py-1 rounded-full text-xs font-medium border",
+                                  doc.status === "ready"
+                                    ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+                                    : "bg-amber-500/10 text-amber-600 border-amber-500/20"
+                                )}>
+                                  {doc.status === "ready" ? tStatus("ready") : tStatus("analyzing")}
+                                </span>
                                 <button
-                                  onClick={(e) => handleDeleteDocument(doc.id, e)}
-                                  className="p-2 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
-                                  title={t("deleteDocumentTooltip")}
+                                  onClick={(e) => handleDeleteDocument(doc.id, e, doc.title)}
+                                  className="p-2 rounded-full hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors opacity-0 group-hover:opacity-100"
                                 >
                                   <Trash2 className="h-4 w-4" />
                                 </button>
-                                {isLoadingPdf === doc.id ? (
-                                  <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                                ) : (
-                                  <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
-                                )}
                               </div>
                             </div>
                           </div>
+                        </div>
 
-                          {/* Afficher les résumés si disponibles */}
-                          {doc.summaries && Array.isArray(doc.summaries) && doc.summaries.length > 0 ? (
-                            <div className="mt-2 px-4 pb-4 space-y-2">
-                              <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
-                                <Sparkles className="h-3 w-3" />
-                                <span className="font-medium">{t("summariesAvailable")}</span>
-                              </div>
+                        {/* Résumés rapides */}
+                        {doc.summaries && doc.summaries.length > 0 && (
+                          <div className="mt-4 pl-16">
+                            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
                               {doc.summaries.slice(0, 3).map((summary: any, idx: number) => (
                                 <div
                                   key={summary.sectionId || idx}
                                   onClick={(e) => {
                                     e.stopPropagation()
                                     if (summary.sectionId) {
-                                      router.push(`/ documents / ${doc.id} / sections / ${summary.sectionId}`)
+                                      router.push(`/documents/${doc.id}/sections/${summary.sectionId}`)
                                     }
                                   }}
-                                  className="p-3 rounded-lg border border-border/40 bg-muted/30 hover:border-primary/40 hover:bg-muted/50 transition-all cursor-pointer"
+                                  className="flex-shrink-0 w-64 p-3 rounded-xl bg-muted/50 hover:bg-muted border border-border/50 transition-colors text-xs cursor-pointer"
                                 >
-                                  <div className="flex items-start justify-between gap-2 mb-1">
-                                    <h4 className="text-xs font-semibold text-foreground line-clamp-1">
-                                      {summary.heading}
-                                    </h4>
-                                  </div>
-                                  <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
-                                    {summary.summary}
+                                  <h4 className="font-semibold mb-1 line-clamp-1">{summary.heading}</h4>
+                                  <p className="text-muted-foreground line-clamp-2">
+                                    {summary.summary.replace(/#{1,6}\s?/g, '').replace(/\*\*/g, '').replace(/\*/g, '').replace(/\[([^\]]+)\]\([^\)]+\)/g, '$1').replace(/`{3}[\s\S]*?`{3}/g, '').replace(/`([^`]+)`/g, '$1')}
                                   </p>
                                 </div>
                               ))}
-                              {doc.summaries.length > 3 && (
-                                <div className="text-center pt-1">
-                                  <span className="text-xs text-muted-foreground">
-                                    +{doc.summaries.length - 3} {t("otherSummaries")}
-                                  </span>
-                                </div>
-                              )}
                             </div>
-                          ) : null}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 
             {/* Section Flashcards */}
             {activeTab === "flashcards" && (
-              <div className="bg-card/80 backdrop-blur-xl shadow-sm rounded-2xl overflow-hidden border border-border/50">
-
-
-                <div className="px-5 pb-5 space-y-3">
-                  {isLoadingStudy ? (
-                    <div className="flex items-center justify-center py-12">
-                      <div className="flex flex-col items-center gap-4">
-                        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                        <p className="text-sm text-muted-foreground font-medium">{tCommon("loading")}</p>
-                      </div>
+              <div className="space-y-6">
+                {isLoadingStudy ? (
+                  <div className="flex items-center justify-center py-12">
+                    <div className="flex flex-col items-center gap-4">
+                      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                      <p className="text-sm text-muted-foreground font-medium">{tCommon("loading")}</p>
                     </div>
-                  ) : flashcardsCollections.length === 0 ? (
-                    <div className="flex items-center justify-center py-12">
-                      <div className="text-center max-w-md">
-                        <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500/10 to-purple-500/5 mb-4 shadow-lg">
-                          <Brain className="h-8 w-8 text-purple-600 dark:text-purple-400" />
-                        </div>
-                        <h3 className="text-xl font-bold mb-2 text-foreground">{t("noFlashcards")}</h3>
-                        <p className="text-muted-foreground mb-4 text-sm">
-                          {t("noFlashcardsDesc")}
-                        </p>
-                        <div className="bg-muted/50 rounded-lg p-4 text-left text-sm space-y-2 mb-4">
-                          <p className="font-medium text-foreground">💬 {t("examples")}</p>
-                          <ul className="list-disc list-inside space-y-1 text-muted-foreground">
-                            <li>"{t("promptFlashcards1")}"</li>
-                            <li>"{t("promptFlashcards2")}"</li>
-                            <li>"{t("promptFlashcards3")}"</li>
-                          </ul>
-                        </div>
-                        <Button
-                          onClick={() => {
-                            setActiveTab("pdf")
-                            handleOpenGenerationDialog("flashcards")
-                          }}
-                          size="sm"
-                          className="rounded-lg"
-                        >
-                          <Brain className="h-4 w-4 mr-2" />
-                          {t("createFlashcardsNow")}
-                        </Button>
-                      </div>
+                  </div>
+                ) : flashcardsCollections.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-16 text-center">
+                    <div className="w-20 h-20 rounded-3xl bg-purple-500/10 flex items-center justify-center mb-6">
+                      <Brain className="h-10 w-10 text-purple-600 dark:text-purple-400" />
                     </div>
-                  ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {flashcardsCollections.map((studyCollection: any) => (
-                        <div
-                          key={studyCollection.id}
-                          className="group relative rounded-2xl border border-border/50 bg-gradient-to-br from-background to-muted/20 p-5 hover:border-purple-500/50 hover:shadow-lg hover:shadow-purple-500/10 transition-all duration-300 overflow-hidden"
-                        >
-                          {/* Gradient décoratif */}
-                          <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+                    <h3 className="text-xl font-bold text-foreground mb-2">{t("noFlashcards")}</h3>
+                    <p className="text-muted-foreground max-w-md mb-8 leading-relaxed">
+                      {t("noFlashcardsDesc")}
+                    </p>
+                    <Button
+                      onClick={() => {
+                        setActiveTab("pdf")
+                        handleOpenGenerationDialog("flashcards")
+                      }}
+                      size="lg"
+                      className="rounded-full px-8 bg-purple-600 hover:bg-purple-700 text-white shadow-lg shadow-purple-500/20"
+                    >
+                      <Brain className="h-5 w-5 mr-2" />
+                      {t("createFlashcardsNow")}
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {flashcardsCollections.map((studyCollection: any) => (
+                      <div
+                        key={studyCollection.id}
+                        className="group relative flex flex-col bg-card hover:bg-muted/30 border border-border/40 rounded-2xl p-5 transition-all hover:shadow-lg hover:border-purple-500/30 overflow-hidden"
+                      >
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:bg-purple-500/10 transition-colors" />
 
-                          <div className="relative z-10">
-
-                            {/* Header avec icône */}
-                            <div className="flex items-start justify-between mb-4">
-                              <div className="flex items-center gap-3">
-                                <div className="p-2.5 rounded-xl bg-gradient-to-br from-purple-500/20 to-purple-500/10 border border-purple-500/20">
-                                  <Brain className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <h3 className="text-base font-bold text-foreground mb-1 line-clamp-2 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
-                                    {studyCollection.title}
-                                  </h3>
-                                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                    <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-600 dark:text-purple-400 font-medium">
-                                      <Brain className="h-3 w-3" />
-                                      {studyCollection.flashcards.length} {studyCollection.flashcards.length > 1 ? t("cards") : t("card")}
-                                    </span>
-                                  </div>
-                                </div>
-                              </div>
-                              <button
-                                onClick={(e) => handleDeleteStudyCollection(studyCollection.id, e)}
-                                className="p-2 rounded-lg text-muted-foreground hover:bg-red-500/10 hover:text-red-600 transition-colors opacity-0 group-hover:opacity-100"
-                                title="Supprimer"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </button>
+                        <div className="relative z-10 flex flex-col h-full">
+                          <div className="flex items-start justify-between mb-4">
+                            <div className="p-3 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400">
+                              <Brain className="h-6 w-6" />
                             </div>
-
-
-
-                            {/* Aperçu des flashcards en format carte */}
-                            {studyCollection.flashcards && studyCollection.flashcards.length > 0 && (
-                              <div className="mb-4 space-y-2">
-                                {studyCollection.flashcards.slice(0, 3).map((fc: any, idx: number) => (
-                                  <div
-                                    key={fc.id}
-                                    className="relative p-3 rounded-xl bg-gradient-to-br from-card/80 to-card/40 border border-border/40 hover:border-purple-500/30 transition-all group/card"
-                                    style={{ transform: `translateY(${idx * 2}px)`, zIndex: 3 - idx }}
-                                  >
-                                    <div className="flex items-start gap-2">
-                                      <div className="flex-shrink-0 w-6 h-6 rounded-md bg-purple-500/10 flex items-center justify-center text-xs font-bold text-purple-600 dark:text-purple-400">
-                                        {idx + 1}
-                                      </div>
-                                      <div className="flex-1 min-w-0">
-                                        <p className="text-xs font-semibold text-foreground mb-1 line-clamp-1">{fc.question}</p>
-                                        <p className="text-xs text-muted-foreground line-clamp-1 opacity-70">{fc.answer}</p>
-                                      </div>
-                                    </div>
-                                  </div>
-                                ))}
-                                {studyCollection.flashcards.length > 3 && (
-                                  <div className="text-center pt-2">
-                                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-muted/50 border border-border/40 text-xs font-medium text-muted-foreground">
-                                      <Brain className="h-3 w-3" />
-                                      +{studyCollection.flashcards.length - 3} {t("cards")}
-                                    </span>
-                                  </div>
-                                )}
-                              </div>
-                            )}
-
-                            {/* Bouton d'action */}
-                            <Button
-                              onClick={() => setSelectedFlashcardCollectionId(studyCollection.id)}
-                              className="w-full bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-700 hover:to-purple-600 text-white border-0 shadow-md hover:shadow-lg transition-all"
-                              size="sm"
+                            <button
+                              onClick={(e) => handleDeleteStudyCollection(studyCollection.id, e, studyCollection.title, "flashcards")}
+                              className="p-2 rounded-full hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors opacity-0 group-hover:opacity-100"
                             >
-                              <Brain className="h-4 w-4 mr-2" />
-                              {t("studyNow")}
-                            </Button>
+                              <Trash2 className="h-4 w-4" />
+                            </button>
                           </div>
+
+                          <h3 className="text-lg font-bold text-foreground mb-2 line-clamp-2 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
+                            {studyCollection.title}
+                          </h3>
+
+                          <div className="flex items-center gap-2 mb-6">
+                            <span className="px-2.5 py-1 rounded-full bg-purple-500/10 text-purple-600 dark:text-purple-400 text-xs font-bold">
+                              {studyCollection.flashcards.length} {studyCollection.flashcards.length > 1 ? t("cards") : t("card")}
+                            </span>
+                            {(() => {
+                              const totalCards = studyCollection.flashcards.length
+                              const stats = studyCollection.flashcardStats || []
+                              const masteredCount = stats.filter((s: any) => s.box >= 4).length
+                              const progress = totalCards > 0 ? Math.round((masteredCount / totalCards) * 100) : 0
+
+                              if (progress > 0) {
+                                return (
+                                  <div className="flex items-center gap-2 ml-auto">
+                                    <span className="text-xs font-medium text-purple-600 dark:text-purple-400">{progress}%</span>
+                                    <Progress value={progress} className="w-16 h-1.5 bg-purple-100 dark:bg-purple-950/30" />
+                                  </div>
+                                )
+                              }
+                              return null
+                            })()}
+                          </div>
+
+                          {/* Aperçu des cartes */}
+                          <div className="flex-1 space-y-2 mb-6">
+                            {studyCollection.flashcards.slice(0, 2).map((fc: any, idx: number) => (
+                              <div key={fc.id} className="p-3 rounded-lg bg-muted/50 border border-border/50 text-xs">
+                                <p className="font-medium mb-1 line-clamp-1">{fc.question}</p>
+                                <p className="text-muted-foreground line-clamp-1">{fc.answer}</p>
+                              </div>
+                            ))}
+                          </div>
+
+                          <Button
+                            onClick={() => setSelectedFlashcardCollectionId(studyCollection.id)}
+                            className="w-full rounded-xl bg-purple-600 hover:bg-purple-700 text-white shadow-md shadow-purple-500/20"
+                          >
+                            {t("studyNow")}
+                            <ArrowRight className="h-4 w-4 ml-2" />
+                          </Button>
                         </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 
             {/* Section Quiz */}
             {activeTab === "quiz" && (
-              <div className="bg-card/80 backdrop-blur-xl shadow-sm rounded-2xl overflow-hidden border border-border/50">
-
-
-                <div className="px-5 pb-5 space-y-3">
-                  {isLoadingStudy ? (
-                    <div className="flex items-center justify-center py-12">
-                      <div className="flex flex-col items-center gap-4">
-                        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                        <p className="text-sm text-muted-foreground font-medium">{tCommon("loading")}</p>
-                      </div>
+              <div className="space-y-6">
+                {isLoadingStudy ? (
+                  <div className="flex items-center justify-center py-12">
+                    <div className="flex flex-col items-center gap-4">
+                      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                      <p className="text-sm text-muted-foreground font-medium">{tCommon("loading")}</p>
                     </div>
-                  ) : quizCollections.length === 0 ? (
-                    <div className="flex items-center justify-center py-12">
-                      <div className="text-center max-w-md">
-                        <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-green-500/10 to-green-500/5 mb-4 shadow-lg">
-                          <ListChecks className="h-8 w-8 text-green-600 dark:text-green-400" />
-                        </div>
-                        <h3 className="text-xl font-bold mb-2 text-foreground">{t("noQuiz")}</h3>
-                        <p className="text-muted-foreground mb-4 text-sm">
-                          {t("noQuizDesc")}
-                        </p>
-                        <div className="bg-muted/50 rounded-lg p-4 text-left text-sm space-y-2 mb-4">
-                          <p className="font-medium text-foreground">💬 {t("examples")}</p>
-                          <ul className="list-disc list-inside space-y-1 text-muted-foreground">
-                            <li>"{t("promptQuiz1")}"</li>
-                            <li>"{t("promptQuiz2")}"</li>
-                            <li>"{t("promptQuiz3")}"</li>
-                          </ul>
-                        </div>
-                        <Button
-                          onClick={() => {
-                            setActiveTab("pdf")
-                            handleOpenGenerationDialog("quiz")
-                          }}
-                          size="sm"
-                          className="rounded-lg"
+                  </div>
+                ) : quizCollections.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-16 text-center">
+                    <div className="w-20 h-20 rounded-3xl bg-green-500/10 flex items-center justify-center mb-6">
+                      <ListChecks className="h-10 w-10 text-green-600 dark:text-green-400" />
+                    </div>
+                    <h3 className="text-xl font-bold text-foreground mb-2">{t("noQuiz")}</h3>
+                    <p className="text-muted-foreground max-w-md mb-8 leading-relaxed">
+                      {t("noQuizDesc")}
+                    </p>
+                    <Button
+                      onClick={() => {
+                        setActiveTab("pdf")
+                        handleOpenGenerationDialog("quiz")
+                      }}
+                      size="lg"
+                      className="rounded-full px-8 bg-green-600 hover:bg-green-700 text-white shadow-lg shadow-green-500/20"
+                    >
+                      <ListChecks className="h-5 w-5 mr-2" />
+                      {t("createQuizNow")}
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {quizCollections.map((studyCollection: any) => {
+                      // Compter les types de questions
+                      const questionTypes = studyCollection.quizQuestions?.reduce((acc: any, q: any) => {
+                        const type = q.question_type === "multiple_choice" ? t("typeQCM") : q.question_type === "true_false" ? t("typeTrueFalse") : t("typeCompletion")
+                        acc[type] = (acc[type] || 0) + 1
+                        return acc
+                      }, {}) || {}
+
+                      return (
+                        <div
+                          key={studyCollection.id}
+                          className="group relative flex flex-col bg-card hover:bg-muted/30 border border-border/40 rounded-2xl p-5 transition-all hover:shadow-lg hover:border-green-500/30 overflow-hidden"
                         >
-                          <ListChecks className="h-4 w-4 mr-2" />
-                          {t("createQuizNow")}
-                        </Button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {quizCollections.map((studyCollection: any) => {
-                        // Compter les types de questions
-                        const questionTypes = studyCollection.quizQuestions?.reduce((acc: any, q: any) => {
-                          const type = q.question_type === "multiple_choice" ? t("typeQCM") : q.question_type === "true_false" ? t("typeTrueFalse") : t("typeCompletion")
-                          acc[type] = (acc[type] || 0) + 1
-                          return acc
-                        }, {}) || {}
+                          <div className="absolute top-0 right-0 w-32 h-32 bg-green-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:bg-green-500/10 transition-colors" />
 
-                        return (
-                          <div
-                            key={studyCollection.id}
-                            className="group relative rounded-2xl border border-border/50 bg-gradient-to-br from-background to-muted/20 p-5 hover:border-green-500/50 hover:shadow-lg hover:shadow-green-500/10 transition-all duration-300 overflow-hidden"
-                          >
-                            {/* Gradient décoratif */}
-                            <div className="absolute top-0 right-0 w-32 h-32 bg-green-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-
-                            <div className="relative z-10">
-                              {/* Header avec icône */}
-                              <div className="flex items-start justify-between mb-4">
-                                <div className="flex items-center gap-3">
-                                  <div className="p-2.5 rounded-xl bg-gradient-to-br from-green-500/20 to-green-500/10 border border-green-500/20">
-                                    <ListChecks className="h-5 w-5 text-green-600 dark:text-green-400" />
-                                  </div>
-                                  <div className="flex-1 min-w-0">
-                                    <h3 className="text-base font-bold text-foreground mb-1 line-clamp-2 group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors">
-                                      {studyCollection.title}
-                                    </h3>
-                                    <div className="flex items-center gap-2 flex-wrap">
-                                      <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-green-500/10 text-green-600 dark:text-green-400 font-medium text-xs">
-                                        <ListChecks className="h-3 w-3" />
-                                        {studyCollection.quizQuestions.length} {studyCollection.quizQuestions.length > 1 ? t("questions") : t("question")}
-                                      </span>
-                                      {Object.keys(questionTypes).length > 0 && (
-                                        <span className="text-xs text-muted-foreground">
-                                          {Object.entries(questionTypes).map(([type, count]: [string, any]) => `${count} ${type}`).join(" • ")}
-                                        </span>
-                                      )}
-                                    </div>
-                                  </div>
-                                </div>
-                                <button
-                                  onClick={(e) => handleDeleteStudyCollection(studyCollection.id, e)}
-                                  className="p-2 rounded-lg text-muted-foreground hover:bg-red-500/10 hover:text-red-600 transition-colors opacity-0 group-hover:opacity-100"
-                                  title="Supprimer"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </button>
+                          <div className="relative z-10 flex flex-col h-full">
+                            <div className="flex items-start justify-between mb-4">
+                              <div className="p-3 rounded-xl bg-green-500/10 text-green-600 dark:text-green-400">
+                                <ListChecks className="h-6 w-6" />
                               </div>
-
-                              {/* Aperçu des questions en format carte */}
-                              {studyCollection.quizQuestions && studyCollection.quizQuestions.length > 0 && (
-                                <div className="mb-4 space-y-2">
-                                  {studyCollection.quizQuestions.slice(0, 3).map((q: any, idx: number) => {
-                                    const typeLabel = q.question_type === "multiple_choice" ? t("typeQCM") : q.question_type === "true_false" ? t("typeTrueFalse") : t("typeCompletion")
-                                    const typeColor = q.question_type === "multiple_choice" ? "blue" : q.question_type === "true_false" ? "amber" : "indigo"
-                                    return (
-                                      <div
-                                        key={q.id}
-                                        className="relative p-3 rounded-xl bg-gradient-to-br from-card/80 to-card/40 border border-border/40 hover:border-green-500/30 transition-all group/card"
-                                        style={{ transform: `translateY(${idx * 2}px)`, zIndex: 3 - idx }}
-                                      >
-                                        <div className="flex items-start gap-2">
-                                          <div className={cn(
-                                            "flex-shrink-0 w-6 h-6 rounded-md flex items-center justify-center text-xs font-bold",
-                                            typeColor === "blue" && "bg-blue-500/10 text-blue-600 dark:text-blue-400",
-                                            typeColor === "amber" && "bg-amber-500/10 text-amber-600 dark:text-amber-400",
-                                            typeColor === "indigo" && "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400"
-                                          )}>
-                                            {idx + 1}
-                                          </div>
-                                          <div className="flex-1 min-w-0">
-                                            <p className="text-xs font-semibold text-foreground mb-1 line-clamp-1">{q.prompt}</p>
-                                            <div className="flex items-center gap-2">
-                                              <span className={cn(
-                                                "text-xs px-1.5 py-0.5 rounded font-medium",
-                                                typeColor === "blue" && "bg-blue-500/10 text-blue-600 dark:text-blue-400",
-                                                typeColor === "amber" && "bg-amber-500/10 text-amber-600 dark:text-amber-400",
-                                                typeColor === "indigo" && "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400"
-                                              )}>
-                                                {typeLabel}
-                                              </span>
-                                              {q.options && Array.isArray(q.options) && q.options.length > 0 && (
-                                                <span className="text-xs text-muted-foreground">
-                                                  {t("optionsCount", { count: q.options.length })}
-                                                </span>
-                                              )}
-                                            </div>
-                                          </div>
-                                        </div>
-                                      </div>
-                                    )
-                                  })}
-                                  {studyCollection.quizQuestions.length > 3 && (
-                                    <div className="text-center pt-2">
-                                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-muted/50 border border-border/40 text-xs font-medium text-muted-foreground">
-                                        <ListChecks className="h-3 w-3" />
-                                        +{studyCollection.quizQuestions.length - 3} {t("questions")}
-                                      </span>
-                                    </div>
-                                  )}
-                                </div>
-                              )}
-
-                              {/* Bouton d'action */}
-                              <Button
-                                onClick={() => setSelectedQuizCollection(studyCollection)}
-                                className="w-full bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-white border-0 shadow-md hover:shadow-lg transition-all"
-                                size="sm"
+                              <button
+                                onClick={(e) => handleDeleteStudyCollection(studyCollection.id, e, studyCollection.title, "quiz")}
+                                className="p-2 rounded-full hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors opacity-0 group-hover:opacity-100"
                               >
-                                <ListChecks className="h-4 w-4 mr-2" />
-                                {t("startQuiz")}
-                              </Button>
+                                <Trash2 className="h-4 w-4" />
+                              </button>
                             </div>
+
+                            <h3 className="text-lg font-bold text-foreground mb-2 line-clamp-2 group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors">
+                              {studyCollection.title}
+                            </h3>
+
+                            <div className="flex items-center gap-2 mb-6 flex-wrap">
+                              <span className="px-2.5 py-1 rounded-full bg-green-500/10 text-green-600 dark:text-green-400 text-xs font-bold">
+                                {studyCollection.quizQuestions.length} {studyCollection.quizQuestions.length > 1 ? t("questions") : t("question")}
+                              </span>
+                              {Object.entries(questionTypes).map(([type, count]: [string, any]) => (
+                                <span key={type} className="px-2 py-1 rounded-full bg-muted text-muted-foreground text-[10px] font-medium border border-border/50">
+                                  {count} {type}
+                                </span>
+                              ))}
+                              {(() => {
+                                const totalQuestions = studyCollection.quizQuestions.length
+                                const stats = studyCollection.quizStats || []
+                                const masteredCount = stats.filter((s: any) => s.mastery_level === 'mastered').length
+                                const progress = totalQuestions > 0 ? Math.round((masteredCount / totalQuestions) * 100) : 0
+
+                                if (progress > 0) {
+                                  return (
+                                    <div className="flex items-center gap-2 ml-auto w-full mt-2">
+                                      <span className="text-xs font-medium text-green-600 dark:text-green-400 min-w-[30px]">{progress}%</span>
+                                      <Progress value={progress} className="flex-1 h-1.5 bg-green-100 dark:bg-green-950/30" />
+                                    </div>
+                                  )
+                                }
+                                return null
+                              })()}
+                            </div>
+
+                            {/* Aperçu des questions */}
+                            <div className="flex-1 space-y-2 mb-6">
+                              {studyCollection.quizQuestions.slice(0, 2).map((q: any, idx: number) => (
+                                <div key={q.id} className="p-3 rounded-lg bg-muted/50 border border-border/50 text-xs">
+                                  <p className="font-medium mb-1 line-clamp-1">{q.prompt}</p>
+                                  <div className="flex items-center gap-2 text-muted-foreground">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-green-500/50" />
+                                    <span>{q.options?.length || 2} options</span>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+
+                            <Button
+                              onClick={() => setSelectedQuizCollection(studyCollection)}
+                              className="w-full rounded-xl bg-green-600 hover:bg-green-700 text-white shadow-md shadow-green-500/20"
+                            >
+                              {t("startQuiz")}
+                              <ArrowRight className="h-4 w-4 ml-2" />
+                            </Button>
                           </div>
-                        )
-                      })}
-                    </div>
-                  )}
-                </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
               </div>
             )}
 
             {/* Section Résumés */}
             {activeTab === "resume" && (
-              <div className="bg-card/80 backdrop-blur-xl shadow-sm rounded-2xl overflow-hidden border border-border/50">
-
-
-                <div className="px-5 pb-5 space-y-6">
-                  {isLoading ? (
-                    <div className="flex items-center justify-center py-12">
-                      <div className="flex flex-col items-center gap-4">
-                        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                        <p className="text-sm text-muted-foreground font-medium">{t("loadingSummaries")}</p>
-                      </div>
+              <div className="space-y-6">
+                {isLoading ? (
+                  <div className="flex items-center justify-center py-12">
+                    <div className="flex flex-col items-center gap-4">
+                      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                      <p className="text-sm text-muted-foreground font-medium">{t("loadingSummaries")}</p>
                     </div>
-                  ) : totalSummaries === 0 ? (
-                    <div className="flex items-center justify-center py-12">
-                      <div className="text-center max-w-md">
-                        <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-500/10 to-amber-500/5 mb-4 shadow-lg">
-                          <BookOpen className="h-8 w-8 text-amber-600 dark:text-amber-400" />
-                        </div>
-                        <h3 className="text-xl font-bold mb-2 text-foreground">{t("noSummaries")}</h3>
-                        <p className="text-muted-foreground mb-4 text-sm">
-                          {t("noSummariesDesc")}
-                        </p>
-                        <div className="bg-muted/50 rounded-lg p-4 text-left text-sm space-y-2 mb-4">
-                          <p className="font-medium text-foreground">💬 {t("examples")}</p>
-                          <ul className="list-disc list-inside space-y-1 text-muted-foreground">
-                            <li>"{t("promptSummary1")}"</li>
-                            <li>"{t("promptSummary2")}"</li>
-                          </ul>
-                        </div>
-                        <Button
-                          onClick={() => {
-                            handleOpenGenerationDialog("summary")
-                          }}
-                          size="sm"
-                          className="rounded-lg"
-                        >
-                          <BookOpen className="h-4 w-4 mr-2" />
-                          {t("generateSummaryNow")}
-                        </Button>
-                      </div>
+                  </div>
+                ) : totalSummaries === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-16 text-center">
+                    <div className="w-20 h-20 rounded-3xl bg-amber-500/10 flex items-center justify-center mb-6">
+                      <BookOpen className="h-10 w-10 text-amber-600 dark:text-amber-400" />
                     </div>
-                  ) : (
-                    <div className="space-y-8">
-                      {/* Résumés de collection */}
-                      {collectionSummaries.length > 0 && (
-                        <div className="space-y-4">
-                          <div className="flex items-center gap-2 pb-2">
-                            <Sparkles className="h-4 w-4 text-amber-500" />
-                            <h3 className="text-sm font-semibold text-foreground">{t("collectionSummaries")}</h3>
-                          </div>
+                    <h3 className="text-xl font-bold text-foreground mb-2">{t("noSummaries")}</h3>
+                    <p className="text-muted-foreground max-w-md mb-8 leading-relaxed">
+                      {t("noSummariesDesc")}
+                    </p>
+                    <Button
+                      onClick={() => {
+                        handleOpenGenerationDialog("summary")
+                      }}
+                      size="lg"
+                      className="rounded-full px-8 bg-amber-600 hover:bg-amber-700 text-white shadow-lg shadow-amber-500/20"
+                    >
+                      <BookOpen className="h-5 w-5 mr-2" />
+                      {t("generateSummaryNow")}
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-8">
+                    {/* Résumés de collection */}
+                    {collectionSummaries.length > 0 && (
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-2 pb-2 border-b border-border/40">
+                          <Sparkles className="h-4 w-4 text-amber-500" />
+                          <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">{t("collectionSummaries")}</h3>
+                        </div>
 
-                          <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-                            {collectionSummaries.map((summary: any) => (
-                              <div
-                                key={summary.id}
-                                className="group flex flex-col justify-between p-5 rounded-xl border border-border/40 bg-card hover:border-amber-500/30 hover:shadow-lg hover:shadow-amber-500/5 transition-all duration-300"
-                              >
-                                <div>
-                                  <div className="flex items-start justify-between mb-3">
-                                    <div className="flex items-center gap-3">
-                                      <div className="p-2 rounded-lg bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400">
-                                        <BookOpen className="h-4 w-4" />
-                                      </div>
-                                      <h4 className="text-base font-bold text-foreground line-clamp-1">
-                                        {t("summaryPrefix")} {summary.title}
-                                      </h4>
-                                    </div>
-                                    <button
-                                      onClick={(e) => handleDeleteStudyCollection(summary.id, e)}
-                                      className="p-2 rounded-lg text-muted-foreground hover:bg-red-500/10 hover:text-red-600 transition-colors opacity-0 group-hover:opacity-100"
-                                      title="Supprimer"
-                                    >
-                                      <Trash2 className="h-4 w-4" />
-                                    </button>
-                                  </div>
+                        <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+                          {collectionSummaries.map((summary: any) => (
+                            <div
+                              key={summary.id}
+                              className="group relative flex flex-col bg-card hover:bg-muted/30 border border-border/40 rounded-2xl p-5 transition-all hover:shadow-lg hover:border-amber-500/30 overflow-hidden"
+                            >
+                              <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:bg-amber-500/10 transition-colors" />
 
-                                  <div className="prose prose-sm dark:prose-invert max-w-none mb-4">
-                                    <p className="text-sm text-muted-foreground leading-relaxed line-clamp-4">
-                                      {summary.summary}
-                                    </p>
+                              <div className="relative z-10 flex flex-col h-full">
+                                <div className="flex items-start justify-between mb-4">
+                                  <div className="p-3 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                                    <BookOpen className="h-6 w-6" />
                                   </div>
+                                  <button
+                                    onClick={(e) => handleDeleteStudyCollection(summary.id, e, summary.title, "summary")}
+                                    className="p-2 rounded-full hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors opacity-0 group-hover:opacity-100"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </button>
+                                </div>
+
+                                <h3 className="text-lg font-bold text-foreground mb-3 line-clamp-2 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
+                                  {summary.title}
+                                </h3>
+
+                                <div className="flex-1 mb-6">
+                                  <p className="text-sm text-muted-foreground leading-relaxed line-clamp-4">
+                                    {summary.summary.replace(/#{1,6}\s?/g, '').replace(/\*\*/g, '').replace(/\*/g, '').replace(/\[([^\]]+)\]\([^\)]+\)/g, '$1').replace(/`{3}[\s\S]*?`{3}/g, '').replace(/`([^`]+)`/g, '$1')}
+                                  </p>
                                 </div>
 
                                 <Button
@@ -1130,47 +1082,51 @@ export function CollectionView({ collection, onBack, onSelectDocument }: Collect
                                     isDocumentSummary: false
                                   })}
                                   variant="outline"
-                                  className="w-full mt-auto border-amber-200 hover:bg-amber-50 hover:text-amber-700 dark:border-amber-800 dark:hover:bg-amber-950/50 dark:hover:text-amber-400 transition-colors"
+                                  className="w-full rounded-xl border-amber-200 hover:bg-amber-50 hover:text-amber-700 dark:border-amber-800 dark:hover:bg-amber-950/50 dark:hover:text-amber-400 transition-colors"
                                 >
                                   {t("readSummary")}
+                                  <ArrowRight className="h-4 w-4 ml-2" />
                                 </Button>
                               </div>
-                            ))}
-                          </div>
+                            </div>
+                          ))}
                         </div>
-                      )}
+                      </div>
+                    )}
 
-                      {/* Résumés de documents */}
-                      {documents.filter((doc: any) => doc.summaries && doc.summaries.length > 0).map((doc: any) => (
-                        <div key={doc.id} className="space-y-4">
-                          {/* Document Header */}
-                          <div className="flex items-center gap-2 pb-2">
-                            <FileText className="h-4 w-4 text-blue-500" />
-                            <h3 className="text-sm font-semibold text-foreground">{doc.title}</h3>
-                          </div>
+                    {/* Résumés de documents */}
+                    {documents.filter((doc: any) => doc.summaries && doc.summaries.length > 0).map((doc: any) => (
+                      <div key={doc.id} className="space-y-4">
+                        {/* Document Header */}
+                        <div className="flex items-center gap-2 pb-2 border-b border-border/40">
+                          <FileText className="h-4 w-4 text-blue-500" />
+                          <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">{doc.title}</h3>
+                        </div>
 
-                          {/* Summaries Grid */}
-                          <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-                            {doc.summaries.map((summary: any, idx: number) => (
-                              <div
-                                key={summary.sectionId || idx}
-                                className="group flex flex-col justify-between p-5 rounded-xl border border-border/40 bg-card hover:border-amber-500/30 hover:shadow-lg hover:shadow-amber-500/5 transition-all duration-300"
-                              >
-                                <div>
-                                  <div className="flex items-center gap-3 mb-3">
-                                    <div className="p-2 rounded-lg bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400">
-                                      <BookOpen className="h-4 w-4" />
-                                    </div>
-                                    <h4 className="text-base font-bold text-foreground line-clamp-1">
-                                      {t("summaryPrefix")} {summary.heading}
-                                    </h4>
+                        {/* Summaries Grid */}
+                        <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+                          {doc.summaries.map((summary: any, idx: number) => (
+                            <div
+                              key={summary.sectionId || idx}
+                              className="group relative flex flex-col bg-card hover:bg-muted/30 border border-border/40 rounded-2xl p-5 transition-all hover:shadow-lg hover:border-amber-500/30 overflow-hidden"
+                            >
+                              <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:bg-amber-500/10 transition-colors" />
+
+                              <div className="relative z-10 flex flex-col h-full">
+                                <div className="flex items-start justify-between mb-4">
+                                  <div className="p-3 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                                    <BookOpen className="h-6 w-6" />
                                   </div>
+                                </div>
 
-                                  <div className="prose prose-sm dark:prose-invert max-w-none mb-4">
-                                    <p className="text-sm text-muted-foreground leading-relaxed line-clamp-4">
-                                      {summary.summary}
-                                    </p>
-                                  </div>
+                                <h3 className="text-lg font-bold text-foreground mb-3 line-clamp-2 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
+                                  {summary.heading}
+                                </h3>
+
+                                <div className="flex-1 mb-6">
+                                  <p className="text-sm text-muted-foreground leading-relaxed line-clamp-4">
+                                    {summary.summary.replace(/#{1,6}\s?/g, '').replace(/\*\*/g, '').replace(/\*/g, '').replace(/\[([^\]]+)\]\([^\)]+\)/g, '$1').replace(/`{3}[\s\S]*?`{3}/g, '').replace(/`([^`]+)`/g, '$1')}
+                                  </p>
                                 </div>
 
                                 <Button
@@ -1181,18 +1137,19 @@ export function CollectionView({ collection, onBack, onSelectDocument }: Collect
                                     documentTitle: doc.title
                                   })}
                                   variant="outline"
-                                  className="w-full mt-auto border-amber-200 hover:bg-amber-50 hover:text-amber-700 dark:border-amber-800 dark:hover:bg-amber-950/50 dark:hover:text-amber-400 transition-colors"
+                                  className="w-full rounded-xl border-amber-200 hover:bg-amber-50 hover:text-amber-700 dark:border-amber-800 dark:hover:bg-amber-950/50 dark:hover:text-amber-400 transition-colors"
                                 >
                                   {t("readSummary")}
+                                  <ArrowRight className="h-4 w-4 ml-2" />
                                 </Button>
                               </div>
-                            ))}
-                          </div>
+                            </div>
+                          ))}
                         </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -1221,40 +1178,23 @@ export function CollectionView({ collection, onBack, onSelectDocument }: Collect
           )
         ) : selectedQuizCollection && selectedQuizCollection.quizQuestions && selectedQuizCollection.quizQuestions.length > 0 ? (
           // Afficher directement le quiz dans le contenu
-          <div className="h-full w-full flex flex-col p-6 md:p-8">
-            <div className="w-full max-w-4xl mx-auto flex flex-col h-full">
-              <div className="flex justify-between items-center mb-6">
-                <div>
-                  <h2 className="text-xl font-semibold">{selectedQuizCollection.title}</h2>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {selectedQuizCollection.quizQuestions.length} {selectedQuizCollection.quizQuestions.length > 1 ? t("questions") : t("question")} {t("ofQuiz")}
-                  </p>
-                </div>
-                <button
-                  onClick={() => setSelectedQuizCollection(null)}
-                  className="p-2 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
-              <div className="flex-1 overflow-y-auto">
-                <QuizViewer
-                  questions={selectedQuizCollection.quizQuestions.map((q: any): QuizQuestionItem => ({
-                    id: q.id,
-                    question_type: q.question_type as "multiple_choice" | "true_false" | "completion",
-                    prompt: q.prompt,
-                    options: Array.isArray(q.options) ? q.options : (typeof q.options === "string" ? JSON.parse(q.options || "[]") : null),
-                    answer: q.answer,
-                    explanation: q.explanation || null,
-                    tags: q.tags || [],
-                    order_index: q.order_index || 0,
-                  }))}
-                  studyCollectionId={selectedQuizCollection.id}
-                  mode="adaptive"
-                />
-              </div>
-            </div>
-          </div>
+          // Afficher directement le quiz dans le contenu
+          <QuizViewer
+            questions={selectedQuizCollection.quizQuestions.map((q: any): QuizQuestionItem => ({
+              id: q.id,
+              question_type: q.question_type as "multiple_choice" | "true_false" | "completion",
+              prompt: q.prompt,
+              options: Array.isArray(q.options) ? q.options : (typeof q.options === "string" ? JSON.parse(q.options || "[]") : null),
+              answer: q.answer,
+              explanation: q.explanation || null,
+              tags: q.tags || [],
+              order_index: q.order_index || 0,
+            }))}
+            studyCollectionId={selectedQuizCollection.id}
+            mode="adaptive"
+            title={selectedQuizCollection.title}
+            onClose={() => setSelectedQuizCollection(null)}
+          />
         ) : selectedSummary ? (
           <div className="h-full flex flex-col bg-background animate-in fade-in slide-in-from-bottom-4 duration-300">
             {/* Header du résumé */}
@@ -1419,6 +1359,61 @@ export function CollectionView({ collection, onBack, onSelectDocument }: Collect
         intent={generationIntent}
         onConfirm={handleConfirmGeneration}
       />
+
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>{t("editCollection")}</DialogTitle>
+            <DialogDescription>
+              {t("editCollectionDesc")}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="title">{t("title")}</Label>
+              <Input
+                id="title"
+                value={editTitle}
+                onChange={(e) => setEditTitle(e.target.value)}
+                placeholder={t("collectionTitlePlaceholder")}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label>{t("color")}</Label>
+              <div className="grid grid-cols-6 gap-2">
+                {gradients.map((gradient) => (
+                  <button
+                    key={gradient.value}
+                    onClick={() => setEditColor(gradient.value)}
+                    className={cn(
+                      "w-8 h-8 rounded-full transition-all ring-offset-background flex items-center justify-center",
+                      editColor === gradient.value
+                        ? "ring-2 ring-offset-2 ring-foreground scale-110"
+                        : "border border-border/50 hover:scale-110 opacity-70 hover:opacity-100"
+                    )}
+                    title={gradient.label}
+                  >
+                    <div className={cn("w-full h-full rounded-full bg-gradient-to-br flex items-center justify-center", gradient.value)}>
+                      {editColor === gradient.value && (
+                        <Check className="h-4 w-4 text-white shadow-sm" />
+                      )}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+              {tCommon("cancel")}
+            </Button>
+            <Button onClick={handleUpdateCollection} disabled={isUpdating}>
+              {isUpdating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {tCommon("save")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Modal/Viewer pour le PDF */}
       {

@@ -30,10 +30,11 @@ export default function WorkspacePage() {
       <Sidebar />
       <MainContent className="bg-background">
         {selectedCollection ? (
-          <CollectionView 
-            collection={selectedCollection} 
+          <CollectionView
+            collection={selectedCollection}
             onBack={handleBack}
             onSelectDocument={handleSelectDocument}
+            onUpdate={(updatedCollection) => setSelectedCollection(updatedCollection)}
           />
         ) : (
           <LibraryView onSelectCollection={handleSelectCollection} />

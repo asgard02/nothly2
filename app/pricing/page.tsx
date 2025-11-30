@@ -27,50 +27,21 @@ export default function PricingPage() {
 
   const plans: Plan[] = [
     {
-      name: "Free",
+      name: "Bêta Publique",
       price: "0€",
-      tagline: "Pour découvrir Nothly",
+      tagline: "Accès illimité pendant le lancement",
       features: [
-        "Jusqu'à 100 notes",
-        "10 000 tokens IA offerts",
-        "Synchronisation cloud",
-        "Export en Markdown",
-        "Accès mobile & desktop",
-        "Support communautaire",
-      ],
-      button: { label: "Commencer gratuitement", variant: "secondary" },
-      popular: false,
-      period: "à vie",
-    },
-    {
-      name: "Plus",
-      price: "9€",
-      tagline: "1 000 000 tokens IA (non expirants)",
-      features: [
-        "Tout de Free",
-        "Chat IA personnalisé",
-        "Résumé / traduction / génération de quiz",
-        "Historique des conversations IA",
-        "Pas d'abonnement, tu rachètes quand tu veux",
-      ],
-      button: { label: "Acheter 1M tokens", variant: "primary" },
-      popular: true,
-      period: "achat unique",
-    },
-    {
-      name: "Pro",
-      price: "29€/mois",
-      tagline: "IA illimitée et support premium",
-      features: [
-        "Tout de Plus",
-        "IA illimitée",
+        "Notes illimitées",
+        "Génération IA illimitée",
+        "Quiz & Flashcards illimités",
+        "Export PDF & Markdown",
         "Support prioritaire",
-        "Collaboration multi-notes",
-        "Accès anticipé aux nouvelles features",
+        "Accès aux nouvelles fonctionnalités",
       ],
-      button: { label: "Passer à Pro", variant: "primary" },
-      popular: false,
-      period: "par mois",
+      button: { label: "Profiter de l'accès gratuit", variant: "primary" },
+      popular: true,
+      period: "pendant 2 mois",
+      description: "Valeur habituelle : 4,99€/mois. Gratuit aujourd'hui sans carte bancaire.",
     },
   ]
 
@@ -118,13 +89,12 @@ export default function PricingPage() {
           </div>
 
           {/* Tarifs */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch">
+          <div className="flex justify-center max-w-md mx-auto">
             {plans.map((plan, index) => (
               <div
                 key={index}
-                className={`relative flex flex-col justify-between bg-card border border-border rounded-xl p-8 space-y-4 min-h-[32rem] transition-colors ${
-                  plan.popular ? "shadow-md" : ""
-                }`}
+                className={`relative flex flex-col justify-between bg-card border border-border rounded-xl p-8 space-y-4 min-h-[32rem] transition-colors ${plan.popular ? "shadow-md" : ""
+                  }`}
               >
                 {/* Badge "Populaire" */}
                 {plan.popular && (

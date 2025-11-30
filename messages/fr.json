@@ -332,7 +332,9 @@
   "Common": {
     "back": "Retour",
     "loading": "Chargement...",
-    "close": "Fermer"
+    "close": "Fermer",
+    "cancel": "Annuler",
+    "save": "Enregistrer"
   },
   "Status": {
     "ready": "Prêt",
@@ -419,7 +421,22 @@
     "generatingContent": "Génération en cours...",
     "generatingContentDesc": "L'IA analyse vos documents pour créer du contenu pertinent. Cela peut prendre quelques instants.",
     "viewResult": "Voir le résultat",
-    "generationSuccessTitle": "Contenu généré !"
+    "generationSuccessTitle": "Contenu généré !",
+    "editCollection": "Modifier la collection",
+    "editCollectionDesc": "Modifiez le titre et la couleur de votre collection.",
+    "title": "Titre",
+    "color": "Couleur",
+    "collectionTitlePlaceholder": "Nom de la collection",
+    "deleteDocumentTitle": "Supprimer ce document ?",
+    "deleteDocumentDesc": "Êtes-vous sûr de vouloir supprimer ce document ? Cette action est irréversible.",
+    "deleteFlashcardsTitle": "Supprimer ces flashcards ?",
+    "deleteFlashcardsDesc": "Êtes-vous sûr de vouloir supprimer cette collection de flashcards ? Votre progression sera perdue.",
+    "deleteQuizTitle": "Supprimer ce quiz ?",
+    "deleteQuizDesc": "Êtes-vous sûr de vouloir supprimer ce quiz ? Vos scores seront perdus.",
+    "deleteSummaryTitle": "Supprimer ce résumé ?",
+    "deleteSummaryDesc": "Êtes-vous sûr de vouloir supprimer ce résumé ?",
+    "documentDeleted": "Document supprimé",
+    "itemDeleted": "Élément supprimé"
   },
   "Library": {
     "title": "Collections",

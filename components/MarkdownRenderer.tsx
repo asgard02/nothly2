@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useState, useMemo } from "react"
 import { useTheme } from "next-themes"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
@@ -23,46 +23,41 @@ export default function MarkdownRenderer({ content }: { content: string }) {
 
     // Charge le style highlight.js selon le thème
     const isDark = resolvedTheme === "dark" || theme === "dark"
-
-    // Supprime les anciens styles si présents
-    const existingLink = document.getElementById("highlight-theme")
-    if (existingLink) {
-      existingLink.remove()
-    }
-
-    // Ajoute le style approprié
-    const link = document.createElement("link")
-    link.id = "highlight-theme"
-    link.rel = "stylesheet"
-    link.href = isDark
+    const highlightHref = isDark
       ? "https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11/build/styles/github-dark.min.css"
       : "https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11/build/styles/github.min.css"
-    document.head.appendChild(link)
 
-    // Ajoute le style KaTeX pour les maths
-    const katexLink = document.createElement("link")
-    katexLink.id = "katex-style"
-    katexLink.rel = "stylesheet"
-    katexLink.href = "https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css"
-    document.head.appendChild(katexLink)
-
-    return () => {
-      const linkToRemove = document.getElementById("highlight-theme")
-      if (linkToRemove) {
-        linkToRemove.remove()
-      }
-      const katexToRemove = document.getElementById("katex-style")
-      if (katexToRemove) {
-        katexToRemove.remove()
-      }
+    // Gestion du style Highlight.js
+    let highlightLink = document.getElementById("highlight-theme") as HTMLLinkElement
+    if (!highlightLink) {
+      highlightLink = document.createElement("link")
+      highlightLink.id = "highlight-theme"
+      highlightLink.rel = "stylesheet"
+      document.head.appendChild(highlightLink)
     }
+
+    // Mettre à jour le href seulement si nécessaire
+    if (highlightLink.href !== highlightHref) {
+      highlightLink.href = highlightHref
+    }
+
+    // Gestion du style KaTeX (ne jamais le supprimer une fois ajouté)
+    if (!document.getElementById("katex-style")) {
+      const katexLink = document.createElement("link")
+      katexLink.id = "katex-style"
+      katexLink.rel = "stylesheet"
+      katexLink.href = "https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css"
+      document.head.appendChild(katexLink)
+    }
+
+    // Pas de nettoyage (cleanup) pour éviter le clignotement/lag lors du démontage
   }, [theme, resolvedTheme])
 
   // Échapper le contenu avant de le rendre
-  const escapedContent = escapeInlineHeadings(content)
+  const escapedContent = useMemo(() => escapeInlineHeadings(content), [content])
 
   return (
-    <div 
+    <div
       className="prose prose-sm md:prose-base lg:prose-lg dark:prose-invert max-w-none leading-relaxed"
       onDragStart={(e) => e.preventDefault()}
       onDrag={(e) => e.preventDefault()}
@@ -118,4 +113,3 @@ export default function MarkdownRenderer({ content }: { content: string }) {
     </div>
   )
 }
-

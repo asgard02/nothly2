@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { LogOut, Trash2, Mail, User as UserIcon, Calendar, TrendingUp, FileText, Zap } from "lucide-react"
 
 import { useTranslations } from "next-intl"
+import DeleteConfirmationDialog from "@/components/DeleteConfirmationDialog"
 
 export default function ProfileSettingsPage() {
   const t = useTranslations("Settings.Profile")
@@ -17,6 +18,8 @@ export default function ProfileSettingsPage() {
     quizzesCount: 0,
     tokensUsed: 2500,
   })
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   useEffect(() => {
     const loadUser = async () => {
@@ -52,15 +55,12 @@ export default function ProfileSettingsPage() {
     }
   }
 
-  const handleDeleteAccount = async () => {
-    if (
-      !confirm(
-        t("deleteConfirm")
-      )
-    ) {
-      return
-    }
+  const handleDeleteAccount = () => {
+    setIsDeleteDialogOpen(true)
+  }
 
+  const confirmDeleteAccount = async () => {
+    setIsDeleting(true)
     try {
       const response = await fetch("/api/notes", {
         method: "GET",
@@ -74,11 +74,12 @@ export default function ProfileSettingsPage() {
         await Promise.all(deletePromises)
       }
 
-      alert(t("deleteSuccess"))
+      // alert(t("deleteSuccess")) // Removed alert, handleLogout redirects
       handleLogout()
     } catch (error) {
       console.error("Erreur:", error)
       alert(t("deleteError"))
+      setIsDeleting(false)
     }
   }
 
@@ -137,29 +138,6 @@ export default function ProfileSettingsPage() {
           </div>
         </div>
 
-        {/* Statistiques */}
-        <div className="grid grid-cols-4 gap-3 pt-6 border-t border-border">
-          <div className="text-center p-3 bg-muted/50 rounded-lg">
-            <FileText className="h-5 w-5 text-primary mx-auto mb-1" />
-            <p className="text-2xl font-bold text-foreground">{stats.notesCount}</p>
-            <p className="text-xs text-muted-foreground">{t("notes")}</p>
-          </div>
-          <div className="text-center p-3 bg-muted/50 rounded-lg">
-            <TrendingUp className="h-5 w-5 text-primary mx-auto mb-1" />
-            <p className="text-2xl font-bold text-foreground">{stats.flashcardsCount}</p>
-            <p className="text-xs text-muted-foreground">{t("flashcards")}</p>
-          </div>
-          <div className="text-center p-3 bg-muted/50 rounded-lg">
-            <UserIcon className="h-5 w-5 text-primary mx-auto mb-1" />
-            <p className="text-2xl font-bold text-foreground">{stats.quizzesCount}</p>
-            <p className="text-xs text-muted-foreground">{t("quizzes")}</p>
-          </div>
-          <div className="text-center p-3 bg-muted/50 rounded-lg">
-            <Zap className="h-5 w-5 text-primary mx-auto mb-1" />
-            <p className="text-2xl font-bold text-foreground">{stats.tokensUsed}</p>
-            <p className="text-xs text-muted-foreground">{t("tokens")}</p>
-          </div>
-        </div>
       </div>
 
       {/* Informations du compte */}
@@ -170,7 +148,7 @@ export default function ProfileSettingsPage() {
 
         <div className="space-y-4">
           {/* Email */}
-          <div className="flex items-center justify-between py-3 border-b border-border">
+          <div className="flex items-center justify-between py-3">
             <div className="flex items-center gap-3">
               <Mail className="h-5 w-5 text-muted-foreground" />
               <div>
@@ -183,19 +161,6 @@ export default function ProfileSettingsPage() {
             <span className="px-3 py-1 bg-green-500/10 text-green-500 text-xs font-medium rounded-full">
               {t("verified")}
             </span>
-          </div>
-
-          {/* ID utilisateur */}
-          <div className="flex items-center justify-between py-3">
-            <div className="flex items-center gap-3">
-              <UserIcon className="h-5 w-5 text-muted-foreground" />
-              <div>
-                <p className="text-sm font-medium text-foreground">{t("userId")}</p>
-                <p className="text-xs text-muted-foreground font-mono">
-                  {user?.id?.substring(0, 20)}...
-                </p>
-              </div>
-            </div>
           </div>
         </div>
       </div>
@@ -237,6 +202,15 @@ export default function ProfileSettingsPage() {
           {t("deleteAccount")}
         </button>
       </div>
+
+      <DeleteConfirmationDialog
+        isOpen={isDeleteDialogOpen}
+        onClose={() => setIsDeleteDialogOpen(false)}
+        onConfirm={confirmDeleteAccount}
+        title={t("deleteAccount")}
+        description={t("deleteConfirm")}
+        isDeleting={isDeleting}
+      />
     </div>
   )
 }

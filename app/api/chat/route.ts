@@ -185,11 +185,16 @@ export async function POST(req: Request) {
       : false
 
     if (userAskedForPlans) {
-      const planMessage = `Voici les différents plans disponibles sur Nothly :
+      const planMessage = `Actuellement, Nothly est en **Bêta Publique**.
+Cela signifie que l'application est **100% gratuite** pendant la période de lancement (2 mois).
 
-- **Free** : 0 €. Idéal pour découvrir Nothly. Avantages : jusqu'à 100 notes, 10 000 tokens IA offerts, synchronisation cloud, export Markdown, accès mobile et desktop, support communautaire.
-- **Plus** : 9 €. Achat ponctuel de 1 000 000 tokens IA non expirants. Avantages : tout Free, chat IA personnalisé, résumé / traduction / génération de quiz, historique des conversations IA, pas d'abonnement (tu rachètes quand tu veux).
-- **Pro** : 29 €/mois. Pensé pour un usage intensif. Avantages : tout Plus, IA illimitée, support prioritaire, collaboration multi-notes, accès anticipé aux nouvelles fonctionnalités.`
+Vous avez accès à toutes les fonctionnalités Premium :
+- Notes illimitées
+- IA illimitée (Génération de texte, Quiz, Flashcards)
+- Export PDF & Markdown
+- Support prioritaire
+
+Tout cela sans aucune limite et sans carte bancaire requise. Profitez-en pour tout tester !`
 
       parsedResponse = {
         message: planMessage,

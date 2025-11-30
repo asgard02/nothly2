@@ -7,6 +7,7 @@ import { FileText, Plus, Trash2, LogOut, Sparkles, Bot, Wand2 } from "lucide-rea
 import AIChat from "@/components/AIChat"
 import SelectionMenu from "@/components/SelectionMenu"
 import { transformText } from "@/lib/ai-client"
+import DeleteConfirmationDialog from "@/components/DeleteConfirmationDialog"
 
 interface DashboardClientProps {
   user: User
@@ -31,6 +32,8 @@ export default function DashboardClient({ user }: DashboardClientProps) {
     selectedText: string
   }>({ show: false, position: { top: 0, left: 0 }, selectedText: "" })
   const [isTransforming, setIsTransforming] = useState(false)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   // Charge les notes au montage
   // Charge les notes au montage
@@ -141,9 +144,14 @@ export default function DashboardClient({ user }: DashboardClientProps) {
     return () => clearTimeout(timer)
   }, [content, title, selectedNote, saveNote])
 
-  const deleteNote = async () => {
+  const deleteNote = () => {
     if (!selectedNote) return
-    if (!confirm("Supprimer cette note ?")) return
+    setIsDeleteDialogOpen(true)
+  }
+
+  const confirmDeleteNote = async () => {
+    if (!selectedNote) return
+    setIsDeleting(true)
 
     const res = await fetch(`/api/notes/${selectedNote.id}`, {
       method: "DELETE"
@@ -162,6 +170,8 @@ export default function DashboardClient({ user }: DashboardClientProps) {
         setContent("")
       }
     }
+    setIsDeleting(false)
+    setIsDeleteDialogOpen(false)
   }
 
   const improveWithAI = async () => {
@@ -426,6 +436,15 @@ export default function DashboardClient({ user }: DashboardClientProps) {
 
       {/* Chat IA */}
       <AIChat isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
+
+      <DeleteConfirmationDialog
+        isOpen={isDeleteDialogOpen}
+        onClose={() => setIsDeleteDialogOpen(false)}
+        onConfirm={confirmDeleteNote}
+        title="Supprimer cette note ?"
+        description="Êtes-vous sûr de vouloir supprimer cette note ? Cette action est irréversible."
+        isDeleting={isDeleting}
+      />
     </div>
   )
 }

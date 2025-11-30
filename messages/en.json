@@ -323,7 +323,9 @@
   "Common": {
     "back": "Back",
     "loading": "Loading...",
-    "close": "Close"
+    "close": "Close",
+    "cancel": "Cancel",
+    "save": "Save"
   },
   "Status": {
     "ready": "Ready",
@@ -410,7 +412,22 @@
     "generatingContent": "Generating content...",
     "generatingContentDesc": "AI is analyzing your documents to create relevant content. This may take a few moments.",
     "viewResult": "View result",
-    "generationSuccessTitle": "Content generated!"
+    "generationSuccessTitle": "Content generated!",
+    "editCollection": "Edit collection",
+    "editCollectionDesc": "Edit the title and color of your collection.",
+    "title": "Title",
+    "color": "Color",
+    "collectionTitlePlaceholder": "Collection name",
+    "deleteDocumentTitle": "Delete this document?",
+    "deleteDocumentDesc": "Are you sure you want to delete this document? This action cannot be undone.",
+    "deleteFlashcardsTitle": "Delete these flashcards?",
+    "deleteFlashcardsDesc": "Are you sure you want to delete this flashcard collection? Your progress will be lost.",
+    "deleteQuizTitle": "Delete this quiz?",
+    "deleteQuizDesc": "Are you sure you want to delete this quiz? Your scores will be lost.",
+    "deleteSummaryTitle": "Delete this summary?",
+    "deleteSummaryDesc": "Are you sure you want to delete this summary?",
+    "documentDeleted": "Document deleted",
+    "itemDeleted": "Item deleted"
   },
   "Library": {
     "title": "Collections",

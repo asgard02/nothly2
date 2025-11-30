@@ -47,62 +47,7 @@ export default function NotificationsPage() {
         setTimeout(() => setSaved(false), 2000)
     }
 
-    const notificationGroups = [
-        {
-            title: t("essential"),
-            icon: Bell,
-            items: [
-                {
-                    key: "emailNotifications" as keyof NotificationSettings,
-                    label: t("emailNotifs"),
-                    description: t("emailNotifsDesc"),
-                },
-                {
-                    key: "pushNotifications" as keyof NotificationSettings,
-                    label: t("pushNotifs"),
-                    description: t("pushNotifsDesc"),
-                },
-            ],
-        },
-        {
-            title: t("ai"),
-            icon: Sparkles,
-            items: [
-                {
-                    key: "aiSuggestions" as keyof NotificationSettings,
-                    label: t("aiSuggestions"),
-                    description: t("aiSuggestionsDesc"),
-                },
-            ],
-        },
-        {
-            title: t("digests"),
-            icon: MessageSquare,
-            items: [
-                {
-                    key: "weeklyDigest" as keyof NotificationSettings,
-                    label: t("weeklyDigest"),
-                    description: t("weeklyDigestDesc"),
-                },
-            ],
-        },
-        {
-            title: t("updates"),
-            icon: Mail,
-            items: [
-                {
-                    key: "newFeatures" as keyof NotificationSettings,
-                    label: t("newFeatures"),
-                    description: t("newFeaturesDesc"),
-                },
-                {
-                    key: "marketingEmails" as keyof NotificationSettings,
-                    label: t("marketing"),
-                    description: t("marketingDesc"),
-                },
-            ],
-        },
-    ]
+
 
     return (
         <div className="max-w-3xl mx-auto p-10">
@@ -124,69 +69,7 @@ export default function NotificationsPage() {
                 </div>
             )}
 
-            {/* Groupes de notifications */}
-            <div className="space-y-6">
-                {notificationGroups.map((group) => {
-                    const Icon = group.icon
-                    return (
-                        <div
-                            key={group.title}
-                            className="bg-card rounded-xl border border-border shadow-sm p-6 transition-colors"
-                        >
-                            <div className="flex items-center gap-3 mb-4">
-                                <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
-                                    <Icon className="h-5 w-5 text-primary" />
-                                </div>
-                                <h2 className="text-lg font-semibold text-foreground">
-                                    {group.title}
-                                </h2>
-                            </div>
 
-                            <div className="space-y-4">
-                                {group.items.map((item) => (
-                                    <div
-                                        key={item.key}
-                                        className="flex items-center justify-between py-3 border-b border-border last:border-0"
-                                    >
-                                        <div className="flex-1">
-                                            <p className="font-medium text-foreground text-sm">
-                                                {item.label}
-                                            </p>
-                                            <p className="text-xs text-muted-foreground mt-1">
-                                                {item.description}
-                                            </p>
-                                        </div>
-                                        <button
-                                            onClick={() => handleToggle(item.key)}
-                                            className={`relative w-12 h-6 rounded-full transition-all duration-200 ${settings[item.key]
-                                                ? "bg-primary"
-                                                : "bg-muted"
-                                                }`}
-                                        >
-                                            <div
-                                                className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow-md transition-all duration-200 ${settings[item.key]
-                                                    ? "left-[26px]"
-                                                    : "left-0.5"
-                                                    }`}
-                                            />
-                                        </button>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    )
-                })}
-            </div>
-
-            {/* Info */}
-            <div className="mt-6 bg-primary/10 border border-primary/20 rounded-xl p-6 transition-colors">
-                <h3 className="text-sm font-semibold text-foreground mb-2">
-                    {t("infoTitle")}
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                    {t("infoDesc")}
-                </p>
-            </div>
         </div>
     )
 }

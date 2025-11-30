@@ -38,7 +38,32 @@ export default function CalendarPage() {
     const [currentDate, setCurrentDate] = useState(new Date())
     const [selectedDate, setSelectedDate] = useState(new Date())
     const [events, setEvents] = useState<Event[]>(INITIAL_EVENTS)
+    const [isLoading, setIsLoading] = useState(true)
     const [isAddEventOpen, setIsAddEventOpen] = useState(false)
+
+    // Charger les événements
+    useEffect(() => {
+        const fetchEvents = async () => {
+            try {
+                const response = await fetch("/api/calendar/events")
+                if (response.ok) {
+                    const data = await response.json()
+                    // Convertir les dates string en objets Date
+                    const formattedEvents = data.map((e: any) => ({
+                        ...e,
+                        date: new Date(e.date)
+                    }))
+                    setEvents(formattedEvents)
+                }
+            } catch (error) {
+                console.error("Erreur chargement événements:", error)
+                toast.error("Impossible de charger les événements")
+            } finally {
+                setIsLoading(false)
+            }
+        }
+        fetchEvents()
+    }, [])
 
     // Generation State
     const [isGenerateOpen, setIsGenerateOpen] = useState(false)
@@ -92,7 +117,7 @@ export default function CalendarPage() {
         setView("day")
     }
 
-    const handleAddEvent = () => {
+    const handleAddEvent = async () => {
         if (!newEventTitle.trim()) return
 
         const [hours, minutes] = newEventTime.split(":").map(Number)
@@ -104,23 +129,52 @@ export default function CalendarPage() {
             deadline: "bg-amber-500"
         }
 
-        const newEvent: Event = {
-            id: Date.now().toString(),
-            title: newEventTitle,
-            date: eventDate,
-            duration: newEventType === "deadline" ? 0 : parseInt(newEventDuration),
-            type: newEventType,
-            color: colors[newEventType]
-        }
+        try {
+            const response = await fetch("/api/calendar/events", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    title: newEventTitle,
+                    date: eventDate,
+                    duration: newEventType === "deadline" ? 0 : parseInt(newEventDuration),
+                    type: newEventType,
+                    color: colors[newEventType]
+                })
+            })
 
-        setEvents([...events, newEvent])
-        setNewEventTitle("")
-        setIsAddEventOpen(false)
+            if (!response.ok) throw new Error("Erreur lors de la création")
+
+            const savedEvent = await response.json()
+            // Convertir la date
+            savedEvent.date = new Date(savedEvent.date)
+
+            setEvents([...events, savedEvent])
+            setNewEventTitle("")
+            setIsAddEventOpen(false)
+            toast.success("Événement ajouté")
+        } catch (error) {
+            console.error(error)
+            toast.error("Impossible de créer l'événement")
+        }
     }
 
-    const handleDeleteEvent = (eventId: string, e: React.MouseEvent) => {
+    const handleDeleteEvent = async (eventId: string, e: React.MouseEvent) => {
         e.stopPropagation()
-        setEvents(events.filter(e => e.id !== eventId))
+        if (!confirm("Supprimer cet événement ?")) return
+
+        try {
+            const response = await fetch(`/api/calendar/events/${eventId}`, {
+                method: "DELETE"
+            })
+
+            if (!response.ok) throw new Error("Erreur suppression")
+
+            setEvents(events.filter(e => e.id !== eventId))
+            toast.success("Événement supprimé")
+        } catch (error) {
+            console.error(error)
+            toast.error("Impossible de supprimer l'événement")
+        }
     }
 
     const handleGeneratePlan = async () => {
@@ -159,7 +213,30 @@ export default function CalendarPage() {
                 }
             })
 
-            setEvents([...events, ...newEvents])
+            // Sauvegarder les événements générés
+            const savePromises = newEvents.map((e: any) =>
+                fetch("/api/calendar/events", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        title: e.title,
+                        date: e.date,
+                        duration: e.duration,
+                        type: e.type,
+                        color: e.color,
+                        description: e.description
+                    })
+                }).then(res => res.json())
+            )
+
+            const savedEvents = await Promise.all(savePromises)
+            // Convertir les dates
+            const formattedSavedEvents = savedEvents.map((e: any) => ({
+                ...e,
+                date: new Date(e.date)
+            }))
+
+            setEvents([...events, ...formattedSavedEvents])
             setIsGenerateOpen(false)
             toast.success(t("successMessage"))
         } catch (error) {

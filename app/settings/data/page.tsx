@@ -4,11 +4,13 @@ import { useState } from "react"
 import { Download, Upload, Database, Trash2, FileJson, FileText, Archive } from "lucide-react"
 
 import { useTranslations } from "next-intl"
+import DeleteConfirmationDialog from "@/components/DeleteConfirmationDialog"
 
 export default function DataPage() {
     const t = useTranslations("Settings.Data")
     const [exporting, setExporting] = useState(false)
     const [importing, setImporting] = useState(false)
+    const [isClearCacheDialogOpen, setIsClearCacheDialogOpen] = useState(false)
 
     const handleExportJSON = async () => {
         setExporting(true)
@@ -61,12 +63,14 @@ export default function DataPage() {
     }
 
     const handleClearCache = () => {
-        if (confirm(t("clearCacheConfirm"))) {
-            localStorage.clear()
-            sessionStorage.clear()
-            alert(t("clearCacheSuccess"))
-            window.location.reload()
-        }
+        setIsClearCacheDialogOpen(true)
+    }
+
+    const confirmClearCache = () => {
+        localStorage.clear()
+        sessionStorage.clear()
+        // alert(t("clearCacheSuccess")) // Removed alert, reload happens immediately
+        window.location.reload()
     }
 
     return (
@@ -194,6 +198,15 @@ export default function DataPage() {
                     {t("deleteAll")}
                 </button>
             </div>
+
+            <DeleteConfirmationDialog
+                isOpen={isClearCacheDialogOpen}
+                onClose={() => setIsClearCacheDialogOpen(false)}
+                onConfirm={confirmClearCache}
+                title={t("clearCache")}
+                description={t("clearCacheConfirm")}
+                isDeleting={false}
+            />
         </div>
     )
 }

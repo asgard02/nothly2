@@ -115,3 +115,71 @@ export async function DELETE(
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 })
   }
 }
+
+// PATCH /api/collections/[id] - Mettre à jour une collection
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const supabase = await createServerClient()
+    if (!supabase) {
+      return NextResponse.json({ error: "Configuration Supabase manquante" }, { status: 500 })
+    }
+
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser()
+
+    if (authError || !user) {
+      return NextResponse.json({ error: "Non authentifié" }, { status: 401 })
+    }
+
+    const body = await request.json()
+    const { title, color } = body
+
+    if (!title && !color) {
+      return NextResponse.json({ error: "Aucune donnée à mettre à jour" }, { status: 400 })
+    }
+
+    const admin = getSupabaseAdmin()
+    if (!admin) {
+      return NextResponse.json({ error: "Configuration Supabase manquante" }, { status: 500 })
+    }
+
+    // Vérifier que la collection appartient à l'utilisateur
+    const { data: collection, error: fetchError } = await admin
+      .from("collections")
+      .select("id")
+      .eq("id", params.id)
+      .eq("user_id", user.id)
+      .single()
+
+    if (fetchError || !collection) {
+      return NextResponse.json({ error: "Collection non trouvée" }, { status: 404 })
+    }
+
+    const updates: any = {}
+    if (title) updates.title = title
+    if (color) updates.color = color
+    updates.updated_at = new Date().toISOString()
+
+    const { data: updatedCollection, error: updateError } = await admin
+      .from("collections")
+      .update(updates)
+      .eq("id", params.id)
+      .select()
+      .single()
+
+    if (updateError) {
+      console.error("[PATCH /api/collections/:id] ❌ Erreur Supabase:", updateError)
+      return NextResponse.json({ error: updateError.message }, { status: 500 })
+    }
+
+    return NextResponse.json(updatedCollection)
+  } catch (err: any) {
+    console.error("[PATCH /api/collections/:id] ❌ Exception:", err)
+    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 })
+  }
+}

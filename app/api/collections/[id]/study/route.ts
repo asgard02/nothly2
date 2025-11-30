@@ -86,6 +86,18 @@ export async function GET(
           .eq("collection_id", studyCollection.id)
           .order("order_index", { ascending: true })
 
+        // Récupérer les stats flashcards
+        const flashcardIds = flashcards?.map((f: any) => f.id) || []
+        let flashcardStats: any[] = []
+        if (flashcardIds.length > 0) {
+           const { data: stats } = await admin
+            .from("flashcard_stats")
+            .select("flashcard_id, box, next_review_at, last_reviewed_at")
+            .in("flashcard_id", flashcardIds)
+            .eq("user_id", user.id)
+           flashcardStats = stats || []
+        }
+
         // Récupérer les quiz
         const { data: quizQuestions } = await admin
           .from("study_collection_quiz_questions")
@@ -93,10 +105,24 @@ export async function GET(
           .eq("collection_id", studyCollection.id)
           .order("order_index", { ascending: true })
 
+        // Récupérer les stats quiz
+        const quizQuestionIds = quizQuestions?.map((q: any) => q.id) || []
+        let quizStats: any[] = []
+        if (quizQuestionIds.length > 0) {
+           const { data: stats } = await admin
+            .from("quiz_question_stats")
+            .select("quiz_question_id, mastery_level, correct_attempts, total_attempts")
+            .in("quiz_question_id", quizQuestionIds)
+            .eq("user_id", user.id)
+           quizStats = stats || []
+        }
+
         return {
           ...studyCollection,
           flashcards: flashcards || [],
           quizQuestions: quizQuestions || [],
+          flashcardStats,
+          quizStats
         }
       })
     )

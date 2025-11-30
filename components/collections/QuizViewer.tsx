@@ -1,7 +1,6 @@
 "use client"
 
 import { useEffect, useMemo, useState, useCallback, useRef } from "react"
-// useRef importé pour suivre les IDs des questions précédentes
 import {
   CheckCircle2,
   ChevronLeft,
@@ -21,11 +20,16 @@ import {
   Award,
   AlertCircle,
   Loader2,
+  Check,
+  X,
+  ArrowRight
 } from "lucide-react"
+import { motion, AnimatePresence } from "framer-motion"
 
 import MarkdownRenderer from "@/components/MarkdownRenderer"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import { Progress } from "@/components/ui/progress"
 
 export type QuizQuestionType = "multiple_choice" | "true_false" | "completion"
 
@@ -55,6 +59,8 @@ interface QuizViewerProps {
   questions: QuizQuestionItem[]
   studyCollectionId?: string
   mode?: SessionMode
+  title?: string
+  onClose?: () => void
 }
 
 const MASTERY_COLORS: Record<MasteryLevel, { bg: string; text: string; border: string; icon: typeof Brain; gradient: string }> = {
@@ -88,7 +94,7 @@ const MASTERY_COLORS: Record<MasteryLevel, { bg: string; text: string; border: s
   },
 }
 
-export default function QuizViewer({ questions, studyCollectionId, mode = "practice" }: QuizViewerProps) {
+export default function QuizViewer({ questions, studyCollectionId, mode = "practice", title, onClose }: QuizViewerProps) {
   const [currentQuestionId, setCurrentQuestionId] = useState<string | null>(null)
   const [selectedOption, setSelectedOption] = useState<number | null>(null)
   const [revealAnswer, setRevealAnswer] = useState(false)
@@ -111,7 +117,6 @@ export default function QuizViewer({ questions, studyCollectionId, mode = "pract
       fetch(`/api/quiz/generate-targeted?studyCollectionId=${studyCollectionId}`)
         .then((res) => {
           if (!res.ok) {
-            // Si erreur 400, c'est normal (pas de zones de difficulté encore)
             if (res.status === 400) {
               return { weakAreas: [] }
             }
@@ -125,7 +130,6 @@ export default function QuizViewer({ questions, studyCollectionId, mode = "pract
           }
         })
         .catch((err) => {
-          // Ne pas afficher d'erreur si c'est juste qu'il n'y a pas encore de zones de difficulté
           if (err.message !== "Erreur 400") {
             console.error("Erreur chargement zones de difficulté:", err)
           }
@@ -166,8 +170,6 @@ export default function QuizViewer({ questions, studyCollectionId, mode = "pract
     let filtered = questions
 
     if (filterMode === "mistakes") {
-      // Filtrer les questions qui ont été ratées dans la session précédente
-      // On utilise les stats actuelles pour identifier celles qui sont en "learning" ou ont des erreurs récentes
       filtered = questions.filter(q => {
         const stats = questionStats[q.id]
         return stats && (stats.incorrect_attempts > 0 || stats.mastery_level === "learning")
@@ -180,21 +182,17 @@ export default function QuizViewer({ questions, studyCollectionId, mode = "pract
       const statsA = questionStats[a.id]
       const statsB = questionStats[b.id]
 
-      // Priorité : learning > reviewing > new > mastered
       const priority = { learning: 4, reviewing: 3, new: 2, mastered: 1 }
       const priorityA = priority[statsA?.mastery_level || "new"] || 2
       const priorityB = priority[statsB?.mastery_level || "new"] || 2
 
       if (priorityA !== priorityB) return priorityB - priorityA
 
-      // Si même priorité, trier par nombre d'erreurs
       const errorsA = statsA?.incorrect_attempts || 0
       const errorsB = statsB?.incorrect_attempts || 0
       return errorsB - errorsA
     })
   }, [questions, questionStats, mode, filterMode])
-
-
 
   const handleRestart = (onlyMistakes: boolean = false) => {
     setQuestionStatuses({})
@@ -203,14 +201,11 @@ export default function QuizViewer({ questions, studyCollectionId, mode = "pract
 
     if (onlyMistakes) {
       setFilterMode("mistakes")
-      // On laisse le useEffect de prioritizedQuestions mettre à jour currentQuestionId
     } else {
       setFilterMode("all")
-      // On laisse le useEffect de prioritizedQuestions mettre à jour currentQuestionId
     }
   }
 
-  // Trouver l'index de la question actuelle dans prioritizedQuestions
   const currentIndex = useMemo(() => {
     if (!currentQuestionId || prioritizedQuestions.length === 0) return 0
     const index = prioritizedQuestions.findIndex(q => q.id === currentQuestionId)
@@ -219,8 +214,6 @@ export default function QuizViewer({ questions, studyCollectionId, mode = "pract
 
   const current = prioritizedQuestions[currentIndex] || null
 
-  // Réinitialiser seulement si les questions changent vraiment (nouveau quiz)
-  // Pas si c'est juste un re-tri dû aux stats
   const previousQuestionsIds = useRef<Set<string>>(new Set())
   const isInitialMount = useRef(true)
 
@@ -228,14 +221,12 @@ export default function QuizViewer({ questions, studyCollectionId, mode = "pract
     const currentQuestionsSet = new Set(prioritizedQuestions.map(q => q.id))
     const previousSet = previousQuestionsIds.current
 
-    // Vérifier si c'est un nouveau quiz (nouvelles questions) ou juste un réordonnancement
     const isNewQuiz =
       previousSet.size === 0 ||
       currentQuestionsSet.size !== previousSet.size ||
       ![...currentQuestionsSet].every(id => previousSet.has(id))
 
     if (isNewQuiz) {
-      // Nouveau quiz : réinitialiser
       previousQuestionsIds.current = currentQuestionsSet
       if (prioritizedQuestions.length > 0) {
         setCurrentQuestionId(prioritizedQuestions[0].id)
@@ -245,17 +236,14 @@ export default function QuizViewer({ questions, studyCollectionId, mode = "pract
       setStartTime(Date.now())
       isInitialMount.current = false
     } else {
-      // Juste un réordonnancement : préserver la question actuelle si elle existe toujours
       previousQuestionsIds.current = currentQuestionsSet
       if (currentQuestionId && !currentQuestionsSet.has(currentQuestionId)) {
-        // Si la question actuelle n'existe plus dans la nouvelle liste, aller à la première
         if (prioritizedQuestions.length > 0) {
           setCurrentQuestionId(prioritizedQuestions[0].id)
         }
       }
     }
 
-    // Toujours mettre à jour les statuts pour les nouvelles questions
     setQuestionStatuses((prev) => {
       const next: Record<string, QuizQuestionStatus> = {}
       prioritizedQuestions.forEach((question) => {
@@ -265,12 +253,10 @@ export default function QuizViewer({ questions, studyCollectionId, mode = "pract
     })
   }, [prioritizedQuestions, currentQuestionId])
 
-  // S'assurer que currentQuestionId est toujours valide
   useEffect(() => {
     if (!currentQuestionId && prioritizedQuestions.length > 0 && !isInitialMount.current) {
       setCurrentQuestionId(prioritizedQuestions[0].id)
     } else if (currentQuestionId && !prioritizedQuestions.find(q => q.id === currentQuestionId)) {
-      // Si la question actuelle n'existe plus, aller à la première
       if (prioritizedQuestions.length > 0) {
         setCurrentQuestionId(prioritizedQuestions[0].id)
       }
@@ -285,7 +271,6 @@ export default function QuizViewer({ questions, studyCollectionId, mode = "pract
     }
   }, [currentQuestionId, current])
 
-  // Timer pour chaque question
   useEffect(() => {
     if (!startTime || revealAnswer) return
 
@@ -316,18 +301,12 @@ export default function QuizViewer({ questions, studyCollectionId, mode = "pract
   const accuracyPercent = answeredCount ? Math.round((statusCounts.correct / answeredCount) * 100) : 0
   const progressPercent = prioritizedQuestions.length ? Math.round((answeredCount / prioritizedQuestions.length) * 100) : 0
 
-  // Vérifier si le quiz est terminé
   useEffect(() => {
     if (prioritizedQuestions.length > 0 && answeredCount === prioritizedQuestions.length && !isFinished) {
-      // Petit délai pour laisser l'utilisateur voir la dernière réponse
       const timer = setTimeout(() => setIsFinished(true), 1500)
       return () => clearTimeout(timer)
     }
   }, [answeredCount, prioritizedQuestions.length, isFinished])
-
-
-
-
 
   const currentStatus: QuizQuestionStatus = current ? questionStatuses[current.id] ?? "pending" : "pending"
   const currentStats = current ? questionStats[current.id] : null
@@ -378,7 +357,6 @@ export default function QuizViewer({ questions, studyCollectionId, mode = "pract
             setSessionId(data.sessionId)
           }
 
-          // Mettre à jour les stats locales
           if (currentStats) {
             setQuestionStats((prev) => ({
               ...prev,
@@ -430,10 +408,6 @@ export default function QuizViewer({ questions, studyCollectionId, mode = "pract
     }
   }
 
-  const handleSelectQuestion = (questionId: string) => {
-    setCurrentQuestionId(questionId)
-  }
-
   const isOptionCorrect = (option: string) => {
     return option.trim().toLowerCase() === current.answer.trim().toLowerCase()
   }
@@ -452,31 +426,29 @@ export default function QuizViewer({ questions, studyCollectionId, mode = "pract
     return null
   }
 
-
-
   if (isFinished) {
     return (
       <div className="flex flex-col items-center justify-center h-full p-8 text-center space-y-8 animate-in fade-in zoom-in-95 duration-500">
         <div className="space-y-4">
-          <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-primary/10 mb-4">
+          <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-primary/10 mb-4 ring-8 ring-primary/5">
             <Award className="h-12 w-12 text-primary" />
           </div>
-          <h2 className="text-3xl font-bold">Session terminée !</h2>
+          <h2 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-600">Session terminée !</h2>
           <p className="text-muted-foreground text-lg max-w-md mx-auto">
             Vous avez répondu à toutes les questions. Voici votre résumé.
           </p>
         </div>
 
         <div className="grid grid-cols-3 gap-6 w-full max-w-2xl">
-          <div className="bg-card border rounded-xl p-6 shadow-sm">
+          <div className="bg-card border rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all">
             <div className="text-4xl font-bold text-primary mb-2">{accuracyPercent}%</div>
             <div className="text-sm text-muted-foreground font-medium">Précision</div>
           </div>
-          <div className="bg-card border rounded-xl p-6 shadow-sm">
+          <div className="bg-card border rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all">
             <div className="text-4xl font-bold text-emerald-500 mb-2">{statusCounts.correct}</div>
             <div className="text-sm text-muted-foreground font-medium">Correctes</div>
           </div>
-          <div className="bg-card border rounded-xl p-6 shadow-sm">
+          <div className="bg-card border rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all">
             <div className="text-4xl font-bold text-rose-500 mb-2">{statusCounts.incorrect}</div>
             <div className="text-sm text-muted-foreground font-medium">À revoir</div>
           </div>
@@ -487,7 +459,7 @@ export default function QuizViewer({ questions, studyCollectionId, mode = "pract
             variant="outline"
             size="lg"
             onClick={() => handleRestart(false)}
-            className="h-12 px-8 text-base"
+            className="h-12 px-8 text-base rounded-full"
           >
             <RotateCcw className="mr-2 h-5 w-5" />
             Tout recommencer
@@ -495,16 +467,21 @@ export default function QuizViewer({ questions, studyCollectionId, mode = "pract
           {statusCounts.incorrect > 0 && (
             <Button
               size="lg"
-              onClick={() => {
-                // Reset statuses for incorrect questions only? 
-                // For now, let's just reset everything but maybe we can implement a "Review" mode later
-                // Actually, let's just restart for now as per the alert above
-                handleRestart(false)
-              }}
-              className="h-12 px-8 text-base shadow-lg hover:shadow-xl transition-all"
+              onClick={() => handleRestart(true)}
+              className="h-12 px-8 text-base shadow-lg hover:shadow-xl transition-all rounded-full bg-primary hover:bg-primary/90"
             >
               <Target className="mr-2 h-5 w-5" />
               Revoir les erreurs
+            </Button>
+          )}
+          {onClose && (
+            <Button
+              variant="ghost"
+              size="lg"
+              onClick={onClose}
+              className="h-12 px-8 text-base rounded-full"
+            >
+              Fermer
             </Button>
           )}
         </div>
@@ -513,402 +490,216 @@ export default function QuizViewer({ questions, studyCollectionId, mode = "pract
   }
 
   return (
-    <div className="flex flex-col gap-4 h-full max-w-7xl mx-auto w-full px-4 py-6">
-      {/* Header compact avec mode et progression */}
-      <div className="flex items-center justify-between gap-4 flex-wrap">
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-primary/10 border border-primary/20">
-            <Brain className="h-5 w-5 text-primary" />
+    <div className="h-full flex flex-col bg-gradient-to-b from-background to-muted/20">
+      {/* Unified Header */}
+      <div className="flex-shrink-0 px-6 py-4 border-b border-border/40 bg-background/80 backdrop-blur-md sticky top-0 z-10 flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <div className="p-2 rounded-xl bg-primary/10 text-primary">
+            <Brain className="h-5 w-5" />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-foreground">
-              {mode === "adaptive" ? "Mode Adaptatif" : mode === "review" ? "Mode Révision" : "Mode Pratique"}
+            <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
+              {title || "Quiz"}
+              <span className="px-2 py-0.5 rounded-full bg-muted text-[10px] font-medium text-muted-foreground uppercase tracking-wider border border-border/50">
+                {mode === "adaptive" ? "Adaptatif" : mode === "review" ? "Révision" : "Pratique"}
+              </span>
             </h2>
-            <p className="text-xs text-muted-foreground">
-              {progressLabel} • {answeredCount} répondu{answeredCount > 1 ? "es" : "e"}
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2">
-          {weakAreas.length > 0 && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowWeakAreas(!showWeakAreas)}
-              className="rounded-lg"
-            >
-              <AlertCircle className="h-4 w-4 mr-1.5" />
-              Zones difficiles
-            </Button>
-          )}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowStats(!showStats)}
-            className="rounded-lg"
-          >
-            <BarChart3 className="h-4 w-4 mr-1.5" />
-            {showStats ? "Masquer stats" : "Stats"}
-          </Button>
-          {weakAreas.length > 0 && (
-            <Button
-              variant="default"
-              size="sm"
-              onClick={async () => {
-                if (!studyCollectionId || isGenerating) return
-                setIsGenerating(true)
-                try {
-                  const response = await fetch("/api/quiz/generate-targeted", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                      studyCollectionId,
-                      type: "quiz",
-                    }),
-                  })
-
-                  if (!response.ok) {
-                    const errorData = await response.json().catch(() => ({ error: "Erreur inconnue" }))
-                    alert(`Erreur: ${errorData.error || `Erreur ${response.status}`}`)
-                    return
-                  }
-
-                  const data = await response.json()
-                  if (data.success) {
-                    alert(`✅ ${data.itemsGenerated} questions ciblées générées avec succès !`)
-                    window.location.reload()
-                  } else {
-                    alert(`Erreur: ${data.error || "Impossible de générer les questions"}`)
-                  }
-                } catch (error) {
-                  console.error("Erreur génération:", error)
-                  alert("Erreur lors de la génération des questions")
-                } finally {
-                  setIsGenerating(false)
-                }
-              }}
-              disabled={isGenerating}
-              className="rounded-lg"
-            >
-              {isGenerating ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
-                  Génération...
-                </>
-              ) : (
-                <>
-                  <Zap className="h-4 w-4 mr-1.5" />
-                  Générer ciblées
-                </>
-              )}
-            </Button>
-          )}
-        </div>
-      </div>
-
-      {/* Barre de progression principale */}
-      <div className="space-y-2">
-        <div className="flex items-center justify-between text-xs">
-          <span className="text-muted-foreground">Progression</span>
-          <span className="font-semibold text-foreground">{progressPercent}%</span>
-        </div>
-        <div className="relative h-2 w-full overflow-hidden rounded-full bg-muted">
-          <div
-            className="absolute inset-y-0 left-0 rounded-full bg-primary transition-all duration-500 ease-out"
-            style={{ width: `${progressPercent}%` }}
-          />
-        </div>
-      </div>
-
-      {/* Zones de difficulté (collapsible) */}
-      {showWeakAreas && weakAreas.length > 0 && (
-        <div className="rounded-xl border border-border bg-card p-4 space-y-3 animate-in fade-in slide-in-from-top-2">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <AlertCircle className="h-4 w-4 text-rose-600 dark:text-rose-400" />
-              <h4 className="text-sm font-semibold text-foreground">Zones de difficulté</h4>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <span>Question {currentIndex + 1} sur {prioritizedQuestions.length}</span>
+              <span className="w-1 h-1 rounded-full bg-border" />
+              <span className="flex items-center gap-1">
+                <Clock className="h-3 w-3" />
+                {Math.floor(timeSpent / 60)}:{(timeSpent % 60).toString().padStart(2, "0")}
+              </span>
             </div>
-            <span className="text-xs text-muted-foreground">{weakAreas.length} zone{weakAreas.length > 1 ? "s" : ""}</span>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-            {weakAreas.slice(0, 6).map((area, idx) => (
-              <div
-                key={area.tag}
-                className="rounded-lg border border-rose-200 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/40 p-3"
+        </div>
+
+        <div className="flex items-center gap-3">
+          <div className="hidden md:flex items-center gap-3 px-3 py-1.5 rounded-full bg-muted/50 border border-border/50 mr-2">
+            <div className="flex items-center gap-1.5 text-xs font-medium text-emerald-600 dark:text-emerald-400">
+              <CheckCircle2 className="h-3.5 w-3.5" />
+              {statusCounts.correct}
+            </div>
+            <div className="w-px h-3 bg-border" />
+            <div className="flex items-center gap-1.5 text-xs font-medium text-rose-600 dark:text-rose-400">
+              <XCircle className="h-3.5 w-3.5" />
+              {statusCounts.incorrect}
+            </div>
+          </div>
+
+          {onClose && (
+            <Button variant="ghost" size="icon" className="rounded-full hover:bg-muted" onClick={onClose}>
+              <X className="h-5 w-5" />
+            </Button>
+          )}
+        </div>
+      </div>
+
+      {/* Progress Bar */}
+      <div className="w-full h-1 bg-muted">
+        <motion.div
+          className="h-full bg-primary"
+          initial={{ width: 0 }}
+          animate={{ width: `${progressPercent}%` }}
+          transition={{ duration: 0.3 }}
+        />
+      </div>
+
+      {/* Main Content Area - Centered & Scrollable */}
+      <div className="flex-1 overflow-hidden relative flex flex-col items-center justify-center p-4 md:p-6">
+        <div className="w-full max-w-3xl h-full max-h-[800px] flex flex-col">
+          <AnimatePresence mode="wait">
+            {current && (
+              <motion.div
+                key={current.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.3, ease: "easeOut" }}
+                className="w-full h-full flex flex-col"
               >
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs font-semibold text-foreground">#{area.tag}</span>
-                  <span className="text-xs font-bold text-rose-600 dark:text-rose-400">
-                    {Math.round(area.difficulty_score)}%
-                  </span>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  {area.questions_count} erreur{area.questions_count > 1 ? "s" : ""}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Statistiques (collapsible) */}
-      {showStats && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 rounded-xl border border-border bg-card p-4 animate-in fade-in slide-in-from-top-2">
-          <div className="space-y-1">
-            <div className="flex items-center gap-1.5">
-              <TrendingUp className="h-3.5 w-3.5 text-primary" />
-              <p className="text-xs font-medium text-muted-foreground">Progression</p>
-            </div>
-            <p className="text-2xl font-bold text-foreground">{progressPercent}%</p>
-          </div>
-          <div className="space-y-1">
-            <div className="flex items-center gap-1.5">
-              <Award className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
-              <p className="text-xs font-medium text-muted-foreground">Précision</p>
-            </div>
-            <p className="text-2xl font-bold text-foreground">{accuracyPercent}%</p>
-            <p className="text-xs text-muted-foreground">{statusCounts.correct}/{answeredCount || 1}</p>
-          </div>
-          <div className="space-y-1">
-            <div className="flex items-center gap-1.5">
-              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
-              <p className="text-xs font-medium text-muted-foreground">Réussies</p>
-            </div>
-            <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{statusCounts.correct}</p>
-          </div>
-          <div className="space-y-1">
-            <div className="flex items-center gap-1.5">
-              <XCircle className="h-3.5 w-3.5 text-rose-600 dark:text-rose-400" />
-              <p className="text-xs font-medium text-muted-foreground">À revoir</p>
-            </div>
-            <p className="text-2xl font-bold text-rose-600 dark:text-rose-400">{statusCounts.incorrect}</p>
-          </div>
-        </div>
-      )}
-
-      {/* Contenu principal - Question et options */}
-      <div className="flex-1 flex flex-col gap-4 min-h-0">
-        {current ? (
-          <div className="flex-1 flex flex-col gap-4 rounded-xl border border-border bg-card p-6 shadow-sm overflow-y-auto">
-            {/* En-tête de la question */}
-            <div className="flex items-center justify-between flex-wrap gap-3 pb-4 border-b border-border">
-              <div className="flex items-center gap-2 flex-wrap">
                 <div className={cn(
-                  "inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-semibold",
-                  masteryMeta.bg,
-                  masteryMeta.text,
-                  masteryMeta.border
+                  "flex-1 flex flex-col bg-card border rounded-3xl shadow-xl overflow-hidden transition-all duration-500",
+                  revealAnswer && questionStatuses[current.id] === "correct" && "border-emerald-500/50 shadow-emerald-500/10",
+                  revealAnswer && questionStatuses[current.id] === "incorrect" && "border-rose-500/50 shadow-rose-500/10"
                 )}>
-                  <masteryMeta.icon className="h-3 w-3" />
-                  {currentMastery === "new" ? "Nouvelle" : currentMastery === "learning" ? "À apprendre" : currentMastery === "reviewing" ? "En révision" : "Maîtrisée"}
-                </div>
-                <div className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-muted/50 px-2.5 py-1 text-xs font-medium text-muted-foreground">
-                  {current?.question_type === "multiple_choice"
-                    ? "QCM"
-                    : current?.question_type === "true_false"
-                      ? "Vrai / Faux"
-                      : "Complétion"}
-                </div>
-                {timeSpent > 0 && (
-                  <div className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-muted/50 px-2.5 py-1 text-xs font-medium text-muted-foreground">
-                    <Clock className="h-3 w-3" />
-                    {Math.floor(timeSpent / 60)}:{(timeSpent % 60).toString().padStart(2, "0")}
-                  </div>
-                )}
-                {currentStats && (
-                  <div className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-muted/50 px-2.5 py-1 text-xs font-medium text-muted-foreground">
-                    <Zap className="h-3 w-3" />
-                    {currentStats.total_attempts} tentative{currentStats.total_attempts > 1 ? "s" : ""}
-                  </div>
-                )}
-              </div>
-
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handlePrevious}
-                  className="rounded-lg"
-                  disabled={currentIndex === 0}
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleNext}
-                  className="rounded-lg"
-                  disabled={currentIndex === prioritizedQuestions.length - 1}
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-                <Button
-                  type="button"
-                  variant={revealAnswer ? "secondary" : "default"}
-                  size="sm"
-                  onClick={handleReveal}
-                  className="rounded-lg"
-                  disabled={selectedOption === null && normalisedOptions.length > 0}
-                >
-                  {revealAnswer ? <EyeOff className="h-4 w-4 mr-1.5" /> : <Eye className="h-4 w-4 mr-1.5" />}
-                  {revealAnswer ? "Masquer" : "Vérifier"}
-                </Button>
-              </div>
-            </div>
-
-            {/* Question */}
-            <div className="space-y-4">
-              <div className="text-base font-medium text-foreground leading-relaxed">
-                <MarkdownRenderer content={current.prompt} />
-              </div>
-
-              {/* Options */}
-              {normalisedOptions.length > 0 ? (
-                <div className="space-y-2">
-                  {normalisedOptions.map((option, index) => {
-                    const isSelected = selectedOption === index
-                    const isCorrectOption = revealAnswer && isOptionCorrect(option)
-                    const isIncorrectSelection = revealAnswer && isSelected && !isCorrectOption
-
-                    return (
-                      <button
-                        key={`${current.id}-${index}`}
-                        type="button"
-                        onClick={() => !revealAnswer && setSelectedOption(index)}
-                        disabled={revealAnswer}
-                        className={cn(
-                          "w-full rounded-lg border-2 px-4 py-3 text-left text-sm transition-all relative",
-                          !revealAnswer && isSelected && "border-primary bg-primary/5 text-primary shadow-sm",
-                          !revealAnswer && !isSelected && "border-border bg-background hover:border-primary/50 hover:bg-primary/5",
-                          isCorrectOption && "border-emerald-500 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300",
-                          isIncorrectSelection && "border-rose-500 bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300",
-                          revealAnswer && !isSelected && !isCorrectOption && "opacity-50"
+                  {/* Card Header & Question - Scrollable part 1 */}
+                  <div className="flex-1 overflow-y-auto custom-scrollbar">
+                    <div className="p-8 border-b border-border/50 bg-muted/30 sticky top-0 z-10 backdrop-blur-sm supports-[backdrop-filter]:bg-muted/30">
+                      <div className="flex items-center justify-between mb-4">
+                        <span className={cn(
+                          "px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider",
+                          masteryMeta.bg, masteryMeta.text, masteryMeta.border, "border"
+                        )}>
+                          {currentMastery === "new" ? "Nouvelle" : currentMastery === "learning" ? "À apprendre" : currentMastery === "reviewing" ? "En révision" : "Maîtrisée"}
+                        </span>
+                        {revealAnswer && (
+                          <motion.div
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            className={cn(
+                              "flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border",
+                              questionStatuses[current.id] === "correct"
+                                ? "bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800"
+                                : "bg-rose-100 text-rose-700 border-rose-200 dark:bg-rose-900/30 dark:text-rose-400 dark:border-rose-800"
+                            )}
+                          >
+                            {questionStatuses[current.id] === "correct" ? (
+                              <>Correct <Check className="h-3 w-3" /></>
+                            ) : (
+                              <>Incorrect <X className="h-3 w-3" /></>
+                            )}
+                          </motion.div>
                         )}
-                      >
-                        <div className="flex items-start gap-3">
-                          <div className={cn(
-                            "flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center text-xs font-bold mt-0.5",
-                            isCorrectOption && "border-emerald-500 bg-emerald-500 text-white",
-                            isIncorrectSelection && "border-rose-500 bg-rose-500 text-white",
-                            !revealAnswer && isSelected && "border-primary bg-primary text-white",
-                            !revealAnswer && !isSelected && "border-border bg-muted"
-                          )}>
-                            {String.fromCharCode(65 + index)}
-                          </div>
-                          <div className="flex-1">
-                            <MarkdownRenderer content={option} />
-                          </div>
-                          {revealAnswer && (
-                            <span className="flex-shrink-0">
-                              {isCorrectOption ? (
-                                <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-                              ) : isIncorrectSelection ? (
-                                <XCircle className="h-5 w-5 text-rose-600 dark:text-rose-400" />
-                              ) : null}
-                            </span>
-                          )}
-                        </div>
-                      </button>
-                    )
-                  })}
-                </div>
-              ) : (
-                <div className="rounded-lg border-2 border-dashed border-border bg-muted/30 px-4 py-3 text-center text-sm text-muted-foreground">
-                  <p>Formule la réponse ou réfléchis avant de la révéler.</p>
-                </div>
-              )}
-
-              {/* Réponse et explication */}
-              {revealAnswer && (
-                <div className="space-y-3 pt-2 animate-in fade-in slide-in-from-bottom-2">
-                  <div className="rounded-lg border border-primary/40 bg-primary/5 p-4">
-                    <div className="flex items-center gap-2 mb-2">
-                      <CheckCircle2 className="h-4 w-4 text-primary" />
-                      <p className="text-xs font-semibold uppercase tracking-wide text-primary">Réponse correcte</p>
+                      </div>
+                      <div className="text-xl md:text-2xl font-medium leading-relaxed">
+                        <MarkdownRenderer content={current.prompt} />
+                      </div>
                     </div>
-                    <div className="text-sm font-medium text-primary">
-                      <MarkdownRenderer content={current.answer} />
+
+                    {/* Options */}
+                    <div className="p-8 space-y-3 bg-background">
+                      {normalisedOptions.map((option, index) => {
+                        const isSelected = selectedOption === index
+                        const isCorrectOption = revealAnswer && isOptionCorrect(option)
+                        const isIncorrectSelection = revealAnswer && isSelected && !isCorrectOption
+
+                        return (
+                          <motion.button
+                            key={`${current.id}-${index}`}
+                            whileHover={!revealAnswer ? { scale: 1.01 } : {}}
+                            whileTap={!revealAnswer ? { scale: 0.99 } : {}}
+                            onClick={() => !revealAnswer && setSelectedOption(index)}
+                            disabled={revealAnswer}
+                            className={cn(
+                              "w-full p-4 rounded-xl border-2 text-left transition-all duration-200 flex items-center gap-4 group relative overflow-hidden",
+                              !revealAnswer && isSelected && "border-primary bg-primary/5 shadow-md ring-1 ring-primary/20",
+                              !revealAnswer && !isSelected && "border-border hover:border-primary/50 hover:bg-muted/50",
+                              isCorrectOption && "border-emerald-500 bg-emerald-50 dark:bg-emerald-950/20 shadow-md",
+                              isIncorrectSelection && "border-rose-500 bg-rose-50 dark:bg-rose-950/20 shadow-md",
+                              revealAnswer && !isSelected && !isCorrectOption && "opacity-40 grayscale"
+                            )}
+                          >
+                            <div className={cn(
+                              "flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold transition-colors",
+                              isCorrectOption ? "bg-emerald-500 text-white" :
+                                isIncorrectSelection ? "bg-rose-500 text-white" :
+                                  isSelected ? "bg-primary text-white" :
+                                    "bg-muted text-muted-foreground group-hover:bg-primary/20 group-hover:text-primary"
+                            )}>
+                              {String.fromCharCode(65 + index)}
+                            </div>
+                            <div className="flex-1 text-base">
+                              <MarkdownRenderer content={option} />
+                            </div>
+                            {isCorrectOption && <CheckCircle2 className="h-5 w-5 text-emerald-500" />}
+                            {isIncorrectSelection && <XCircle className="h-5 w-5 text-rose-500" />}
+                          </motion.button>
+                        )
+                      })}
+
+                      {/* Explanation - Inside scrollable area */}
+                      <AnimatePresence>
+                        {revealAnswer && current.explanation && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: "auto", opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            className="pt-6 border-t border-border mt-6"
+                          >
+                            <div className="p-4 rounded-xl bg-muted/50 border border-border/50">
+                              <div className="flex items-center gap-2 mb-2 text-sm font-semibold text-muted-foreground">
+                                <Brain className="h-4 w-4" />
+                                Explication
+                              </div>
+                              <div className="text-sm text-foreground leading-relaxed">
+                                <MarkdownRenderer content={current.explanation} />
+                              </div>
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
                     </div>
                   </div>
 
-                  {current.explanation && (
-                    <div className="rounded-lg border border-border bg-muted/30 p-4">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Brain className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-                        <p className="text-xs font-semibold text-foreground">Explication</p>
-                      </div>
-                      <div className="text-sm text-muted-foreground leading-relaxed">
-                        <MarkdownRenderer content={current.explanation} />
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Tags */}
-              {current.tags?.length ? (
-                <div className="flex flex-wrap gap-1.5 pt-2 border-t border-border">
-                  {current.tags.map((tag) => (
-                    <span
-                      key={`${current.id}-${tag}`}
-                      className="inline-flex items-center gap-1 rounded-full bg-muted border border-border px-2 py-0.5 text-xs font-medium text-muted-foreground"
+                  {/* Footer Controls - Fixed at bottom of card */}
+                  <div className="flex-shrink-0 p-6 border-t border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 flex items-center justify-between z-10">
+                    <Button
+                      variant="ghost"
+                      onClick={handlePrevious}
+                      disabled={currentIndex === 0}
+                      className="text-muted-foreground hover:text-foreground"
                     >
-                      #{tag}
-                    </span>
-                  ))}
-                </div>
-              ) : null}
-            </div>
-          </div>
-        ) : null}
+                      <ChevronLeft className="h-4 w-4 mr-2" />
+                      Précédent
+                    </Button>
 
-        {/* Navigation rapide */}
-        <div className="rounded-xl border border-border bg-card p-4">
-          <div className="flex items-center justify-between text-xs mb-3">
-            <span className="font-semibold text-foreground">Navigation</span>
-            <span className="text-muted-foreground">{prioritizedQuestions.length} questions</span>
-          </div>
-          <div className="flex flex-wrap gap-1.5">
-            {prioritizedQuestions.map((question, idx) => {
-              const status = questionStatuses[question.id] ?? "pending"
-              const stats = questionStats[question.id]
-              const mastery = stats?.mastery_level || "new"
-              const masteryColor = MASTERY_COLORS[mastery]
-              const isActive = question.id === currentQuestionId
-
-              return (
-                <button
-                  key={question.id}
-                  type="button"
-                  onClick={() => handleSelectQuestion(question.id)}
-                  className={cn(
-                    "inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-all",
-                    isActive
-                      ? "border-primary bg-primary/10 text-primary shadow-sm"
-                      : cn(
-                        masteryColor.border,
-                        masteryColor.bg,
-                        masteryColor.text,
-                        "hover:opacity-80"
-                      )
-                  )}
-                >
-                  <span
-                    className={cn(
-                      "h-1.5 w-1.5 rounded-full",
-                      status === "correct"
-                        ? "bg-emerald-500"
-                        : status === "incorrect"
-                          ? "bg-rose-500"
-                          : "bg-slate-400"
+                    {!revealAnswer ? (
+                      <Button
+                        size="lg"
+                        onClick={handleReveal}
+                        disabled={selectedOption === null && normalisedOptions.length > 0}
+                        className="rounded-full px-8 shadow-lg shadow-primary/20"
+                      >
+                        Vérifier
+                        <ArrowRight className="h-4 w-4 ml-2" />
+                      </Button>
+                    ) : (
+                      <Button
+                        size="lg"
+                        onClick={handleNext}
+                        className="rounded-full px-8 shadow-lg shadow-primary/20"
+                      >
+                        {currentIndex === prioritizedQuestions.length - 1 ? "Terminer" : "Suivant"}
+                        <ArrowRight className="h-4 w-4 ml-2" />
+                      </Button>
                     )}
-                  />
-                  {idx + 1}
-                </button>
-              )
-            })}
-          </div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
     </div>
