@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { CheckCircle2, Loader2, Sparkles, FileText, Brain, Database } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useTranslations } from "next-intl"
 
 export type GenerationStep = "intent" | "documents" | "context" | "generation" | "saving" | "complete"
 
@@ -13,40 +14,41 @@ interface GenerationOverlayProps {
     onClose?: () => void
 }
 
-const steps = [
-    {
-        id: "intent",
-        label: "Analyse de votre demande",
-        icon: Sparkles,
-        description: "Compréhension de l'intention et du sujet"
-    },
-    {
-        id: "documents",
-        label: "Recherche des documents",
-        icon: FileText,
-        description: "Identification des sources pertinentes"
-    },
-    {
-        id: "context",
-        label: "Préparation du contexte",
-        icon: Database,
-        description: "Extraction et structuration du contenu"
-    },
-    {
-        id: "generation",
-        label: "Génération par l'IA",
-        icon: Brain,
-        description: "Création du contenu pédagogique"
-    },
-    {
-        id: "saving",
-        label: "Finalisation",
-        icon: CheckCircle2,
-        description: "Sauvegarde et organisation"
-    }
-]
-
 export function GenerationOverlay({ isVisible, currentStep, onClose }: GenerationOverlayProps) {
+    const t = useTranslations("GenerationOverlay")
+
+    const steps = [
+        {
+            id: "intent",
+            label: t("intentLabel"),
+            icon: Sparkles,
+            description: t("intentDescription")
+        },
+        {
+            id: "documents",
+            label: t("documentsLabel"),
+            icon: FileText,
+            description: t("documentsDescription")
+        },
+        {
+            id: "context",
+            label: t("contextLabel"),
+            icon: Database,
+            description: t("contextDescription")
+        },
+        {
+            id: "generation",
+            label: t("generationLabel"),
+            icon: Brain,
+            description: t("generationDescription")
+        },
+        {
+            id: "saving",
+            label: t("savingLabel"),
+            icon: CheckCircle2,
+            description: t("savingDescription")
+        }
+    ]
     // Calculer l'index de l'étape active
     const activeStepIndex = steps.findIndex(s => s.id === currentStep)
     const isComplete = currentStep === "complete"
@@ -74,7 +76,7 @@ export function GenerationOverlay({ isVisible, currentStep, onClose }: Generatio
                                     <Sparkles className="h-4 w-4 text-primary animate-pulse" />
                                 )}
                                 <span className="text-sm font-semibold text-foreground">
-                                    {isComplete ? "Terminé" : "L'IA travaille..."}
+                                    {isComplete ? t("completeTitle") : t("workingTitle")}
                                 </span>
                             </div>
                         </div>
@@ -104,10 +106,10 @@ export function GenerationOverlay({ isVisible, currentStep, onClose }: Generatio
                                     </div>
                                     <div>
                                         <h3 className="text-sm font-medium text-foreground">
-                                            {isComplete ? "Contenu généré !" : currentStepData.label}
+                                            {isComplete ? t("contentGenerated") : currentStepData.label}
                                         </h3>
                                         <p className="text-xs text-muted-foreground mt-0.5">
-                                            {isComplete ? "Cliquez pour voir le résultat." : currentStepData.description}
+                                            {isComplete ? t("clickToView") : currentStepData.description}
                                         </p>
                                     </div>
                                 </motion.div>
@@ -130,7 +132,7 @@ export function GenerationOverlay({ isVisible, currentStep, onClose }: Generatio
                                     onClick={onClose}
                                     className="mt-4 w-full py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors shadow-sm"
                                 >
-                                    Ouvrir l'onglet
+                                    {t("openTab")}
                                 </motion.button>
                             )}
                         </div>

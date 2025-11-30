@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useEffect, useMemo } from "react"
-import { Search, Plus, FolderOpen, Sparkles, ArrowRight, FileText, Layers, Trash2 } from "lucide-react"
+import { Search, Plus, FolderOpen, Sparkles, ArrowRight, FileText, Layers, Trash2, GraduationCap } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { CreateSubjectDialog } from "./CreateSubjectDialog"
@@ -158,54 +158,67 @@ export function LibraryView({ onSelectSubject }: LibraryViewProps) {
               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[100px]" />
             </div>
 
-            <div className="relative z-10 flex flex-col items-center text-center max-w-lg mx-auto p-8 rounded-3xl border border-border/50 bg-background/30 backdrop-blur-xl shadow-2xl animate-in fade-in zoom-in-95 duration-500">
-              {/* Icon with glow */}
-              <div className="relative mb-8 group cursor-default">
-                <div className="absolute inset-0 bg-primary/20 rounded-full blur-xl group-hover:blur-2xl transition-all duration-500" />
-                <div className="relative h-24 w-24 rounded-2xl bg-gradient-to-br from-background to-muted border border-border/50 shadow-xl flex items-center justify-center group-hover:-translate-y-2 transition-transform duration-500">
-                  <Layers className="h-10 w-10 text-primary" />
-                  <Plus className="absolute top-4 right-4 h-4 w-4 text-primary/60" />
+            <div className="relative z-10 flex flex-col items-center text-center max-w-3xl mx-auto p-12 rounded-3xl border border-border/50 bg-background/30 backdrop-blur-xl shadow-2xl animate-in fade-in zoom-in-95 duration-500">
+              {/* Benefit-driven headline */}
+              <h2 className="text-4xl md:text-5xl font-bold tracking-tight mb-4 bg-clip-text text-transparent bg-gradient-to-br from-foreground via-foreground to-foreground/70 leading-tight py-2">
+                {t("onboardingHeadline")}
+              </h2>
+
+              <p className="text-muted-foreground text-lg mb-12 leading-relaxed max-w-2xl">
+                {t("onboardingSubtitle")}
+              </p>
+
+              {/* 3-Step Process Visualization */}
+              <div className="flex items-center justify-center gap-6 mb-12 w-full">
+                {/* Step 1: Import PDF */}
+                <div className="flex flex-col items-center gap-3 flex-1 max-w-[140px]">
+                  <div className="relative group">
+                    <div className="absolute inset-0 bg-blue-500/20 rounded-2xl blur-lg group-hover:blur-xl transition-all duration-300" />
+                    <div className="relative h-16 w-16 rounded-2xl bg-gradient-to-br from-blue-500/10 to-blue-600/5 border border-blue-500/20 shadow-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                      <FileText className="h-8 w-8 text-blue-500" />
+                    </div>
+                  </div>
+                  <span className="text-sm font-semibold text-foreground">{t("step1Label")}</span>
+                </div>
+
+                {/* Arrow */}
+                <ArrowRight className="h-6 w-6 text-muted-foreground/40 flex-shrink-0" />
+
+                {/* Step 2: AI Processing */}
+                <div className="flex flex-col items-center gap-3 flex-1 max-w-[140px]">
+                  <div className="relative group">
+                    <div className="absolute inset-0 bg-purple-500/20 rounded-2xl blur-lg group-hover:blur-xl transition-all duration-300" />
+                    <div className="relative h-16 w-16 rounded-2xl bg-gradient-to-br from-purple-500/10 to-purple-600/5 border border-purple-500/20 shadow-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                      <Sparkles className="h-8 w-8 text-purple-500" />
+                    </div>
+                  </div>
+                  <span className="text-sm font-semibold text-foreground">{t("step2Label")}</span>
+                </div>
+
+                {/* Arrow */}
+                <ArrowRight className="h-6 w-6 text-muted-foreground/40 flex-shrink-0" />
+
+                {/* Step 3: Master it */}
+                <div className="flex flex-col items-center gap-3 flex-1 max-w-[140px]">
+                  <div className="relative group">
+                    <div className="absolute inset-0 bg-emerald-500/20 rounded-2xl blur-lg group-hover:blur-xl transition-all duration-300" />
+                    <div className="relative h-16 w-16 rounded-2xl bg-gradient-to-br from-emerald-500/10 to-emerald-600/5 border border-emerald-500/20 shadow-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                      <GraduationCap className="h-8 w-8 text-emerald-500" />
+                    </div>
+                  </div>
+                  <span className="text-sm font-semibold text-foreground">{t("step3Label")}</span>
                 </div>
               </div>
 
-              <h2 className="text-3xl font-bold tracking-tight mb-3 bg-clip-text text-transparent bg-gradient-to-br from-foreground to-foreground/70">
-                {t("noCollections")}
-              </h2>
-
-              <p className="text-muted-foreground text-lg mb-8 leading-relaxed">
-                {t("noCollectionsDesc")}
-              </p>
-
+              {/* CTA Button */}
               <Button
                 onClick={() => setIsCreateDialogOpen(true)}
                 size="lg"
-                className="h-12 px-8 rounded-full shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all duration-300 hover:scale-105 text-base"
+                className="h-14 px-10 rounded-full shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all duration-300 hover:scale-105 text-base font-semibold"
               >
                 <Plus className="h-5 w-5 mr-2" />
-                {t("createCollection")}
+                {t("ctaStartSubject")}
               </Button>
-
-              {/* Quick tips or features */}
-              <div className="grid grid-cols-2 gap-4 mt-12 w-full">
-                <div className="p-4 rounded-xl bg-background/50 border border-border/50 text-left hover:bg-background/80 transition-colors">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="p-1.5 rounded-lg bg-blue-500/10">
-                      <FileText className="h-4 w-4 text-blue-500" />
-                    </div>
-                    <span className="text-sm font-medium">Documents</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground">Importez vos PDF et notes</p>
-                </div>
-                <div className="p-4 rounded-xl bg-background/50 border border-border/50 text-left hover:bg-background/80 transition-colors">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="p-1.5 rounded-lg bg-purple-500/10">
-                      <Sparkles className="h-4 w-4 text-purple-500" />
-                    </div>
-                    <span className="text-sm font-medium">AI Magic</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground">Générez quiz et flashcards</p>
-                </div>
-              </div>
             </div>
           </div>
         ) : (

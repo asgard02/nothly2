@@ -436,6 +436,12 @@
     "noCollections": "No subjects",
     "noCollectionsDesc": "Create your first subject to organize your documents.",
     "createCollection": "Create a subject",
+    "onboardingHeadline": "Turn your notes into Grades",
+    "onboardingSubtitle": "Upload your course materials (PDF, notes) and let our AI instantly generate quizzes and flashcards for you.",
+    "step1Label": "Import PDF",
+    "step2Label": "AI Processing",
+    "step3Label": "Master it",
+    "ctaStartSubject": "Start a new subject",
     "deleteTooltip": "Delete",
     "open": "Open",
     "loading": "Loading subjects...",
@@ -532,5 +538,22 @@
     "cancel": "Cancel",
     "importing": "Importing...",
     "import": "Import"
+  },
+  "GenerationOverlay": {
+    "intentLabel": "Analyzing request",
+    "intentDescription": "Understanding intent and topic",
+    "documentsLabel": "Finding documents",
+    "documentsDescription": "Identifying relevant sources",
+    "contextLabel": "Preparing context",
+    "contextDescription": "Extracting and structuring content",
+    "generationLabel": "AI Generation",
+    "generationDescription": "Creating educational content",
+    "savingLabel": "Finalizing",
+    "savingDescription": "Saving and organizing",
+    "workingTitle": "AI is working...",
+    "completeTitle": "Complete",
+    "contentGenerated": "Content generated!",
+    "clickToView": "Click to view the result.",
+    "openTab": "Open tab"
   }
 }

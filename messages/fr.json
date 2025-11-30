@@ -445,6 +445,12 @@
     "noCollections": "Aucune matière",
     "noCollectionsDesc": "Créez votre première matière pour organiser vos documents.",
     "createCollection": "Créer une matière",
+    "onboardingHeadline": "Transformez vos notes en Réussite",
+    "onboardingSubtitle": "Importez vos supports de cours (PDF, notes) et laissez notre IA générer instantanément des quiz et flashcards pour vous.",
+    "step1Label": "Importer PDF",
+    "step2Label": "Traitement IA",
+    "step3Label": "Maîtrisez-le",
+    "ctaStartSubject": "Créer une nouvelle matière",
     "deleteTooltip": "Supprimer",
     "open": "Ouvrir",
     "loading": "Chargement des matières...",
@@ -541,5 +547,22 @@
     "cancel": "Annuler",
     "importing": "Importation...",
     "import": "Importer"
+  },
+  "GenerationOverlay": {
+    "intentLabel": "Analyse de votre demande",
+    "intentDescription": "Compréhension de l'intention et du sujet",
+    "documentsLabel": "Recherche des documents",
+    "documentsDescription": "Identification des sources pertinentes",
+    "contextLabel": "Préparation du contexte",
+    "contextDescription": "Extraction et structuration du contenu",
+    "generationLabel": "Génération par l'IA",
+    "generationDescription": "Création du contenu pédagogique",
+    "savingLabel": "Finalisation",
+    "savingDescription": "Sauvegarde et organisation",
+    "workingTitle": "L'IA travaille...",
+    "completeTitle": "Terminé",
+    "contentGenerated": "Contenu généré !",
+    "clickToView": "Cliquez pour voir le résultat.",
+    "openTab": "Ouvrir l'onglet"
   }
 }
