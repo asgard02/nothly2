@@ -172,7 +172,11 @@ export async function middleware(request: NextRequest) {
   }
 
   // Pour les routes API protégées
-  if (pathname.startsWith('/api/notes') || pathname.startsWith('/api/ai')) {
+  if (pathname.startsWith('/api/notes') ||
+    pathname.startsWith('/api/ai') ||
+    pathname.startsWith('/api/documents') ||
+    pathname.startsWith('/api/subjects') ||
+    pathname.startsWith('/api/collections')) {
     try {
       const supabase = createServerClient(
         supabaseUrl,

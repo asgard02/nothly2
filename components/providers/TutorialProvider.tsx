@@ -15,7 +15,7 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
 
     const startTutorial = () => {
         // Reset the completion flag so it shows up
-        localStorage.removeItem("nothly_tutorial_v3_completed")
+        localStorage.removeItem("nothly_tutorial_v4_completed")
         setIsOpen(true)
     }
 
@@ -30,7 +30,7 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
             const searchParams = new URLSearchParams(window.location.search)
             const isFreshLoginParam = searchParams.get("fresh_login") === "true"
 
-            const hasSeen = localStorage.getItem("nothly_tutorial_v3_completed")
+            const hasSeen = localStorage.getItem("nothly_tutorial_v4_completed")
 
             console.log("[TutorialProvider] Checking launch conditions:", {
                 isFreshLoginSession,
@@ -38,24 +38,21 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
                 hasSeen
             })
 
+            // Logic: Show if it's a fresh login (session or param) AND they haven't seen it yet
+            if ((isFreshLoginSession || isFreshLoginParam) && !hasSeen) {
+                console.log("[TutorialProvider] Launching tutorial...")
 
-            // DEBUG FORCE: We ignore hasSeen for now to prove it works
-            // if ((isFreshLoginSession || isFreshLoginParam) && !hasSeen) {
-
-            if (isFreshLoginSession || isFreshLoginParam) {
-                console.log("[TutorialProvider] FORCING tutorial open (Ignoring hasSeen for debug)...")
+                // Small delay to ensure hydration/layout stability
                 setTimeout(() => {
-                    console.log("[TutorialProvider] OPENING NOW.")
                     setIsOpen(true)
-                    sessionStorage.removeItem("nothly_fresh_login")
 
+                    // Cleanup flags
+                    sessionStorage.removeItem("nothly_fresh_login")
                     if (isFreshLoginParam) {
                         const newUrl = window.location.pathname + window.location.hash
                         window.history.replaceState({}, '', newUrl)
                     }
                 }, 500)
-            } else {
-                console.log("[TutorialProvider] Not forcing open. Session:", isFreshLoginSession, "Param:", isFreshLoginParam)
             }
         }
 

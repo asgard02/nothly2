@@ -69,7 +69,17 @@ export default function RegisterPage() {
       if (error) {
         setIsError(true)
         setMessage(`Error: ${error.message}`)
+      } else if (data.session) {
+        // User is automatically signed in (email confirmation disabled)
+        setIsSuccess(true)
+        setMessage("🎉 Account created successfully! Logging you in...")
+        sessionStorage.setItem("nothly_fresh_login", "true")
+        window.dispatchEvent(new Event("nothly-login-success"))
+        setTimeout(() => {
+          router.push("/workspace")
+        }, 1500)
       } else if (data.user) {
+        // Email confirmation required
         setIsSuccess(true)
         setMessage("✉️ A confirmation email has been sent. Please check your inbox.")
         setTimeout(() => {
@@ -267,8 +277,8 @@ export default function RegisterPage() {
                 {message && (
                   <div
                     className={`p-4 rounded-xl border-2 font-bold ${isError
-                        ? "bg-red-100 text-red-700 border-red-700"
-                        : "bg-green-100 text-green-700 border-green-700"
+                      ? "bg-red-100 text-red-700 border-red-700"
+                      : "bg-green-100 text-green-700 border-green-700"
                       }`}
                   >
                     {message}

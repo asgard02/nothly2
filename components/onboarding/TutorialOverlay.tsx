@@ -348,7 +348,7 @@ export function TutorialOverlay() {
     }
 
     const handleComplete = () => {
-        localStorage.setItem("nothly_tutorial_v3_completed", "true")
+        localStorage.setItem("nothly_tutorial_v4_completed", "true")
         setIsOpen(false)
     }
 
