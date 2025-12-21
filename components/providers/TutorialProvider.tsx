@@ -15,7 +15,7 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
 
     const startTutorial = () => {
         // Reset the completion flag so it shows up
-        localStorage.removeItem("nothly_tutorial_v1_completed")
+        localStorage.removeItem("nothly_tutorial_v3_completed")
         setIsOpen(true)
     }
 
@@ -30,7 +30,7 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
             const searchParams = new URLSearchParams(window.location.search)
             const isFreshLoginParam = searchParams.get("fresh_login") === "true"
 
-            const hasSeen = localStorage.getItem("nothly_tutorial_v1_completed")
+            const hasSeen = localStorage.getItem("nothly_tutorial_v3_completed")
 
             console.log("[TutorialProvider] Checking launch conditions:", {
                 isFreshLoginSession,
@@ -38,10 +38,14 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
                 hasSeen
             })
 
-            if ((isFreshLoginSession || isFreshLoginParam) && !hasSeen) {
-                console.log("[TutorialProvider] Triggering tutorial sequence...")
+
+            // DEBUG FORCE: We ignore hasSeen for now to prove it works
+            // if ((isFreshLoginSession || isFreshLoginParam) && !hasSeen) {
+
+            if (isFreshLoginSession || isFreshLoginParam) {
+                console.log("[TutorialProvider] FORCING tutorial open (Ignoring hasSeen for debug)...")
                 setTimeout(() => {
-                    console.log("[TutorialProvider] Opening tutorial now.")
+                    console.log("[TutorialProvider] OPENING NOW.")
                     setIsOpen(true)
                     sessionStorage.removeItem("nothly_fresh_login")
 
@@ -49,7 +53,9 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
                         const newUrl = window.location.pathname + window.location.hash
                         window.history.replaceState({}, '', newUrl)
                     }
-                }, 500) // Slightly shorter delay
+                }, 500)
+            } else {
+                console.log("[TutorialProvider] Not forcing open. Session:", isFreshLoginSession, "Param:", isFreshLoginParam)
             }
         }
 
