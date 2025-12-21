@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { X, ArrowRight, ArrowLeft, Check, Sparkles, LayoutDashboard, Plus, FileText, Upload, MessageSquare, Brain, Grid, ListChecks, BookOpen } from "lucide-react"
+import { X, ArrowRight, ArrowLeft, Check, Sparkles, LayoutDashboard, Plus, FileText, Upload, MessageSquare, Brain, Grid, ListChecks, BookOpen, MousePointer2 } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -63,18 +63,46 @@ const TutorialVisual = ({ step, t }: { step: number, t: any }) => {
     // Arrow Pointer
     const Pointer = ({ text, className, side = "top" }: { text: string, className?: string, side?: "top" | "bottom" | "left" | "right" }) => (
         <motion.div
-            initial={{ opacity: 0, [side === "top" ? "y" : "y"]: 10 }}
-            animate={{ opacity: 1, [side === "top" ? "y" : "y"]: 0 }}
+            initial={{ opacity: 0, [side === "top" || side === "bottom" ? "y" : "x"]: side === "top" || side === "bottom" ? 10 : -10 }}
+            animate={{ opacity: 1, [side === "top" || side === "bottom" ? "y" : "x"]: 0 }}
             transition={{ delay: 0.5 }}
-            className={cn("absolute z-40 flex flex-col items-center pointer-events-none", className)}
+            className={cn(
+                "absolute z-40 flex items-center pointer-events-none",
+                (side === "top" || side === "bottom") ? "flex-col" : "flex-row",
+                className
+            )}
         >
             {side === "bottom" && <div className="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-b-[8px] border-b-black mb-1"></div>}
+            {side === "right" && <div className="w-0 h-0 border-t-[6px] border-t-transparent border-b-[6px] border-b-transparent border-r-[8px] border-r-black mr-1"></div>}
 
             <div className="bg-black text-white text-xs font-bold px-3 py-1.5 rounded shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] whitespace-nowrap border-2 border-white">
                 {text}
             </div>
 
+            {side === "left" && <div className="w-0 h-0 border-t-[6px] border-t-transparent border-b-[6px] border-b-transparent border-l-[8px] border-l-black ml-1"></div>}
             {side === "top" && <div className="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[8px] border-t-black mt-1"></div>}
+        </motion.div>
+    )
+
+    // Hand Cursor for simulation
+    const HandCursor = ({ className }: { className?: string }) => (
+        <motion.div
+            initial={{ opacity: 0, x: 20, y: 20 }}
+            animate={{
+                opacity: [0, 1, 1],
+                x: [20, 0, 0],
+                y: [20, 0, 0],
+                scale: [1, 1, 0.9, 1]
+            }}
+            transition={{
+                duration: 1.5,
+                times: [0, 0.4, 0.8, 1],
+                repeat: Infinity,
+                repeatDelay: 1
+            }}
+            className={cn("absolute z-50 pointer-events-none", className)}
+        >
+            <MousePointer2 className="w-12 h-12 text-black fill-white drop-shadow-xl" strokeWidth={1.5} />
         </motion.div>
     )
 
@@ -149,7 +177,8 @@ const TutorialVisual = ({ step, t }: { step: number, t: any }) => {
                             </div>
                         </div>
 
-                        <Pointer text={t("pointerCreateSubject")} className="bottom-12 left-[28%] -translate-x-1/2" side="bottom" />
+                        <Pointer text={t("pointerCreateSubject")} className="top-[135px] left-[70px] -translate-y-1/2" side="right" />
+                        <HandCursor className="top-[135px] left-[-12px]" />
                     </MiniAppFrame>
                 </div>
             )
