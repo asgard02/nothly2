@@ -10,17 +10,19 @@ interface TutorialContextType {
 
 const TutorialContext = createContext<TutorialContextType | undefined>(undefined)
 
+import { usePathname } from "next/navigation"
+
 export function TutorialProvider({ children }: { children: React.ReactNode }) {
     const [isOpen, setIsOpen] = useState(false)
+    const pathname = usePathname()
 
     const startTutorial = () => {
         // Reset the completion flag so it shows up
-        localStorage.removeItem("nothly_tutorial_v4_completed")
+        localStorage.removeItem("nothly_tutorial_v5_completed")
         setIsOpen(true)
     }
 
-    // Initial check on mount
-    // Initial check on mount + listen for storage changes
+    // Initial check on mount + listen for storage changes + PATH CHANGE (for redirects)
     useEffect(() => {
         const checkAndLaunch = () => {
             // Check session storage
@@ -30,12 +32,13 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
             const searchParams = new URLSearchParams(window.location.search)
             const isFreshLoginParam = searchParams.get("fresh_login") === "true"
 
-            const hasSeen = localStorage.getItem("nothly_tutorial_v4_completed")
+            const hasSeen = localStorage.getItem("nothly_tutorial_v5_completed")
 
             console.log("[TutorialProvider] Checking launch conditions:", {
                 isFreshLoginSession,
                 isFreshLoginParam,
-                hasSeen
+                hasSeen,
+                pathname
             })
 
             // Logic: Show if it's a fresh login (session or param) AND they haven't seen it yet
@@ -56,14 +59,14 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
             }
         }
 
-        // Run immediately
+        // Run immediately and on path change
         checkAndLaunch()
 
         // Also listen for a custom event we will dispatch from login page
         window.addEventListener("nothly-login-success", checkAndLaunch)
 
         return () => window.removeEventListener("nothly-login-success", checkAndLaunch)
-    }, [])
+    }, [pathname])
 
     return (
         <TutorialContext.Provider value={{ startTutorial, isOpen, setIsOpen }}>
