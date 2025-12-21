@@ -15,37 +15,51 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
 
     const startTutorial = () => {
         // Reset the completion flag so it shows up
-        localStorage.removeItem("nothly_tutorial_completed")
+        localStorage.removeItem("nothly_tutorial_v1_completed")
         setIsOpen(true)
     }
 
     // Initial check on mount
-    // Initial check on mount
+    // Initial check on mount + listen for storage changes
     useEffect(() => {
-        // Check session storage
-        const isFreshLoginSession = sessionStorage.getItem("nothly_fresh_login")
+        const checkAndLaunch = () => {
+            // Check session storage
+            const isFreshLoginSession = sessionStorage.getItem("nothly_fresh_login")
 
-        // Check URL params (for OAuth/Magic Link redirects)
-        const searchParams = new URLSearchParams(window.location.search)
-        const isFreshLoginParam = searchParams.get("fresh_login") === "true"
+            // Check URL params
+            const searchParams = new URLSearchParams(window.location.search)
+            const isFreshLoginParam = searchParams.get("fresh_login") === "true"
 
-        const hasSeen = localStorage.getItem("nothly_tutorial_completed")
+            const hasSeen = localStorage.getItem("nothly_tutorial_v1_completed")
 
-        if ((isFreshLoginSession || isFreshLoginParam) && !hasSeen) {
-            // Small delay to ensure smooth entry
-            const timer = setTimeout(() => setIsOpen(true), 1000)
+            console.log("[TutorialProvider] Checking launch conditions:", {
+                isFreshLoginSession,
+                isFreshLoginParam,
+                hasSeen
+            })
 
-            // Consume the flags
-            sessionStorage.removeItem("nothly_fresh_login")
+            if ((isFreshLoginSession || isFreshLoginParam) && !hasSeen) {
+                console.log("[TutorialProvider] Triggering tutorial sequence...")
+                setTimeout(() => {
+                    console.log("[TutorialProvider] Opening tutorial now.")
+                    setIsOpen(true)
+                    sessionStorage.removeItem("nothly_fresh_login")
 
-            // Clean up URL if needed
-            if (isFreshLoginParam) {
-                const newUrl = window.location.pathname + window.location.hash
-                window.history.replaceState({}, '', newUrl)
+                    if (isFreshLoginParam) {
+                        const newUrl = window.location.pathname + window.location.hash
+                        window.history.replaceState({}, '', newUrl)
+                    }
+                }, 500) // Slightly shorter delay
             }
-
-            return () => clearTimeout(timer)
         }
+
+        // Run immediately
+        checkAndLaunch()
+
+        // Also listen for a custom event we will dispatch from login page
+        window.addEventListener("nothly-login-success", checkAndLaunch)
+
+        return () => window.removeEventListener("nothly-login-success", checkAndLaunch)
     }, [])
 
     return (

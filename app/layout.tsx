@@ -9,6 +9,8 @@ import { notFound } from "next/navigation"
 import { SidebarProvider } from "@/components/providers/SidebarProvider"
 import { Toaster } from "sonner"
 import { AntigravityBackground } from "@/components/ui/antigravity-background"
+import { TutorialOverlay } from "@/components/onboarding/TutorialOverlay"
+import { TutorialProvider } from "@/components/providers/TutorialProvider"
 
 
 const inter = Inter({ subsets: ["latin"] })
@@ -66,7 +68,10 @@ export default async function RootLayout({
           <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false} forcedTheme="dark">
             <SidebarProvider>
               <ReactQueryProvider>
-                {children}
+                <TutorialProvider>
+                  {children}
+                  <TutorialOverlay />
+                </TutorialProvider>
                 <Toaster position="bottom-right" theme="dark" closeButton richColors />
               </ReactQueryProvider>
             </SidebarProvider>

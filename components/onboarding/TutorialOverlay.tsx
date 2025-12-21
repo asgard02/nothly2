@@ -265,10 +265,17 @@ const TutorialVisual = ({ step, t }: { step: number, t: any }) => {
     }
 }
 
+import { usePathname } from "next/navigation"
+
 export function TutorialOverlay() {
     const { isOpen, setIsOpen } = useTutorial()
     const [currentStep, setCurrentStep] = useState(0)
     const t = useTranslations("Tutorial")
+    const pathname = usePathname()
+
+    const isPublicPage = pathname === "/" || pathname?.startsWith("/login") || pathname?.startsWith("/register")
+
+    if (!isOpen || isPublicPage) return null
 
     const STEPS = [
         {
@@ -312,7 +319,7 @@ export function TutorialOverlay() {
     }
 
     const handleComplete = () => {
-        localStorage.setItem("nothly_tutorial_completed", "true")
+        localStorage.setItem("nothly_tutorial_v1_completed", "true")
         setIsOpen(false)
     }
 
@@ -321,7 +328,7 @@ export function TutorialOverlay() {
     const step = STEPS[currentStep]
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
             <AnimatePresence mode="wait">
                 <motion.div
                     key={currentStep}
