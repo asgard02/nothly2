@@ -10,7 +10,7 @@ const nextConfig = {
     // Désactivé temporairement pour éviter les problèmes de vendor-chunks
     // optimizePackageImports: ['lucide-react', '@radix-ui/react-dialog'],
   },
-  transpilePackages: ['react-markdown', 'remark-gfm'],
+  transpilePackages: ['react-markdown', 'remark-gfm', 'micromark-extension-math', 'katex'],
   
   // Augmenter la limite de taille pour les uploads de PDF
 

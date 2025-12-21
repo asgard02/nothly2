@@ -29,10 +29,12 @@ export async function GET() {
     // Récupérer les matières
     const { data: collections, error } = await admin
       .from("collections")
-      .select("id, title, color, is_favorite, created_at, updated_at")
+      .select("id, title, color, created_at, updated_at")
       .eq("user_id", user.id)
       .order("updated_at", { ascending: false })
 
+    console.log(`[GET /api/subjects] searching for user_id: ${user.id}`)
+    console.log("[GET /api/subjects] Query result:", { count: collections?.length, error })
     console.log("[GET /api/subjects] ✅ Matières trouvées:", collections?.length || 0, "pour user:", user.id)
 
     if (error) {
