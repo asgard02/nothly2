@@ -1,7 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { Play, Star, BookOpen, MoreVertical, LayoutGrid, List, Plus, Trash2 } from "lucide-react"
+import { Play, Star, BookOpen, MoreVertical, LayoutGrid, List, Plus, Trash2, Loader2 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { useSubjects, useDeleteSubject, useUpdateSubject } from "@/lib/hooks/useSubjects"
 import Link from "next/link"
@@ -17,7 +17,11 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 
+import { useTranslations, useFormatter } from "next-intl"
+
 export default function SubjectsPage() {
+    const t = useTranslations("Subjects")
+    const format = useFormatter()
     const { data: subjects = [], isLoading } = useSubjects()
     const deleteSubjectMutation = useDeleteSubject()
     const updateSubjectMutation = useUpdateSubject()
@@ -57,13 +61,13 @@ export default function SubjectsPage() {
             <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
                 <div>
                     <h1 className="text-6xl md:text-8xl font-black tracking-tighter text-black flex items-center gap-4">
-                        My Subjects <span className="text-2xl md:text-4xl bg-[#FBCFE8] border-2 border-black rounded-full w-16 h-16 flex items-center justify-center shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] rotate-12">{subjects.length}</span>
+                        {t('title')} <span className="text-2xl md:text-4xl bg-[#FBCFE8] border-2 border-black rounded-full w-16 h-16 flex items-center justify-center shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] rotate-12">{subjects.length}</span>
                     </h1>
                 </div>
 
                 <div className="flex items-center gap-4 w-full md:w-auto">
                     <Input
-                        placeholder="SEARCH..."
+                        placeholder={t('searchPlaceholder')}
                         className="w-full md:w-64 border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] focus:translate-x-[2px] focus:translate-y-[2px] focus:shadow-none transition-all uppercase font-bold"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
@@ -79,22 +83,93 @@ export default function SubjectsPage() {
                 </div>
             </div>
 
+            {/* Loading State */}
+            {isLoading && (
+                <div className="flex flex-col items-center justify-center py-24">
+                    <div className="bg-white border-2 border-black rounded-3xl p-12 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+                        <div className="flex flex-col items-center gap-6">
+                            <div className="relative">
+                                <div className="w-16 h-16 rounded-full border-4 border-black/10"></div>
+                                <div className="absolute inset-0 w-16 h-16 rounded-full border-4 border-black border-t-transparent animate-spin"></div>
+                            </div>
+                            <p className="text-xl font-black uppercase text-black">{t('loading')}</p>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Empty State */}
             {!isLoading && filteredSubjects.length === 0 && (
-                <div className="flex flex-col items-center justify-center py-24 border-2 border-dashed border-black rounded-3xl bg-white/50">
-                    <div className="bg-[#DDD6FE] p-6 rounded-full border-2 border-black mb-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-                        <BookOpen className="h-12 w-12 text-black" strokeWidth={2} />
+                <div className="relative flex items-center justify-center min-h-[500px] px-4">
+                    {/* Decorative Background Elements */}
+                    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                        <div className="absolute top-10 left-10 w-24 h-24 bg-[#FBCFE8] rounded-full border-2 border-black opacity-20 animate-pulse"></div>
+                        <div className="absolute bottom-10 right-10 w-32 h-32 bg-[#BAE6FD] rounded-full border-2 border-black opacity-20 animate-pulse" style={{ animationDelay: '1s' }}></div>
+                        <div className="absolute top-1/3 right-1/3 w-20 h-20 bg-[#BBF7D0] rounded-full border-2 border-black opacity-20 animate-pulse" style={{ animationDelay: '0.5s' }}></div>
                     </div>
-                    <h3 className="text-2xl font-black uppercase mb-2">No subjects found</h3>
-                    <p className="font-bold text-gray-500 mb-8">Create your first subject to get started!</p>
-                    <Button onClick={() => setIsCreateSubjectOpen(true)} className="h-14 px-8 rounded-xl border-2 border-black bg-[#FBBF24] text-black hover:bg-[#F59E0B] text-lg font-bold shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-y-[2px] transition-all active:shadow-none">
-                        <Plus className="mr-2 h-6 w-6" strokeWidth={3} /> Create New Subject
-                    </Button>
+
+                    {/* Main Content - Horizontal Layout */}
+                    <div className="relative bg-white border-4 border-black rounded-3xl shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] max-w-5xl w-full overflow-hidden">
+                        {/* Top Accent Bar */}
+                        <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-[#FBBF24] via-[#FBCFE8] to-[#BAE6FD]"></div>
+
+                        <div className="flex flex-col md:flex-row items-center gap-8 p-12">
+                            {/* Left Side - Icon */}
+                            <div className="flex-shrink-0">
+                                <div className="relative">
+                                    <div className="absolute inset-0 bg-[#DDD6FE] rounded-full blur-2xl opacity-40 animate-pulse"></div>
+                                    <div className="relative bg-gradient-to-br from-[#DDD6FE] to-[#BAE6FD] p-10 rounded-3xl border-4 border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:scale-105 transition-transform duration-300">
+                                        <BookOpen className="h-20 w-20 text-black" strokeWidth={2.5} />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Right Side - Content */}
+                            <div className="flex-1 text-center md:text-left">
+                                <h2 className="text-4xl md:text-5xl font-black uppercase mb-3 tracking-tight">
+                                    {t('noSubjectsTitle')}
+                                </h2>
+                                <p className="text-lg font-bold text-gray-600 mb-2">
+                                    {t('noSubjectsSubtitle')}
+                                </p>
+                                <p className="text-base font-medium text-gray-500 mb-6 leading-relaxed max-w-xl">
+                                    {t('noSubjectsDesc')}
+                                </p>
+
+                                {/* CTA Button */}
+                                <Button
+                                    onClick={() => setIsCreateSubjectOpen(true)}
+                                    className="group h-14 px-8 rounded-xl border-4 border-black bg-[#FBBF24] hover:bg-[#F59E0B] text-black text-lg font-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5 transition-all duration-200 active:translate-y-1 active:shadow-none uppercase mb-6"
+                                >
+                                    <Plus className="mr-2 h-6 w-6 group-hover:rotate-90 transition-transform duration-300" strokeWidth={3} />
+                                    {t('createFirstSubject')}
+                                </Button>
+
+                                {/* Quick Tips - Horizontal */}
+                                <div className="flex flex-wrap gap-2 justify-center md:justify-start">
+                                    {[
+                                        { icon: "📚", text: t('tips.upload') },
+                                        { icon: "🤖", text: t('tips.ai') },
+                                        { icon: "⚡", text: t('tips.flash') },
+                                        { icon: "🎯", text: t('tips.quiz') }
+                                    ].map((tip, i) => (
+                                        <div
+                                            key={i}
+                                            className="flex items-center gap-1.5 px-3 py-1.5 bg-white border-2 border-black rounded-lg shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5 transition-all"
+                                        >
+                                            <span className="text-base">{tip.icon}</span>
+                                            <span className="text-xs font-bold text-gray-700">{tip.text}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             )}
 
             {/* Grid View */}
-            {viewMode === 'grid' && (
+            {!isLoading && viewMode === 'grid' && (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     {filteredSubjects.map((subject: any) => {
                         // Use stored color if available and valid (starts with bg-), otherwise fallback to deterministic hash
@@ -112,7 +187,7 @@ export default function SubjectsPage() {
                                         <div className="flex justify-between items-start mb-4">
                                             <div className="flex items-center gap-2">
                                                 <div className="bg-black text-white px-3 py-1 rounded-lg text-xs font-black uppercase">
-                                                    {subject.created_at ? new Date(subject.created_at).toLocaleDateString() : 'No Date'}
+                                                    {subject.created_at ? format.dateTime(new Date(subject.created_at), { dateStyle: 'medium' }) : t('noDate')}
                                                 </div>
                                                 {subject.is_favorite && (
                                                     <div className="bg-[#FBBF24] text-black border-2 border-black p-1 rounded-lg shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
@@ -139,7 +214,7 @@ export default function SubjectsPage() {
                                                         }}
                                                     >
                                                         <Star className={cn("h-4 w-4", subject.is_favorite && "fill-black")} />
-                                                        {subject.is_favorite ? "Unfavorite" : "Favorite"}
+                                                        {subject.is_favorite ? t('unfavorite') : t('favorite')}
                                                     </DropdownMenuItem>
                                                     <DropdownMenuItem
                                                         className="p-3 hover:bg-red-50 focus:bg-red-50 text-red-600 font-bold uppercase cursor-pointer flex items-center gap-2"
@@ -150,7 +225,7 @@ export default function SubjectsPage() {
                                                         }}
                                                     >
                                                         <Trash2 className="h-4 w-4" />
-                                                        Delete
+                                                        {t('delete')}
                                                     </DropdownMenuItem>
                                                 </DropdownMenuContent>
                                             </DropdownMenu>
@@ -161,7 +236,7 @@ export default function SubjectsPage() {
                                     </div>
 
                                     <div className="relative z-10 flex items-center justify-between mt-auto pt-4 border-t-2 border-black/5">
-                                        <span className="font-bold text-sm text-gray-500 uppercase">{subject.doc_count || 0} Docs</span>
+                                        <span className="font-bold text-sm text-gray-500 uppercase">{subject.doc_count || 0} {t('docs')}</span>
                                         <div className="h-10 w-10 bg-black rounded-full flex items-center justify-center text-white group-hover:bg-[#FBBF24] group-hover:text-black transition-colors border-2 border-transparent group-hover:border-black">
                                             <ArrowRight className="h-5 w-5" strokeWidth={3} />
                                         </div>
@@ -170,18 +245,20 @@ export default function SubjectsPage() {
                             </Link>
                         )
                     })}
-                    {/* Create New Card */}
-                    <button onClick={() => setIsCreateSubjectOpen(true)} className="border-4 border-dashed border-black/20 rounded-3xl p-6 h-64 flex flex-col items-center justify-center gap-4 hover:border-black hover:bg-[#F0FDF4] transition-all duration-200 ease-out group">
-                        <div className="h-16 w-16 rounded-full bg-[#BBF7D0] border-2 border-black flex items-center justify-center shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] group-hover:scale-110 transition-transform">
-                            <Plus className="h-8 w-8 text-black" strokeWidth={3} />
-                        </div>
-                        <span className="font-black text-xl uppercase">Create New</span>
-                    </button>
+                    {/* Create New Card - Only show when there are existing subjects */}
+                    {filteredSubjects.length > 0 && (
+                        <button onClick={() => setIsCreateSubjectOpen(true)} className="border-4 border-dashed border-black/20 rounded-3xl p-6 h-64 flex flex-col items-center justify-center gap-4 hover:border-black hover:bg-[#F0FDF4] transition-all duration-200 ease-out group">
+                            <div className="h-16 w-16 rounded-full bg-[#BBF7D0] border-2 border-black flex items-center justify-center shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] group-hover:scale-110 transition-transform">
+                                <Plus className="h-8 w-8 text-black" strokeWidth={3} />
+                            </div>
+                            <span className="font-black text-xl uppercase">{t('createNew')}</span>
+                        </button>
+                    )}
                 </div>
             )}
 
             {/* List View */}
-            {viewMode === 'list' && (
+            {!isLoading && viewMode === 'list' && (
                 <div className="flex flex-col gap-4">
                     {filteredSubjects.map((subject: any) => {
                         // Use stored color if available and valid (starts with bg-), otherwise fallback to deterministic hash
@@ -205,7 +282,7 @@ export default function SubjectsPage() {
                                                     </div>
                                                 )}
                                             </h3>
-                                            <p className="text-xs font-bold text-gray-500 uppercase">{subject.doc_count || 0} Docs • {subject.created_at ? new Date(subject.created_at).toLocaleDateString() : 'No Date'}</p>
+                                            <p className="text-xs font-bold text-gray-500 uppercase">{subject.doc_count || 0} {t('docs')} • {subject.created_at ? format.dateTime(new Date(subject.created_at), { dateStyle: 'medium' }) : t('noDate')}</p>
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-4">
@@ -228,7 +305,7 @@ export default function SubjectsPage() {
                                                     }}
                                                 >
                                                     <Star className={cn("h-4 w-4", subject.is_favorite && "fill-black")} />
-                                                    {subject.is_favorite ? "Unfavorite" : "Favorite"}
+                                                    {subject.is_favorite ? t('unfavorite') : t('favorite')}
                                                 </DropdownMenuItem>
                                                 <DropdownMenuItem
                                                     className="p-3 hover:bg-red-50 focus:bg-red-50 text-red-600 font-bold uppercase cursor-pointer flex items-center gap-2"
@@ -239,7 +316,7 @@ export default function SubjectsPage() {
                                                     }}
                                                 >
                                                     <Trash2 className="h-4 w-4" />
-                                                    Delete
+                                                    {t('delete')}
                                                 </DropdownMenuItem>
                                             </DropdownMenuContent>
                                         </DropdownMenu>
@@ -251,11 +328,13 @@ export default function SubjectsPage() {
                             </Link>
                         )
                     })}
-                    {/* Create New List Item */}
-                    <button onClick={() => setIsCreateSubjectOpen(true)} className="border-2 border-dashed border-black/20 rounded-xl p-4 flex items-center justify-center gap-4 hover:border-black hover:bg-[#F0FDF4] transition-all duration-200 ease-out group">
-                        <Plus className="h-6 w-6 text-black/50 group-hover:text-black" strokeWidth={3} />
-                        <span className="font-black text-lg uppercase text-black/50 group-hover:text-black">Create New Subject</span>
-                    </button>
+                    {/* Create New List Item - Only show when there are existing subjects */}
+                    {filteredSubjects.length > 0 && (
+                        <button onClick={() => setIsCreateSubjectOpen(true)} className="border-2 border-dashed border-black/20 rounded-xl p-4 flex items-center justify-center gap-4 hover:border-black hover:bg-[#F0FDF4] transition-all duration-200 ease-out group">
+                            <Plus className="h-6 w-6 text-black/50 group-hover:text-black" strokeWidth={3} />
+                            <span className="font-black text-lg uppercase text-black/50 group-hover:text-black">{t('createFirstSubject')}</span>
+                        </button>
+                    )}
                 </div>
             )}
 

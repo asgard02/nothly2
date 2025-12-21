@@ -8,7 +8,11 @@ import { Input } from "@/components/ui/input"
 import { useSubjects } from "@/lib/hooks/useSubjects"
 import { cn } from "@/lib/utils"
 
+import { useTranslations, useFormatter } from "next-intl"
+
 export default function FavoritesPage() {
+    const t = useTranslations("Favorites")
+    const format = useFormatter()
     const { data: subjects = [], isLoading } = useSubjects()
 
     // Config pour l'animation et couleurs
@@ -22,7 +26,7 @@ export default function FavoritesPage() {
             <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6 pb-8 border-b-2 border-black/10">
                 <div>
                     <h1 className="text-6xl md:text-8xl font-black tracking-tighter text-black flex items-center gap-4">
-                        FAVORITES <span className="text-sm md:text-xl bg-[#FBBF24] text-black border-2 border-black px-4 py-1 rounded-full -rotate-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">{favoriteSubjects.length}</span>
+                        {t('title')} <span className="text-sm md:text-xl bg-[#FBBF24] text-black border-2 border-black px-4 py-1 rounded-full -rotate-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">{favoriteSubjects.length}</span>
                     </h1>
                 </div>
             </div>
@@ -46,7 +50,7 @@ export default function FavoritesPage() {
                                         <div className="flex justify-between items-start mb-4">
                                             <div className="flex items-center gap-2">
                                                 <div className="bg-black text-white px-3 py-1 rounded-lg text-xs font-black uppercase">
-                                                    {subject.created_at ? new Date(subject.created_at).toLocaleDateString() : 'No Date'}
+                                                    {subject.created_at ? format.dateTime(new Date(subject.created_at), { dateStyle: 'medium' }) : t('noDate')}
                                                 </div>
                                                 <div className="bg-[#FBBF24] text-black border-2 border-black p-1 rounded-lg shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
                                                     <Star className="h-3 w-3" fill="black" strokeWidth={2.5} />
@@ -59,7 +63,7 @@ export default function FavoritesPage() {
                                     </div>
 
                                     <div className="relative z-10 flex items-center justify-between mt-auto pt-4 border-t-2 border-black/5">
-                                        <span className="font-bold text-sm text-gray-500 uppercase">{subject.doc_count || 0} Docs</span>
+                                        <span className="font-bold text-sm text-gray-500 uppercase">{subject.doc_count || 0} {t('docs')}</span>
                                         <div className="h-10 w-10 bg-black rounded-full flex items-center justify-center text-white group-hover:bg-[#FBBF24] group-hover:text-black transition-colors border-2 border-transparent group-hover:border-black">
                                             <ArrowRight className="h-5 w-5" strokeWidth={3} />
                                         </div>
@@ -76,9 +80,13 @@ export default function FavoritesPage() {
                             <Star className="h-32 w-32 text-black opacity-10" />
                         </div>
 
-                        <h2 className="text-4xl font-black uppercase mb-4 leading-tight">Your Personal<br />Hall of Fame.</h2>
+                        <h2 className="text-4xl font-black uppercase mb-4 leading-tight">
+                            {t.rich('hallOfFameTitle', {
+                                br: () => <br />
+                            })}
+                        </h2>
                         <p className="font-bold text-lg mb-8 max-w-md">
-                            Pin your most important subjects and documents here for lightning-fast access.
+                            {t('hallOfFameDesc')}
                         </p>
 
                         <div className="bg-white border-2 border-black rounded-2xl p-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
@@ -105,22 +113,22 @@ export default function FavoritesPage() {
                         <div className="p-6 border-2 border-black rounded-2xl bg-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex items-center gap-4">
                             <div className="h-12 w-12 bg-black text-white rounded-xl flex items-center justify-center text-xl font-black">A.</div>
                             <div>
-                                <h3 className="font-black text-xl">Star Subjects.</h3>
-                                <p className="font-bold text-gray-400 text-sm">Keep your current focus top of mind.</p>
+                                <h3 className="font-black text-xl">{t('starSubjectsTitle')}</h3>
+                                <p className="font-bold text-gray-400 text-sm">{t('starSubjectsDesc')}</p>
                             </div>
                         </div>
 
                         <div className="p-6 border-2 border-black rounded-2xl bg-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex items-center gap-4">
                             <div className="h-12 w-12 bg-black text-white rounded-xl flex items-center justify-center text-xl font-black">B.</div>
                             <div>
-                                <h3 className="font-black text-xl">Key Documents.</h3>
-                                <p className="font-bold text-gray-400 text-sm">Never lose track of that one cheat sheet.</p>
+                                <h3 className="font-black text-xl">{t('keyDocumentsTitle')}</h3>
+                                <p className="font-bold text-gray-400 text-sm">{t('keyDocumentsDesc')}</p>
                             </div>
                         </div>
 
                         <Link href="/workspace/subjects">
                             <Button className="w-full h-16 rounded-2xl border-2 border-black bg-[#BBF7D0] text-black text-xl font-black uppercase hover:bg-[#86EFAC] shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:translate-y-[2px] transition-all active:shadow-none">
-                                Browse Subjects <ArrowRight className="ml-2 h-6 w-6" strokeWidth={3} />
+                                {t('browseSubjects')} <ArrowRight className="ml-2 h-6 w-6" strokeWidth={3} />
                             </Button>
                         </Link>
                     </div>

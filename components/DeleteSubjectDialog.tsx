@@ -5,6 +5,7 @@ import { createPortal } from "react-dom"
 import { AlertTriangle, X } from "lucide-react"
 
 import MarkdownRenderer from "@/components/MarkdownRenderer"
+import { useTranslations } from "next-intl"
 
 interface DeleteSubjectDialogProps {
   isOpen: boolean
@@ -21,6 +22,7 @@ export default function DeleteSubjectDialog({
   subjectTitle,
   isDeleting,
 }: DeleteSubjectDialogProps) {
+  const t = useTranslations("DeleteCollectionDialog")
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
@@ -54,17 +56,20 @@ export default function DeleteSubjectDialog({
 
         {/* Title */}
         <h3 className="text-2xl font-black text-black text-center mb-4 uppercase tracking-tight">
-          Supprimer cette matière ?
+          {t('title')}
         </h3>
 
         {/* Description */}
         <p className="text-black font-medium text-center mb-8 leading-relaxed">
-          Êtes-vous sûr de vouloir supprimer{" "}
-          <span className="font-black bg-[#FBCFE8] px-2 py-0.5 rounded border border-black text-black">
-            "{subjectTitle || "Sans titre"}"
-          </span>{" "}
-          ? <br />
-          <span className="text-sm text-gray-500 mt-2 block font-bold uppercase">Cette action est irréversible.</span>
+          {t.rich('description', {
+            title: subjectTitle || "Sans titre",
+            bold: (chunks) => (
+              <span className="font-black bg-[#FBCFE8] px-2 py-0.5 rounded border border-black text-black">
+                {chunks}
+              </span>
+            )
+          })} <br />
+          <span className="text-sm text-gray-500 mt-2 block font-bold uppercase">{t('warning')}</span>
         </p>
 
         {/* Actions */}
@@ -74,7 +79,7 @@ export default function DeleteSubjectDialog({
             disabled={isDeleting}
             className="flex-1 h-12 rounded-xl font-bold text-black border-2 border-black bg-white hover:bg-gray-100 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-y-[2px] active:translate-y-[4px] active:shadow-none transition-all disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-wide"
           >
-            Annuler
+            {t('cancel')}
           </button>
           <button
             onClick={onConfirm}
@@ -87,7 +92,7 @@ export default function DeleteSubjectDialog({
                 ...
               </>
             ) : (
-              "Supprimer"
+              t('delete')
             )}
           </button>
         </div>

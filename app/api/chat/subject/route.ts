@@ -73,80 +73,65 @@ export async function POST(request: NextRequest) {
       }, { status: 400 })
     }
 
-    // Détecter intelligemment l'intention avec l'IA (flashcard/quiz/question normale/résumé)
-    // Cela permet de détecter même sans mots-clés explicites
+    // Détecter intelligemment l'intention SEULEMENT si ce n'est pas un mode conversation explicit
     let isFlashcardRequest = false
     let isQuizRequest = false
     let isSummaryRequest = false
     let searchTopic: string | null = null
 
-    try {
-      const intentResponse = await fetch("https://api.openai.com/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
-        },
-        body: JSON.stringify({
-          model: "gpt-4o-mini",
-          messages: [
-            {
-              role: "system",
-              content: `Analyze the user's message and determine their intent. Respond ONLY with a JSON in this format:
-{
-  "intent": "flashcard" | "quiz" | "summary" | "question",
-  "topic": "extracted topic or null"
-}
-
-Rules:
-- "flashcard" if the user wants to create revision cards, memorize, review, learn by heart, study
-- "quiz" if the user wants to test their knowledge, take a test, an exam, questions, evaluate
-- "summary" if the user wants a summary, a synthesis, a recap, summarize content
-- "question" for any other request (explanation, definition, etc.)
-- "topic" : extract the main topic if mentioned, otherwise null
-
-Examples:
-- "make flashcards on limits" -> {"intent": "flashcard", "topic": "limits"}
-- "i want to review functions" -> {"intent": "flashcard", "topic": "functions"}
-- "create a quiz on derivatives" -> {"intent": "quiz", "topic": "derivatives"}
-- "summarize this course" -> {"intent": "summary", "topic": null}
-- "make a synthesis on the cold war" -> {"intent": "summary", "topic": "cold war"}
-- "explain limits" -> {"intent": "question", "topic": "limits"}`
-            },
-            {
-              role: "user",
-              content: message,
-            },
-          ],
-          max_tokens: 100,
-          temperature: 0.3,
-        }),
-      })
-
-      if (intentResponse.ok) {
-        const intentData = await intentResponse.json()
-        const responseText = intentData.choices?.[0]?.message?.content?.trim()
-        
+    // Si le mode est explicitement "conversation", on force le mode question/discussion
+    // par contre si c'est "auto", on laisse l'IA décider
+    if (body.mode !== "conversation") {
         try {
-          // Nettoyer la réponse pour extraire le JSON (enlever markdown si présent)
-          const jsonMatch = responseText.match(/\{[\s\S]*\}/)
-          if (jsonMatch) {
-            const parsed = JSON.parse(jsonMatch[0])
-            isFlashcardRequest = parsed.intent === "flashcard"
-            isQuizRequest = parsed.intent === "quiz"
-            isSummaryRequest = parsed.intent === "summary"
-            searchTopic = parsed.topic || null
-          }
-        } catch (parseError) {
-          console.warn("[POST /api/chat/subject] Error parsing intent:", parseError)
+        const intentResponse = await fetch("https://api.openai.com/v1/chat/completions", {
+            method: "POST",
+            headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
+            },
+            body: JSON.stringify({
+            model: "gpt-4o-mini",
+            messages: [
+                {
+                role: "system",
+                content: `Analyze the user's message. Respond ONLY with a JSON: {"intent": "flashcard"|"quiz"|"summary"|"question", "topic": "extracted topic or null"}.
+    Rules:
+    - "flashcard" ONLY if explicitly asked (create cards, flashcards, study deck)
+    - "quiz" ONLY if explicitly asked (create quiz, test me)
+    - "summary" ONLY if explicitly asked (summarize this, tldr)
+    - "question" for EVERYTHING else (chat, discussion, specific questions, explaining concepts).`
+                },
+                { role: "user", content: message },
+            ],
+            max_tokens: 100,
+            temperature: 0.3,
+            }),
+        })
+
+        if (intentResponse.ok) {
+            const intentData = await intentResponse.json()
+            const responseText = intentData.choices?.[0]?.message?.content?.trim()
+            
+            try {
+            const jsonMatch = responseText.match(/\{[\s\S]*\}/)
+            if (jsonMatch) {
+                const parsed = JSON.parse(jsonMatch[0])
+                isFlashcardRequest = parsed.intent === "flashcard"
+                isQuizRequest = parsed.intent === "quiz"
+                isSummaryRequest = parsed.intent === "summary"
+                searchTopic = parsed.topic || null
+            }
+            } catch (parseError) {
+            console.warn("[POST /api/chat/subject] Error parsing intent:", parseError)
+            }
         }
-      }
-    } catch (error) {
-      console.warn("[POST /api/chat/subject] Error detecting AI intent:", error)
+        } catch (error) {
+        console.warn("[POST /api/chat/subject] Error detecting AI intent:", error)
+        }
     }
 
-    // Fallback: détection par mots-clés si l'IA n'a pas fonctionné
-    if (!isFlashcardRequest && !isQuizRequest && !isSummaryRequest) {
+    // Fallback: détection par mots-clés si l'IA n'a pas fonctionné ET que le mode n'est pas "conversation"
+    if (body.mode !== "conversation" && !isFlashcardRequest && !isQuizRequest && !isSummaryRequest) {
       const flashcardKeywords = ["flashcard", "carte", "cartes", "révision", "mémorisation", "apprendre", "étudier", "réviser", "mémoriser", "card", "cards", "study", "memorize", "review"]
       const quizKeywords = ["quiz", "question", "questions", "test", "examen", "évaluation", "interro", "qcm", "teste", "tester", "exam", "evaluation"]
       const summaryKeywords = ["résumé", "résumer", "synthèse", "synthétiser", "récapitulatif", "récapituler", "resumer", "synthese", "summary", "summarize", "synthesis", "recap", "liste", "lister", "list"]
@@ -502,14 +487,19 @@ RÈGLES CRITIQUES :
 Contexte des documents (UTILISE UNIQUEMENT CE CONTENU):
 ${context.substring(0, 100000)}`
     } else {
-      systemPrompt = `Tu es un assistant IA qui aide l'utilisateur à comprendre et analyser ses documents PDF dans la matière "${collection.title}". 
+      systemPrompt = `Tu es un assistant pédagogique virtuel intelligent et amical. Tu discutes avec l'étudiant concernant sa matière "${collection.title}".
             
-Tu as accès au contenu des documents suivants. Utilise ce contexte pour répondre aux questions de l'utilisateur de manière précise et détaillée.
+Ton objectif est de répondre à ses questions, d'expliquer des concepts, et de l'aider à comprendre ses cours, en te basant sur les documents fournis.
 
-RÈGLE IMPORTANTE : Si l'utilisateur demande une liste (ex: "liste les abréviations"), fournis la liste COMPLÈTE et EXHAUSTIVE sans rien omettre. Ne fais pas de sélection.
+CONTEXTE (Documents disponibles) :
+${context.substring(0, 100000)}
 
-Contexte des documents:
-${context.substring(0, 100000)}`
+RÈGLES DE CONVERSATION :
+1. Réponds de manière naturelle, comme un tuteur ou un professeur particulier.
+2. Utilise le contexte ci-dessus pour tes réponses. Si la réponse n'est pas dans le cours, dis-le honnêtement ou utilise tes connaissances générales en précisant que ce n'est pas dans les documents.
+3. Sois concis, clair et pédagogique.
+4. N'hésite pas à poser des questions en retour pour vérifier la compréhension si pertinent.
+5. NE GÉNÈRE PAS de JSON, de flashcards ou de quiz structurés ici. Fais juste de la conversation textuelle (Markdown accepté).`
     }
 
     // STRATÉGIE D'EXTRACTION EXHAUSTIVE (Deep Extraction)

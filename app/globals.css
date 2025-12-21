@@ -66,6 +66,20 @@
     @apply hover:-translate-y-[2px] hover:-translate-x-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-0 active:translate-y-0 active:shadow-none;
   }
 
+  /* 3D Flip Animation for Flashcards */
+  .transform-style-preserve-3d {
+    transform-style: preserve-3d;
+  }
+  
+  .backface-hidden {
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+  }
+  
+  .rotate-y-180 {
+    transform: rotateY(180deg);
+  }
+
   /* Specific background colors for map usage */
   .bg-neo-violet { background-color: #DDD6FE; }
   .bg-neo-yellow { background-color: #FCD34D; }

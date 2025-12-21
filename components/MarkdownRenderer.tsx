@@ -20,7 +20,7 @@ function normalizeMathDelimiters(content: string): string {
     .replace(/\\\(([\s\S]*?)\\\)/g, '$$$1$$')     // \( ... \) -> $ ... $
 }
 
-export default function MarkdownRenderer({ content }: { content: string }) {
+function MarkdownRenderer({ content }: { content: string }) {
   const { theme, resolvedTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
 
@@ -124,3 +124,5 @@ export default function MarkdownRenderer({ content }: { content: string }) {
     </div>
   )
 }
+
+export default React.memo(MarkdownRenderer)

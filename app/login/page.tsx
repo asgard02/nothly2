@@ -7,11 +7,13 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
-import { Eye, EyeOff, Sparkles, Mail, Lock, ArrowRight } from "lucide-react"
+import { Eye, EyeOff, Sparkles, Mail, Lock, ArrowRight, ArrowLeft } from "lucide-react"
+import { useTranslations } from "next-intl"
 
 type LoginMode = "password" | "magic-link"
 
 export default function LoginPage() {
+  const t = useTranslations("Login")
   const [mode, setMode] = useState<LoginMode>("password")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -20,7 +22,6 @@ export default function LoginPage() {
   const [message, setMessage] = useState("")
   const [isSuccess, setIsSuccess] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
   const [emailError, setEmailError] = useState("")
   const [passwordError, setPasswordError] = useState("")
 
@@ -30,35 +31,27 @@ export default function LoginPage() {
   const searchParams = useSearchParams()
 
   useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      setMousePosition({ x: e.clientX, y: e.clientY })
-    }
-    window.addEventListener("mousemove", handleMouseMove, { passive: true })
-    return () => window.removeEventListener("mousemove", handleMouseMove)
-  }, [])
-
-  useEffect(() => {
     const error = searchParams.get('error')
     const errorDescription = searchParams.get('error_description')
 
     if (error) {
-      let errorMessage = errorDescription || "An authentication error occurred"
+      let errorMessage = errorDescription || t('errors.authError')
 
       if (error === 'invalid_grant') {
-        errorMessage = "The authentication session has expired or is invalid. Please try signing in again."
+        errorMessage = t('errors.authError') // Simplified for now or add specific key
       } else if (error === 'auth_failed') {
-        errorMessage = errorDescription || "Authentication failed. Please try again."
+        errorMessage = errorDescription || t('errors.authError')
       } else if (error === 'no_session') {
-        errorMessage = "Failed to create session. Please try again."
+        errorMessage = t('errors.authError')
       } else if (error === 'configuration') {
-        errorMessage = "Server configuration error. Please contact support."
+        errorMessage = t('errors.genericError')
       }
 
       setMessage(`Error: ${errorMessage}`)
       setIsSuccess(false)
       router.replace('/login', { scroll: false })
     }
-  }, [searchParams, router])
+  }, [searchParams, router, t])
 
   const handlePasswordLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -72,15 +65,15 @@ export default function LoginPage() {
     let hasError = false
 
     if (!email) {
-      setEmailError("Email address is required")
+      setEmailError(t('errors.emailRequired'))
       hasError = true
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setEmailError("Please enter a valid email address")
+      setEmailError(t('errors.emailInvalid'))
       hasError = true
     }
 
     if (!password) {
-      setPasswordError("Password is required")
+      setPasswordError(t('errors.passwordRequired'))
       hasError = true
     }
 
@@ -98,12 +91,12 @@ export default function LoginPage() {
         setMessage(`Error: ${error.message}`)
         setIsSuccess(false)
       } else if (data.session) {
-        setMessage("✅ Logged in! Redirecting...")
+        setMessage(t('errors.successRedirect'))
         setIsSuccess(true)
         router.replace("/workspace")
       }
     } catch (error) {
-      setMessage("An error occurred")
+      setMessage(t('errors.genericError'))
       setIsSuccess(false)
     } finally {
       setIsLoading(false)
@@ -119,10 +112,10 @@ export default function LoginPage() {
 
     // Validation
     if (!email) {
-      setEmailError("Email address is required")
+      setEmailError(t('errors.emailRequired'))
       return
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setEmailError("Please enter a valid email address")
+      setEmailError(t('errors.emailInvalid'))
       return
     }
 
@@ -143,7 +136,7 @@ export default function LoginPage() {
         setIsSuccess(true)
       }
     } catch (error) {
-      setMessage("An error occurred")
+      setMessage(t('errors.genericError'))
       setIsSuccess(false)
     } finally {
       setIsLoading(false)
@@ -174,7 +167,7 @@ export default function LoginPage() {
         setIsLoading(false)
       }
     } catch (error: any) {
-      let errorMessage = "An error occurred"
+      let errorMessage = t('errors.genericError')
       if (error?.message?.includes('not enabled') || error?.message?.includes('Unsupported provider')) {
         errorMessage = "Google sign-in is not enabled. Please configure it in Supabase Dashboard → Authentication → Providers → Google"
       }
@@ -185,78 +178,66 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-muted/10 to-background text-foreground relative overflow-hidden flex items-center justify-center p-4">
-      {/* Grille de fond subtile */}
-      <div className="fixed inset-0 z-0" style={{
-        backgroundImage: `
-          linear-gradient(to right, hsl(var(--border)) 1px, transparent 1px),
-          linear-gradient(to bottom, hsl(var(--border)) 1px, transparent 1px)
-        `,
-        backgroundSize: '100px 100px',
-        opacity: 0.3
-      }} />
+    <div className="min-h-screen bg-[#FFF0F5] flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Abstract Background pattern */}
+      <div className="absolute inset-0 z-0" style={{
+        backgroundImage: 'radial-gradient(#CBD5E1 1.5px, transparent 1.5px)',
+        backgroundSize: '24px 24px'
+      }}></div>
 
-      {/* Gradient suivant la souris */}
-      <div
-        className="fixed inset-0 z-0 opacity-20 transition-opacity duration-700"
-        style={{
-          background: `radial-gradient(600px circle at ${mousePosition.x}px ${mousePosition.y}px, hsl(var(--primary) / 0.08), transparent 50%)`,
-        }}
-      />
+      {/* Decorative elements */}
+      <div className="absolute top-10 left-10 w-20 h-20 bg-blue-400 rounded-full border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hidden md:block animate-bounce delay-700"></div>
+      <div className="absolute bottom-20 right-20 w-16 h-16 bg-pink-400 rotate-12 border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hidden md:block animate-pulse"></div>
 
-      {/* Blobs animés subtils */}
-      <div className="fixed inset-0 z-0 opacity-5">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-gradient-to-br from-nothly-blue to-nothly-violet rounded-full blur-[100px] animate-blob" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-gradient-to-br from-nothly-violet to-nothly-blue rounded-full blur-[100px] animate-blob animation-delay-2000" />
-      </div>
-
-      {/* Card de login */}
+      {/* Main Card */}
       <div className="relative z-10 w-full max-w-md">
-        <div className="rounded-3xl border-2 border-border bg-card/80 backdrop-blur-xl p-6 md:p-8 shadow-2xl">
+        <div className="bg-white border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] rounded-2xl p-6 md:p-8">
+
           {/* Header */}
-          <div className="text-center mb-6">
-            <div className="flex items-center justify-center mb-4">
-              <Logo size={40} showText={true} href="/" className="justify-center" />
+          <div className="text-center mb-8">
+            <div className="flex items-center justify-center mb-6">
+              <Logo size={48} showText={true} href="/" className="justify-center" />
             </div>
-            <h1 className="text-2xl font-black mb-1 text-foreground">
-              Welcome back
+            <h1 className="text-3xl font-black mb-2 text-black uppercase tracking-tight">
+              {t('welcome')}
             </h1>
-            <p className="text-sm text-muted-foreground">
-              Sign in to access your workspace
+            <p className="text-base font-medium text-gray-500">
+              {t('subtitle')}
             </p>
           </div>
 
           {/* Tabs */}
-          <div className="flex gap-2 mb-6 p-1 bg-muted/30 rounded-2xl border border-border/50">
+          <div className="flex gap-4 mb-6">
             <button
               type="button"
               onClick={() => setMode("password")}
-              className={`flex-1 py-3 px-4 rounded-xl font-semibold transition-all duration-300 ${mode === "password"
-                ? "bg-gradient-to-r from-nothly-blue to-nothly-violet text-white shadow-lg"
-                : "text-muted-foreground hover:text-foreground"
+              className={`flex-1 py-3 px-4 rounded-xl font-bold border-2 transition-all duration-200 ${mode === "password"
+                ? "bg-violet-500 text-white border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] translate-x-[-2px] translate-y-[-2px]"
+                : "bg-white text-gray-500 border-transparent hover:border-black/20 hover:bg-gray-50"
                 }`}
             >
-              Password
+              {t('tabPassword')}
             </button>
             <button
               type="button"
               onClick={() => setMode("magic-link")}
-              className={`flex-1 py-3 px-4 rounded-xl font-semibold transition-all duration-300 ${mode === "magic-link"
-                ? "bg-gradient-to-r from-nothly-blue to-nothly-violet text-white shadow-lg"
-                : "text-muted-foreground hover:text-foreground"
+              className={`flex-1 py-3 px-4 rounded-xl font-bold border-2 transition-all duration-200 ${mode === "magic-link"
+                ? "bg-blue-500 text-white border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] translate-x-[-2px] translate-y-[-2px]"
+                : "bg-white text-gray-500 border-transparent hover:border-black/20 hover:bg-gray-50"
                 }`}
             >
-              Magic Link
+              {t('tabMagicLink')}
             </button>
           </div>
 
           {/* Google Login */}
-          <div className="mb-6">
+          <div className="mb-8">
             <Button
               type="button"
+              variant="outline"
               onClick={handleGoogleLogin}
               disabled={isLoading}
-              className="w-full py-4 rounded-2xl bg-muted/30 border-2 border-border hover:bg-muted/50 hover:border-border/80 transition-all duration-300 text-foreground font-semibold"
+              className="w-full py-6 text-base"
             >
               <svg className="mr-3 h-5 w-5" viewBox="0 0 24 24">
                 <path
@@ -276,72 +257,70 @@ export default function LoginPage() {
                   d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
                 />
               </svg>
-              Continue with Google
+              {t('google')}
             </Button>
 
             <div className="relative my-6">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-border" />
+                <div className="w-full border-t-2 border-dashed border-gray-300" />
               </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-card px-3 text-muted-foreground font-semibold">Or</span>
+              <div className="relative flex justify-center text-xs uppercase font-bold tracking-widest">
+                <span className="bg-white px-3 text-gray-400">{t('orContinueWith')}</span>
               </div>
             </div>
           </div>
 
           {/* Forms */}
           {mode === "password" ? (
-            <form onSubmit={handlePasswordLogin} className="space-y-4">
+            <form onSubmit={handlePasswordLogin} className="space-y-5">
               <div>
-                <label className="block text-sm font-semibold text-foreground mb-2">
-                  Email address
+                <label className="block text-sm font-bold text-black mb-2 uppercase tracking-wide">
+                  {t('emailLabel')}
                 </label>
                 <div className="relative">
-                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500 z-10" />
                   <Input
                     type="email"
-                    placeholder="you@email.com"
+                    placeholder={t('emailPlaceholder')}
                     value={email}
                     onChange={(e) => { setEmail(e.target.value); setEmailError("") }}
                     disabled={isLoading}
-                    className={`w-full pl-12 py-4 rounded-2xl bg-muted/20 border-2 text-foreground placeholder:text-muted-foreground focus:bg-muted/30 transition-all ${emailError ? "border-red-500 focus:border-red-500" : "border-border focus:border-primary"
-                      }`}
+                    className={`pl-12 ${emailError ? "border-red-500 focus:border-red-500" : ""}`}
                   />
                 </div>
                 {emailError && (
-                  <p className="mt-2 text-sm text-red-400 flex items-center gap-1.5">
-                    <span className="inline-block w-1 h-1 bg-red-400 rounded-full" />
+                  <p className="mt-2 text-sm font-bold text-red-500 flex items-center gap-1.5">
+                    <span className="inline-block w-2 h-2 bg-red-500 rounded-full" />
                     {emailError}
                   </p>
                 )}
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-foreground mb-2">
-                  Password
+                <label className="block text-sm font-bold text-black mb-2 uppercase tracking-wide">
+                  {t('passwordLabel')}
                 </label>
                 <div className="relative">
-                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500 z-10" />
                   <Input
                     type={showPassword ? "text" : "password"}
-                    placeholder="Enter your password"
+                    placeholder={t('passwordPlaceholder')}
                     value={password}
                     onChange={(e) => { setPassword(e.target.value); setPasswordError("") }}
                     disabled={isLoading}
-                    className={`w-full pl-12 pr-12 py-4 rounded-2xl bg-muted/20 border-2 text-foreground placeholder:text-muted-foreground focus:bg-muted/30 transition-all ${passwordError ? "border-red-500 focus:border-red-500" : "border-border focus:border-primary"
-                      }`}
+                    className={`pl-12 pr-12 ${passwordError ? "border-red-500 focus:border-red-500" : ""}`}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-black transition"
                   >
                     {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                   </button>
                 </div>
                 {passwordError && (
-                  <p className="mt-2 text-sm text-red-400 flex items-center gap-1.5">
-                    <span className="inline-block w-1 h-1 bg-red-400 rounded-full" />
+                  <p className="mt-2 text-sm font-bold text-red-500 flex items-center gap-1.5">
+                    <span className="inline-block w-2 h-2 bg-red-500 rounded-full" />
                     {passwordError}
                   </p>
                 )}
@@ -353,18 +332,18 @@ export default function LoginPage() {
                   type="checkbox"
                   checked={rememberMe}
                   onChange={(e) => setRememberMe(e.target.checked)}
-                  className="h-4 w-4 rounded border-border bg-muted text-primary focus:ring-primary focus:ring-offset-card"
+                  className="h-5 w-5 rounded border-2 border-black text-black focus:ring-offset-2"
                 />
-                <label htmlFor="remember" className="ml-2 text-sm text-foreground">
-                  Keep me signed in
+                <label htmlFor="remember" className="ml-2 text-sm font-bold text-black">
+                  {t('keepSignedIn')}
                 </label>
               </div>
 
               {message && (
                 <div
-                  className={`p-4 rounded-2xl text-sm font-medium ${isSuccess
-                    ? "bg-emerald-500/10 text-emerald-400 border-2 border-emerald-500/20"
-                    : "bg-red-500/10 text-red-400 border-2 border-red-500/20"
+                  className={`p-4 rounded-xl border-2 font-bold ${isSuccess
+                    ? "bg-green-100 text-green-700 border-green-700"
+                    : "bg-red-100 text-red-700 border-red-700"
                     }`}
                 >
                   {message}
@@ -374,16 +353,16 @@ export default function LoginPage() {
               <Button
                 type="submit"
                 disabled={isLoading}
-                className="w-full py-5 rounded-2xl bg-gradient-to-r from-nothly-blue to-nothly-violet text-white font-bold text-base shadow-lg shadow-nothly-blue/30 hover:shadow-xl hover:shadow-nothly-violet/40 hover:scale-105 transition-all duration-300"
+                className="w-full py-6 text-base bg-black hover:bg-gray-800 text-white"
               >
                 {isLoading ? (
                   <span className="flex items-center gap-2">
                     <div className="h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    Signing in...
+                    {t('signingIn')}
                   </span>
                 ) : (
                   <span className="flex items-center gap-2">
-                    Sign in
+                    {t('signInButton')}
                     <ArrowRight className="h-5 w-5" />
                   </span>
                 )}
@@ -391,14 +370,15 @@ export default function LoginPage() {
             </form>
           ) : (
             isSuccess ? (
-              <div className="text-center space-y-4 py-6">
-                <div className="w-16 h-16 mx-auto bg-gradient-to-r from-nothly-blue to-nothly-violet rounded-full flex items-center justify-center">
-                  <Mail className="h-8 w-8 text-white" />
+              <div className="text-center space-y-6 py-6">
+                <div className="w-20 h-20 mx-auto bg-green-400 rounded-full border-4 border-black flex items-center justify-center shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                  <Mail className="h-10 w-10 text-black" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold mb-1 text-foreground">Check your email</h3>
-                  <p className="text-muted-foreground">
-                    We've sent a magic link to <span className="text-primary font-semibold">{email}</span>
+                  <h3 className="text-xl font-black mb-2 text-black uppercase">{t('checkEmailTitle')}</h3>
+                  <p className="text-gray-600 font-medium">
+                    {t('checkEmailDesc')} <br />
+                    <span className="text-black font-bold bg-yellow-200 px-1">{email}</span>
                   </p>
                 </div>
                 <Button
@@ -407,32 +387,32 @@ export default function LoginPage() {
                     setMessage("")
                     setEmail("")
                   }}
-                  className="bg-muted/20 border-2 border-border hover:bg-muted/50 text-foreground rounded-2xl px-6 py-4"
+                  variant="outline"
+                  className="w-full"
                 >
-                  Send another link
+                  {t('sendAnotherLink')}
                 </Button>
               </div>
             ) : (
-              <form onSubmit={handleMagicLinkLogin} className="space-y-4">
+              <form onSubmit={handleMagicLinkLogin} className="space-y-5">
                 <div>
-                  <label className="block text-sm font-semibold text-foreground mb-2">
-                    Email address
+                  <label className="block text-sm font-bold text-black mb-2 uppercase tracking-wide">
+                    {t('emailLabel')}
                   </label>
                   <div className="relative">
-                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500 z-10" />
                     <Input
                       type="email"
-                      placeholder="you@email.com"
+                      placeholder={t('emailPlaceholder')}
                       value={email}
                       onChange={(e) => { setEmail(e.target.value); setEmailError("") }}
                       disabled={isLoading}
-                      className={`w-full pl-12 py-4 rounded-2xl bg-muted/20 border-2 text-foreground placeholder:text-muted-foreground focus:bg-muted/30 transition-all ${emailError ? "border-red-500 focus:border-red-500" : "border-border focus:border-primary"
-                        }`}
+                      className={`pl-12 ${emailError ? "border-red-500 focus:border-red-500" : ""}`}
                     />
                   </div>
                   {emailError && (
-                    <p className="mt-2 text-sm text-red-400 flex items-center gap-1.5">
-                      <span className="inline-block w-1 h-1 bg-red-400 rounded-full" />
+                    <p className="mt-2 text-sm font-bold text-red-500 flex items-center gap-1.5">
+                      <span className="inline-block w-2 h-2 bg-red-500 rounded-full" />
                       {emailError}
                     </p>
                   )}
@@ -440,9 +420,9 @@ export default function LoginPage() {
 
                 {message && (
                   <div
-                    className={`p-4 rounded-2xl text-sm font-medium ${isSuccess
-                      ? "bg-emerald-500/10 text-emerald-400 border-2 border-emerald-500/20"
-                      : "bg-red-500/10 text-red-400 border-2 border-red-500/20"
+                    className={`p-4 rounded-xl border-2 font-bold ${isSuccess
+                      ? "bg-green-100 text-green-700 border-green-700"
+                      : "bg-red-100 text-red-700 border-red-700"
                       }`}
                   >
                     {message}
@@ -452,43 +432,43 @@ export default function LoginPage() {
                 <Button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full py-5 rounded-2xl bg-gradient-to-r from-nothly-blue to-nothly-violet text-white font-bold text-base shadow-lg shadow-nothly-blue/30 hover:shadow-xl hover:shadow-nothly-violet/40 hover:scale-105 transition-all duration-300"
+                  className="w-full py-6 text-base bg-blue-500 hover:bg-blue-600 text-white"
                 >
                   {isLoading ? (
                     <span className="flex items-center gap-2">
                       <div className="h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      Sending link...
+                      {t('sendingLink')}
                     </span>
                   ) : (
                     <span className="flex items-center gap-2">
                       <Sparkles className="h-5 w-5" />
-                      Send magic link
+                      {t('magicLinkButton')}
                     </span>
                   )}
                 </Button>
 
-                <p className="text-xs text-center text-muted-foreground">
-                  We'll email you a secure link — no password needed!
+                <p className="text-xs text-center font-bold text-gray-400 uppercase tracking-wider">
+                  {t('magicLinkDesc')}
                 </p>
               </form>
             )
           )}
 
           {/* Footer */}
-          <div className="mt-8 text-center">
-            <p className="text-sm text-muted-foreground">
-              Don't have an account?{" "}
-              <Link href="/register" className="text-primary hover:text-cyan-300 font-semibold transition">
-                Create one now
+          <div className="mt-8 pt-6 border-t-2 border-dashed border-gray-200 text-center">
+            <p className="text-sm font-medium text-gray-600">
+              {t('noAccount')}{" "}
+              <Link href="/register" className="text-black font-black hover:underline uppercase">
+                {t('createAccount')}
               </Link>
             </p>
           </div>
         </div>
 
         {/* Back to home */}
-        <div className="mt-6 text-center">
-          <Link href="/" className="text-sm text-muted-foreground hover:text-foreground transition inline-flex items-center gap-2">
-            ← Back to homepage
+        <div className="mt-8 text-center">
+          <Link href="/" className="text-sm font-bold text-gray-500 hover:text-black transition inline-flex items-center gap-2 uppercase tracking-wide">
+            <ArrowLeft className="mr-2 h-4 w-4" /> {t('backToHome')}
           </Link>
         </div>
       </div>

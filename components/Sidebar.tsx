@@ -3,10 +3,11 @@
 import { useState } from "react"
 import { useRouter, usePathname } from "next/navigation"
 import Logo from "@/components/Logo"
-import { Settings, LogOut, PanelLeftClose, PanelLeft, Calendar, LayoutDashboard, Grid, Brain, Star } from "lucide-react"
+import { Settings, LogOut, PanelLeftClose, PanelLeft, Calendar, LayoutDashboard, Grid, Brain, Star, HelpCircle } from "lucide-react"
 import { useTranslations } from "next-intl"
 import SettingsModal from "@/components/SettingsModal"
 import { useSidebar } from "@/components/providers/SidebarProvider"
+import { useTutorial } from "@/components/providers/TutorialProvider"
 import { cn } from "@/lib/utils"
 
 export default function Sidebar() {
@@ -15,13 +16,14 @@ export default function Sidebar() {
   const pathname = usePathname()
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const { isOpen, toggle } = useSidebar()
+  const { startTutorial } = useTutorial()
 
   const handleLogout = async () => {
     try {
       const { createClient } = await import("@/lib/supabase-client")
       const supabase = createClient()
       await supabase.auth.signOut()
-      router.push("/auth")
+      router.push("/")
     } catch (error) {
       console.error("Logout failed:", error)
     }
@@ -102,10 +104,10 @@ export default function Sidebar() {
                 <div className="absolute -left-2 -bottom-2 w-8 h-8 bg-[#F472B6] rounded-full border-2 border-black"></div>
 
                 <div className="relative z-10">
-                  <h4 className="font-black text-lg leading-tight mb-1">PRO MODE</h4>
-                  <p className="text-xs font-bold mb-3">Unlock unlimited AI power.</p>
+                  <h4 className="font-black text-lg leading-tight mb-1">{t("proTitle")}</h4>
+                  <p className="text-xs font-bold mb-3">{t("proDesc")}</p>
                   <button className="bg-black text-white text-xs font-bold px-3 py-2 rounded-lg w-full hover:bg-white hover:text-black border-2 border-transparent hover:border-black transition-colors">
-                    UPGRADE NOW
+                    {t("upgrade")}
                   </button>
                 </div>
               </div>
@@ -116,6 +118,17 @@ export default function Sidebar() {
           <div className="border-t-2 border-black p-4 bg-gray-50">
             <div className="flex flex-col gap-2">
               <button
+                onClick={startTutorial}
+                className={cn(
+                  "flex items-center p-2 rounded-lg hover:bg-white hover:border-black border-2 border-transparent transition-all",
+                  isOpen ? "justify-start gap-3" : "justify-center"
+                )}
+                title={t("restartTutorial")}
+              >
+                <HelpCircle className="h-5 w-5" strokeWidth={2.5} />
+                {isOpen && <span className="font-bold text-sm">{t("tutorial")}</span>}
+              </button>
+              <button
                 onClick={() => setIsSettingsOpen(true)}
                 className={cn(
                   "flex items-center p-2 rounded-lg hover:bg-white hover:border-black border-2 border-transparent transition-all",
@@ -123,7 +136,7 @@ export default function Sidebar() {
                 )}
               >
                 <Settings className="h-5 w-5" strokeWidth={2.5} />
-                {isOpen && <span className="font-bold text-sm">Settings</span>}
+                {isOpen && <span className="font-bold text-sm">{t("settings")}</span>}
               </button>
 
               <button
@@ -134,7 +147,7 @@ export default function Sidebar() {
                 )}
               >
                 <LogOut className="h-5 w-5" strokeWidth={2.5} />
-                {isOpen && <span className="font-bold text-sm">Logout</span>}
+                {isOpen && <span className="font-bold text-sm">{t("logout")}</span>}
               </button>
             </div>
           </div>

@@ -194,8 +194,10 @@ export async function DELETE(
     storagePathsByBucket.get(normalizedBucket)!.add(objectPath)
   }
 
+  // Tentative de suppression des fichiers du storage (non-bloquant)
   const gcpProjectId = process.env.GCP_PROJECT_ID
-
+  const storageErrors: string[] = []
+  
   for (const [bucket, pathsSet] of storagePathsByBucket.entries()) {
     const paths = Array.from(pathsSet)
     if (paths.length === 0) continue
@@ -208,36 +210,39 @@ export async function DELETE(
           paths.map(async (objectPath) => {
             try {
               await gcsBucket.file(objectPath).delete({ ignoreNotFound: true })
+              console.log(`[DELETE /api/documents/:id] ✅ Fichier GCS supprimé: ${bucket}/${objectPath}`)
             } catch (error) {
-              console.warn("[DELETE /api/documents/:id] ⚠️ GCS suppression partielle", {
-                bucket,
-                objectPath,
-                error,
-              })
-              throw error
+              const errorMsg = `Échec suppression GCS: ${bucket}/${objectPath}`
+              console.warn(`[DELETE /api/documents/:id] ⚠️ ${errorMsg}`, error)
+              storageErrors.push(errorMsg)
             }
           })
         )
         gcsHandled = true
       } catch (error) {
-        console.warn("[DELETE /api/documents/:id] ⚠️ Échec suppression GCS, tentative Supabase", {
-          bucket,
-          paths,
-          error,
-        })
+        const errorMsg = `Échec suppression GCS pour bucket ${bucket}`
+        console.warn(`[DELETE /api/documents/:id] ⚠️ ${errorMsg}`, error)
+        storageErrors.push(errorMsg)
       }
     }
 
+    // Fallback vers Supabase Storage si GCS n'a pas fonctionné
     if (!gcsHandled) {
       const { error: removeError } = await admin.storage.from(bucket).remove(paths)
       if (removeError) {
-        console.error("[DELETE /api/documents/:id] ❌ Erreur suppression storage", removeError)
-        return NextResponse.json(
-          { error: "Impossible de supprimer les fichiers associés au document" },
-          { status: 500 }
-        )
+        const errorMsg = `Échec suppression Supabase Storage: ${bucket}`
+        console.error(`[DELETE /api/documents/:id] ⚠️ ${errorMsg}`, removeError)
+        storageErrors.push(errorMsg)
+        // On ne retourne PAS d'erreur ici - on continue la suppression du document
+      } else {
+        console.log(`[DELETE /api/documents/:id] ✅ Fichiers Supabase Storage supprimés: ${bucket}`)
       }
     }
+  }
+
+  // Logger les erreurs de storage mais continuer quand même
+  if (storageErrors.length > 0) {
+    console.warn(`[DELETE /api/documents/:id] ⚠️ ${storageErrors.length} erreur(s) de storage (non-bloquant):`, storageErrors)
   }
 
   const { error: deleteError } = await admin

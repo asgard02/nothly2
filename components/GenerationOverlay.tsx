@@ -75,59 +75,62 @@ export function GenerationOverlay({ isVisible, currentStep, onClose }: Generatio
                     initial={{ opacity: 0, y: 50, scale: 0.9 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 20, scale: 0.9 }}
-                    className="fixed bottom-6 right-6 z-50 w-80"
+                    className="fixed bottom-6 right-6 z-50 w-96"
                 >
-                    <div className="bg-slate-900/90 backdrop-blur-xl border border-white/10 shadow-2xl shadow-indigo-500/20 rounded-2xl overflow-hidden">
+                    <div className="bg-white border-2 border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] rounded-xl overflow-hidden">
                         {/* Header Compact */}
-                        <div className="px-4 py-3 border-b border-white/5 bg-slate-800/50 flex items-center justify-between">
+                        <div className={cn(
+                            "px-4 py-3 border-b-2 border-black flex items-center justify-between",
+                            isComplete ? "bg-emerald-100" : "bg-indigo-100"
+                        )}>
                             <div className="flex items-center gap-2">
                                 {isComplete ? (
-                                    <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                                    <CheckCircle2 className="h-4 w-4 text-black" strokeWidth={2.5} />
                                 ) : (
-                                    <Sparkles className="h-4 w-4 text-indigo-400 animate-pulse" />
+                                    <Sparkles className="h-4 w-4 text-black animate-pulse" strokeWidth={2.5} />
                                 )}
-                                <span className="text-sm font-semibold text-white">
+                                <span className="text-sm font-black uppercase tracking-tight text-black">
                                     {isComplete ? t("completeTitle") : t("workingTitle")}
                                 </span>
                             </div>
                             {/* Bouton X pour fermer */}
                             <button
                                 onClick={onClose}
-                                className="p-1 rounded-md hover:bg-white/10 transition-colors text-slate-400 hover:text-white"
+                                className="p-1 rounded-lg hover:bg-black hover:text-white transition-colors text-black border-2 border-transparent hover:border-black"
                                 aria-label="Close"
                             >
-                                <X className="h-4 w-4" />
+                                <X className="h-4 w-4" strokeWidth={3} />
                             </button>
                         </div>
 
                         {/* Content - Sequential Animation */}
-                        <div className="p-4">
+                        <div className="p-5 bg-white">
                             <AnimatePresence mode="wait">
                                 <motion.div
                                     key={currentStepData.id}
-                                    initial={{ opacity: 0, y: 20 }}
+                                    initial={{ opacity: 0, y: 10 }}
                                     animate={{ opacity: 1, y: 0 }}
-                                    exit={{ opacity: 0, y: -20 }}
-                                    transition={{ duration: 0.3 }}
-                                    className="flex items-start gap-3"
+                                    exit={{ opacity: 0, y: -10 }}
+                                    transition={{ duration: 0.2 }}
+                                    className="flex items-start gap-4"
                                 >
                                     <div className={cn(
-                                        "w-8 h-8 rounded-full flex items-center justify-center border flex-shrink-0",
+                                        "w-12 h-12 rounded-xl flex items-center justify-center border-2 border-black shrink-0 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]",
                                         isComplete
-                                            ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400"
-                                            : "bg-indigo-500/10 border-indigo-500/20 text-indigo-400"
+                                            ? "bg-emerald-200"
+                                            : "bg-indigo-200"
                                     )}>
                                         {isComplete ? (
-                                            <CheckCircle2 className="h-4 w-4" />
+                                            <CheckCircle2 className="h-6 w-6 text-black" strokeWidth={2.5} />
                                         ) : (
-                                            <currentStepData.icon className="h-4 w-4" />
+                                            <currentStepData.icon className="h-6 w-6 text-black" strokeWidth={2.5} />
                                         )}
                                     </div>
-                                    <div>
-                                        <h3 className="text-sm font-medium text-white">
+                                    <div className="flex-1 min-w-0">
+                                        <h3 className="text-base font-bold text-black truncate">
                                             {isComplete ? t("contentGenerated") : currentStepData.label}
                                         </h3>
-                                        <p className="text-xs text-slate-400 mt-0.5">
+                                        <p className="text-xs font-medium text-gray-500 mt-1 leading-relaxed">
                                             {isComplete ? t("clickToView") : currentStepData.description}
                                         </p>
                                     </div>
@@ -136,9 +139,9 @@ export function GenerationOverlay({ isVisible, currentStep, onClose }: Generatio
 
                             {/* Progress Bar */}
                             {!isComplete ? (
-                                <div className="mt-4 h-1 w-full bg-slate-800 rounded-full overflow-hidden">
+                                <div className="mt-5 h-3 w-full bg-gray-100 rounded-full overflow-hidden border-2 border-black">
                                     <motion.div
-                                        className="h-full bg-indigo-500"
+                                        className="h-full bg-black"
                                         initial={{ width: "0%" }}
                                         animate={{ width: `${((activeStepIndex + 1) / steps.length) * 100}%` }}
                                         transition={{ duration: 0.5 }}
@@ -149,7 +152,7 @@ export function GenerationOverlay({ isVisible, currentStep, onClose }: Generatio
                                     initial={{ opacity: 0, y: 10 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     onClick={onClose}
-                                    className="mt-4 w-full py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-500 transition-colors shadow-lg shadow-indigo-600/30"
+                                    className="mt-5 w-full py-2.5 rounded-lg bg-black text-white text-sm font-black uppercase tracking-wide border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-y-[2px] hover:shadow-none transition-all active:translate-y-[4px]"
                                 >
                                     {t("openTab")}
                                 </motion.button>

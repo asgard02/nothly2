@@ -163,7 +163,7 @@ export async function PATCH(
     const updates: any = {}
     if (title) updates.title = title
     if (color) updates.color = color
-    // if (is_favorite !== undefined) updates.is_favorite = is_favorite
+    if (is_favorite !== undefined) updates.is_favorite = is_favorite
 
     updates.updated_at = new Date().toISOString()
 

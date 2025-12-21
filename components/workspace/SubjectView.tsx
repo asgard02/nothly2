@@ -1,10 +1,10 @@
 "use client"
 
-import { useState, useTransition, useMemo, useEffect } from "react"
-import { motion } from "framer-motion"
+import { useState, useTransition, useMemo, useEffect, useRef } from "react"
+import { motion, AnimatePresence } from "framer-motion"
 import { useRouter } from "next/navigation"
 import { ArrowLeft, ArrowRight, FileText, Plus, Search, Sparkles, BookOpen, MessageSquare, Send, Loader2, X, Brain, ListChecks, ChevronDown, ChevronUp, Calendar, Trash2, Pencil, Check, Zap, Star } from "lucide-react"
-import { toast } from "sonner"
+import { toast } from "@/components/CustomToast"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils"
 import type { Subject } from "@/lib/hooks/useSubjects"
 import { useUpdateSubject } from "@/lib/hooks/useSubjects"
 import { UploadDialog } from "./UploadDialog"
+
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { MentionInput, extractMentionedDocumentIds } from "./MentionInput"
 import QuizViewer, { type QuizQuestionItem } from "@/components/subjects/QuizViewer"
@@ -193,9 +194,24 @@ export default function SubjectView({ subject, onBack, onSelectDocument, onUpdat
   })
 
   const [chatInput, setChatInput] = useState("")
+  const [showChatInput, setShowChatInput] = useState(false)
   const [isSending, setIsSending] = useState(false)
 
-  const filteredDocs = documents.filter((doc: any) =>
+  const [messages, setMessages] = useState<Array<{ role: 'user' | 'assistant', content: string }>>([])
+
+  // Scroller automatiquement vers le bas du chat
+  const scrollRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight
+    }
+  }, [messages, showChatInput])
+
+  const sortedDocs = documents.sort((a: any, b: any) =>
+    new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+  )
+
+  const filteredDocs = sortedDocs.filter((doc: any) =>
     doc.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     doc.filename?.toLowerCase().includes(searchQuery.toLowerCase())
   )
@@ -277,11 +293,49 @@ export default function SubjectView({ subject, onBack, onSelectDocument, onUpdat
     }
   }
 
-  const handleSendMessage = async (messageOverride?: string, explicitDocIds?: string[], sectionIds?: string[]) => {
+  const handleSendMessage = async (messageOverride?: string, explicitDocIds?: string[], sectionIds?: string[], mode: 'auto' | 'conversation' = 'conversation') => {
     const messageToSend = typeof messageOverride === 'string' ? messageOverride : chatInput
     if (!messageToSend.trim() || isSending) return
 
     setIsSending(true)
+
+    // MODE CONVERSATION : Chat classique sans overlay
+    if (mode === 'conversation') {
+      // Ajouter le message de l'utilisateur
+      const userMsg = { role: 'user' as const, content: messageToSend.trim() }
+      setMessages(prev => [...prev, userMsg])
+      setChatInput("")
+
+      try {
+        const response = await fetch("/api/chat/subject", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            subjectId: subject.id,
+            message: messageToSend.trim(),
+            // Pour le chat, si pas de docs explicites, on ne force pas tout le contexte pour aller plus vite, 
+            // ou on laisse l'API gérer. Ici on passe tout pour avoir le contexte.
+            mentionedDocumentIds: documents.map((d: any) => d.id),
+            mode: 'conversation'
+          })
+        })
+
+        if (!response.ok) throw new Error("Erreur réponse IA")
+
+        const data = await response.json()
+        const aiMsg = { role: 'assistant' as const, content: data.response || "Désolé, je n'ai pas compris." }
+
+        setMessages(prev => [...prev, aiMsg])
+
+      } catch (error) {
+        toast.error("Erreur lors de l'envoi du message")
+      } finally {
+        setIsSending(false)
+      }
+      return
+    }
+
+    // MODE GENERATION : Overlay et processus complexe
     setIsGenerating(true)
     setGenerationStep("intent")
 
@@ -293,30 +347,21 @@ export default function SubjectView({ subject, onBack, onSelectDocument, onUpdat
     stepTimers.push(setTimeout(() => setGenerationStep("generation"), 4500))
 
     try {
-      // Extraire les IDs des documents mentionnés
-      let mentionedDocumentIds = extractMentionedDocumentIds(
-        messageToSend,
-        documents.map((doc: any) => ({
-          id: doc.id,
-          title: doc.title,
-          filename: doc.filename,
-        }))
-      )
+      // Pour la génération "auto", on passe les documents
+      const targetDocIds = explicitDocIds && explicitDocIds.length > 0
+        ? explicitDocIds
+        : documents.map((d: any) => d.id)
 
-      // Si des IDs explicites sont fournis (via le dialogue), on les utilise
-      if (explicitDocIds && explicitDocIds.length > 0) {
-        mentionedDocumentIds = explicitDocIds
-      }
-
-      // Appel API pour envoyer le message avec contexte du sujet et documents mentionnés
+      // Appel API
       const response = await fetch("/api/chat/subject", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           subjectId: subject.id,
           message: messageToSend.trim(),
-          mentionedDocumentIds: mentionedDocumentIds.length > 0 ? mentionedDocumentIds : undefined,
-          sectionIds: sectionIds && sectionIds.length > 0 ? sectionIds : undefined
+          mentionedDocumentIds: targetDocIds,
+          sectionIds: sectionIds && sectionIds.length > 0 ? sectionIds : undefined,
+          mode: 'auto'
         })
       })
 
@@ -333,7 +378,6 @@ export default function SubjectView({ subject, onBack, onSelectDocument, onUpdat
       }
 
       const data = await response.json()
-      console.log("Réponse IA:", data)
 
       // Invalider les queries pour rafraîchir les données
       await Promise.all([
@@ -347,17 +391,14 @@ export default function SubjectView({ subject, onBack, onSelectDocument, onUpdat
       // Attendre un peu pour que l'utilisateur voie le succès
       await new Promise(resolve => setTimeout(resolve, 1500))
 
-      // Si du contenu a été créé, on le charge pour avoir les IDs corrects et les données complètes
+      // Traitement du résultat (Flashcards/Quiz/Résumé)
+      // Si du contenu a été créé, on le charge
       if (data.studyCollectionId) {
         try {
-          // Attendre un court instant pour s'assurer que la DB est à jour (réplication, etc.)
           await new Promise(resolve => setTimeout(resolve, 500))
-
           const studyRes = await fetch(`/api/study-subjects/${data.studyCollectionId}`)
           if (studyRes.ok) {
             const studyData = await studyRes.json()
-            console.log("Study Data loaded:", studyData)
-
             const hasQuizQuestions = (studyData.quiz && studyData.quiz.length > 0) || (studyData.quizQuestions && studyData.quizQuestions.length > 0)
             const hasFlashcards = studyData.flashcards && studyData.flashcards.length > 0
 
@@ -366,10 +407,7 @@ export default function SubjectView({ subject, onBack, onSelectDocument, onUpdat
             } else if (studyData.type === 'quiz' || hasQuizQuestions) {
               setPendingGenerationResult({
                 type: 'quiz',
-                data: {
-                  ...studyData,
-                  quizQuestions: studyData.quiz || studyData.quizQuestions
-                }
+                data: { ...studyData, quizQuestions: studyData.quiz || studyData.quizQuestions }
               })
             } else if (studyData.type === 'summary') {
               setPendingGenerationResult({
@@ -388,7 +426,6 @@ export default function SubjectView({ subject, onBack, onSelectDocument, onUpdat
           console.error("Error fetching generated study content:", err)
         }
       } else if (data.isSummaryRequest && !data.isQuizRequest && !data.isFlashcardRequest && data.response) {
-        // Fallback pour le résumé si pas de studyCollectionId (ex: erreur sauvegarde DB mais généré ok)
         setPendingGenerationResult({
           type: 'summary',
           data: {
@@ -400,9 +437,6 @@ export default function SubjectView({ subject, onBack, onSelectDocument, onUpdat
       }
 
       setChatInput("")
-
-      // L'overlay reste ouvert jusqu'à ce que l'utilisateur clique sur "Ouvrir l'onglet"
-      // setIsGenerating(false) est géré par le bouton de l'overlay
 
     } catch (error) {
       console.error("Erreur lors de l'envoi:", error)
@@ -483,7 +517,11 @@ export default function SubjectView({ subject, onBack, onSelectDocument, onUpdat
       prompt += ` sur le sujet : "${topic}"`
     }
 
-    handleSendMessage(prompt, selectedDocIds, sectionIds)
+    if (topic.trim()) {
+      prompt += ` sur le sujet : "${topic}"`
+    }
+
+    handleSendMessage(prompt, selectedDocIds, sectionIds, 'auto')
     setIsGenerationDialogOpen(false)
   }
 
@@ -643,10 +681,10 @@ export default function SubjectView({ subject, onBack, onSelectDocument, onUpdat
                           subject.is_favorite ? "text-yellow-500 hover:text-yellow-600" : "text-gray-400 hover:text-yellow-500"
                         )}
                       >
-                        <Star className={cn("h-6 w-6", subject.is_favorite && "fill-yellow-500")} strokeWidth={2.5} />
+                        <Star className={cn("h-6 w-6", subject.is_favorite && "fill-yellow-500 text-yellow-500")} strokeWidth={2.5} />
                       </button>
                       <span className="text-sm font-bold text-black bg-[#FBCFE8] px-3 py-1 rounded-full border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
-                        {subject.doc_count} DOC{subject.doc_count > 1 ? "S" : ""}
+                        {(subject.doc_count || 0)} DOC{(subject.doc_count || 0) > 1 ? "S" : ""}
                       </span>
                     </h1>
                   </div>
@@ -1237,88 +1275,150 @@ export default function SubjectView({ subject, onBack, onSelectDocument, onUpdat
         ) : null
         }
       </div >
+      {/* Suggestions de prompts rapides - Cachées quand le chat est ouvert OU dans les onglets FC/Quiz/Résumés */}
+      <AnimatePresence mode="wait">
+        {!showChatInput && activeTab === "pdf" && (
+          <motion.div
+            key="action-buttons"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+            className="mb-6 flex justify-center z-20 relative"
+          >
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => handleOpenGenerationDialog("flashcards")}
+                className="px-6 py-4 text-sm font-black uppercase rounded-2xl bg-white border-2 border-black hover:bg-[#FBCFE8] hover:text-black transition-all flex items-center gap-3 text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 active:translate-y-0 active:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+              >
+                <Brain className="h-5 w-5" strokeWidth={2.5} />
+                {t("generateFlashcards")}
+              </button>
+              <button
+                onClick={() => handleOpenGenerationDialog("quiz")}
+                className="px-6 py-4 text-sm font-black uppercase rounded-2xl bg-white border-2 border-black hover:bg-[#BBF7D0] hover:text-black transition-all flex items-center gap-3 text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 active:translate-y-0 active:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+              >
+                <ListChecks className="h-5 w-5" strokeWidth={2.5} />
+                {t("generateQuiz")}
+              </button>
+              <button
+                onClick={() => handleOpenGenerationDialog("summary")}
+                className="px-6 py-4 text-sm font-black uppercase rounded-2xl bg-white border-2 border-black hover:bg-[#FDE68A] hover:text-black transition-all flex items-center gap-3 text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 active:translate-y-0 active:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+              >
+                <FileText className="h-5 w-5" strokeWidth={2.5} />
+                {t("summarize")}
+              </button>
 
-      {/* Chat intégré en bas - Style ChatGPT amélioré - Caché quand on affiche flashcards/quiz */}
-      {
-        !selectedFlashcardCollectionId && !selectedQuizCollection && !selectedSummary && (
-          <div className="sticky bottom-0 left-0 right-0 z-20 mt-auto pointer-events-none pb-6">
-            <div className="max-w-3xl mx-auto px-4 pointer-events-auto">
-              {/* Message si aucun document */}
-              {documents.length === 0 && showNoDocsWarning && (
-                <div className="mb-4 p-4 rounded-xl border border-amber-500/30 bg-amber-500/10 backdrop-blur-md shadow-lg relative">
-                  <button
-                    onClick={() => setShowNoDocsWarning(false)}
-                    className="absolute top-2 right-2 p-1 rounded-md hover:bg-amber-500/20 text-amber-600/60 hover:text-amber-600 transition-colors"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                  <div className="flex items-start gap-3">
-                    <div className="p-1.5 rounded-lg bg-amber-500/20 border border-amber-500/30 flex-shrink-0">
-                      <FileText className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+              <div className="w-px h-8 bg-black/20 mx-2"></div>
+
+              <button
+                onClick={() => setShowChatInput(!showChatInput)}
+                className={cn(
+                  "p-4 rounded-2xl border-2 border-black transition-all shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 active:translate-y-0 active:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]",
+                  showChatInput
+                    ? "bg-black text-white hover:bg-gray-800"
+                    : "bg-white text-gray-500 hover:bg-black hover:text-white"
+                )}
+                title={t("conversationalAssistant")}
+              >
+                <MessageSquare className="h-5 w-5" strokeWidth={2.5} />
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      {/* Chat Input - Interface conversationnelle simplifiée */}
+      <AnimatePresence>
+        {showChatInput && (
+          <motion.div
+            key="chat-window"
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+            transition={{ duration: 0.3, ease: "easeOut" }}
+            className="fixed bottom-6 right-6 z-50"
+          >
+            <div className="w-[420px] bg-white border-2 border-black rounded-2xl shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] overflow-hidden flex flex-col max-h-[600px]">
+              {/* Header simplifié */}
+              <div className="flex justify-between items-center px-5 py-3 border-b-2 border-black bg-white">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-purple-500 border-2 border-black flex items-center justify-center">
+                    <Sparkles className="h-4 w-4 text-white" strokeWidth={2.5} />
+                  </div>
+                  <span className="text-sm font-black uppercase text-black">Assistant IA</span>
+                </div>
+                <button
+                  onClick={() => setShowChatInput(false)}
+                  className="w-8 h-8 rounded-lg hover:bg-gray-100 flex items-center justify-center transition-colors"
+                >
+                  <X className="h-4 w-4 text-gray-600" strokeWidth={2.5} />
+                </button>
+              </div>
+
+              {/* Zone de messages - Améliorée */}
+              <div
+                ref={scrollRef}
+                className="flex-1 overflow-y-auto p-6 space-y-4 min-h-[300px] bg-gradient-to-b from-white to-gray-50/30"
+              >
+                {messages.length === 0 ? (
+                  <div className="h-full flex flex-col items-center justify-center text-center py-10">
+                    <div className="w-16 h-16 rounded-xl bg-purple-100 border-2 border-black flex items-center justify-center mb-3">
+                      <Sparkles className="h-8 w-8 text-purple-600" strokeWidth={2} />
                     </div>
-                    <div className="flex-1 pr-6">
-                      <p className="text-sm font-medium text-foreground mb-1">
-                        {t("noDocsInCollection")}
-                      </p>
-                      <p className="text-xs text-muted-foreground dark:text-gray-400 mb-3">
-                        {t("noDocsInCollectionDesc")}
-                      </p>
-                      <Button
-                        onClick={() => setIsUploadOpen(true)}
-                        size="sm"
-                        className="rounded-lg bg-amber-600 hover:bg-amber-700 text-white"
-                      >
-                        <Plus className="h-3.5 w-3.5 mr-2" />
-                        {t("addDocument")}
-                      </Button>
+                    <h4 className="text-sm font-bold text-black mb-1">Posez votre question</h4>
+                    <p className="text-xs text-gray-500 max-w-xs">Discutez avec l'assistant pour mieux comprendre vos documents</p>
+                  </div>
+                ) : (
+                  messages.map((msg, i) => (
+                    <div key={i} className={cn("flex w-full gap-3", msg.role === 'user' ? "justify-end" : "justify-start")}>
+                      {msg.role === 'assistant' && (
+                        <div className="w-8 h-8 rounded-lg bg-purple-500 border-2 border-black flex items-center justify-center flex-shrink-0 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                          <Sparkles className="h-4 w-4 text-white" strokeWidth={2.5} />
+                        </div>
+                      )}
+                      <div className={cn(
+                        "max-w-[75%] rounded-2xl px-4 py-3 shadow-[3px_3px_0px_0px_rgba(0,0,0,0.1)]",
+                        msg.role === 'user'
+                          ? "bg-black text-white rounded-br-md border-2 border-black"
+                          : "bg-white border-2 border-black text-black rounded-bl-md"
+                      )}>
+                        <div className={cn(
+                          "prose prose-sm max-w-none",
+                          msg.role === 'user'
+                            ? "prose-invert prose-p:text-white prose-headings:text-white prose-strong:text-white"
+                            : "prose-p:text-gray-800 prose-headings:text-black prose-strong:text-black"
+                        )}>
+                          <MarkdownRenderer content={msg.content} />
+                        </div>
+                      </div>
+                      {msg.role === 'user' && (
+                        <div className="w-8 h-8 rounded-lg bg-black border-2 border-black flex items-center justify-center flex-shrink-0 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                          <span className="text-white text-xs font-black">U</span>
+                        </div>
+                      )}
+                    </div>
+                  ))
+                )}
+                {isSending && messages.length > 0 && messages[messages.length - 1].role === 'user' && (
+                  <div className="flex justify-start">
+                    <div className="bg-white border-2 border-black rounded-xl px-4 py-2.5 flex items-center gap-2">
+                      <Loader2 className="h-3.5 w-3.5 animate-spin text-purple-600" strokeWidth={2.5} />
+                      <span className="text-xs font-medium text-gray-600">Réflexion...</span>
                     </div>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
 
-              {/* Suggestions de prompts rapides */}
-              {documents.length > 0 && chatInput.length === 0 && (
-                <div className="mb-4 space-y-2 flex flex-col items-center animate-in slide-in-from-bottom-2 fade-in duration-300">
-                  <div className="flex flex-wrap justify-center gap-3">
-                    <button
-                      onClick={() => {
-                        handleOpenGenerationDialog("flashcards")
-                      }}
-                      className="px-4 py-2 text-xs font-black uppercase rounded-full border-2 border-black bg-white hover:bg-[#FBCFE8] hover:text-black transition-all flex items-center gap-2 text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 active:translate-y-0 active:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
-                    >
-                      <Brain className="h-4 w-4 text-black" strokeWidth={2.5} />
-                      {t("generateFlashcards")}
-                    </button>
-                    <button
-                      onClick={() => {
-                        handleOpenGenerationDialog("quiz")
-                      }}
-                      className="px-4 py-2 text-xs font-black uppercase rounded-full border-2 border-black bg-white hover:bg-[#BBF7D0] hover:text-black transition-all flex items-center gap-2 text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 active:translate-y-0 active:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
-                    >
-                      <ListChecks className="h-4 w-4 text-black" strokeWidth={2.5} />
-                      {t("generateQuiz")}
-                    </button>
-                    <button
-                      onClick={() => {
-                        handleOpenGenerationDialog("summary")
-                      }}
-                      className="px-4 py-2 text-xs font-black uppercase rounded-full border-2 border-black bg-white hover:bg-[#FDE68A] hover:text-black transition-all flex items-center gap-2 text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 active:translate-y-0 active:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
-                    >
-                      <FileText className="h-4 w-4 text-black" strokeWidth={2.5} />
-                      {t("summarize")}
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              <div className="relative">
+              {/* Input simplifié */}
+              <div className="p-3 border-t-2 border-black bg-white">
                 <MentionInput
                   value={chatInput}
                   onChange={setChatInput}
-                  onSend={handleSendMessage}
+                  onSend={() => handleSendMessage(undefined, undefined, undefined, 'conversation')}
                   onUpload={() => setIsUploadOpen(true)}
                   disabled={isSending}
                   isLoading={isSending}
+                  placeholder="Tapez votre message..."
                   documents={documents.map((doc: any) => ({
                     id: doc.id,
                     title: doc.title,
@@ -1326,16 +1426,10 @@ export default function SubjectView({ subject, onBack, onSelectDocument, onUpdat
                   }))}
                 />
               </div>
-              {documents.length > 0 && (
-                <p className="text-[10px] text-center text-slate-500/60 mt-2 font-medium">
-                  {t("aiDisclaimer")}
-                </p>
-              )}
             </div>
-          </div>
-        )
-      }
-
+          </motion.div>
+        )}
+      </AnimatePresence>
       {
         isUploadOpen && (
           <UploadDialog

@@ -75,6 +75,10 @@ export async function GET(req: NextRequest) {
       created_at,
       updated_at,
       current_version_id,
+      collection_id,
+      collections!documents_collection_id_fkey (
+        is_archived
+      ),
       document_versions:document_versions!document_versions_document_id_fkey (
         id,
         created_at,
@@ -116,10 +120,22 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: error.message || "Erreur lors de la récupération des documents" }, { status: 500 })
   }
 
-  const normalized = (data ?? []).map((document) => ({
-    ...document,
-    tags: Array.isArray((document as any).tags) ? (document as any).tags : [],
-  }))
+  // Filtrer les documents des collections archivées
+  const filtered = (data ?? []).filter((doc: any) => {
+    // Garder les documents sans collection (pour compatibilité)
+    if (!doc.collections) return true
+    // Exclure les documents des collections archivées
+    return !doc.collections.is_archived
+  })
+
+  const normalized = filtered.map((document) => {
+    // Supprimer le champ collections de la réponse
+    const { collections, ...rest } = document as any
+    return {
+      ...rest,
+      tags: Array.isArray(rest.tags) ? rest.tags : [],
+    }
+  })
 
   return NextResponse.json(normalized)
   } catch (err: any) {

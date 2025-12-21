@@ -26,11 +26,19 @@ export async function GET() {
       return NextResponse.json({ error: "Configuration Supabase manquante" }, { status: 500 })
     }
 
-    // Récupérer les matières
+    // Récupérer les matières avec le nombre de documents en une seule requête optimisée
     const { data: collections, error } = await admin
       .from("collections")
-      .select("id, title, color, created_at, updated_at")
+      .select(`
+        id, 
+        title, 
+        color, 
+        created_at, 
+        updated_at,
+        is_favorite
+      `)
       .eq("user_id", user.id)
+      .eq("is_archived", false) // Exclure les collections archivées
       .order("updated_at", { ascending: false })
 
     console.log(`[GET /api/subjects] searching for user_id: ${user.id}`)
@@ -60,71 +68,52 @@ export async function GET() {
       return NextResponse.json([])
     }
 
+    // Récupérer les compteurs pour toutes les collections en une seule requête
+    const collectionIds = collections.map((c: any) => c.id)
+    
+    // Compter les documents pour toutes les collections
+    const { data: docCounts } = await admin
+      .from("documents")
+      .select("collection_id")
+      .in("collection_id", collectionIds)
+    
+    // Créer un map des compteurs
+    const docCountMap = new Map<string, number>()
+    docCounts?.forEach((doc: any) => {
+      const count = docCountMap.get(doc.collection_id) || 0
+      docCountMap.set(doc.collection_id, count + 1)
+    })
+
+    // Récupérer la dernière date d'activité pour chaque collection
+    const { data: lastDocs } = await admin
+      .from("documents")
+      .select("collection_id, updated_at")
+      .in("collection_id", collectionIds)
+      .order("updated_at", { ascending: false })
+
+    // Créer un map des dernières dates
+    const lastActiveMap = new Map<string, string>()
+    lastDocs?.forEach((doc: any) => {
+      if (!lastActiveMap.has(doc.collection_id)) {
+        lastActiveMap.set(doc.collection_id, doc.updated_at)
+      }
+    })
+
     // Transformer les données pour correspondre à l'interface Subject
-    const formattedCollections = await Promise.all(
-      collections.map(async (collection: any) => {
-        // Compter les documents
-        const { count: docCount } = await admin
-          .from("documents")
-          .select("*", { count: "exact", head: true })
-          .eq("collection_id", collection.id)
-
-        // Compter les artefacts (revision_notes via document_sections)
-        const { data: documents } = await admin
-          .from("documents")
-          .select("id")
-          .eq("collection_id", collection.id)
-
-        const documentIds = documents?.map((d: any) => d.id) || []
-        
-        let artifactCount = 0
-        if (documentIds.length > 0) {
-          const { data: versions } = await admin
-            .from("document_versions")
-            .select("id")
-            .in("document_id", documentIds)
-
-          const versionIds = versions?.map((v: any) => v.id) || []
-          
-          if (versionIds.length > 0) {
-            const { data: sections } = await admin
-              .from("document_sections")
-              .select("id")
-              .in("document_version_id", versionIds)
-
-            const sectionIds = sections?.map((s: any) => s.id) || []
-            
-            if (sectionIds.length > 0) {
-              const { count } = await admin
-                .from("revision_notes")
-                .select("*", { count: "exact", head: true })
-                .in("document_section_id", sectionIds)
-              
-              artifactCount = count || 0
-            }
-          }
-        }
-
-        // Trouver la date de dernière activité
-        const { data: lastDoc } = await admin
-          .from("documents")
-          .select("updated_at")
-          .eq("collection_id", collection.id)
-          .order("updated_at", { ascending: false })
-          .limit(1)
-          .maybeSingle()
-
-        return {
-          id: collection.id,
-          title: collection.title,
-          color: collection.color,
-          doc_count: docCount || 0,
-          artifact_count: artifactCount,
-          last_active: lastDoc?.updated_at || collection.updated_at || collection.created_at,
-          is_favorite: collection.is_favorite || false,
-        }
-      })
-    )
+    const formattedCollections = collections.map((collection: any) => {
+      return {
+        id: collection.id,
+        user_id: user.id,
+        title: collection.title,
+        color: collection.color,
+        created_at: collection.created_at,
+        updated_at: collection.updated_at,
+        doc_count: docCountMap.get(collection.id) || 0,
+        artifact_count: 0, // On peut calculer ça plus tard si nécessaire
+        last_active: lastActiveMap.get(collection.id) || collection.updated_at || collection.created_at,
+        is_favorite: collection.is_favorite ?? false, // Utilise ?? pour gérer undefined/null
+      }
+    })
 
     console.log("[GET /api/subjects] ✅ Matières formatées:", formattedCollections.length)
     return NextResponse.json(formattedCollections)

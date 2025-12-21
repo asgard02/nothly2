@@ -13,7 +13,7 @@ import { useNote } from "@/lib/hooks/useNotes"
 import { useAutoSave } from "@/lib/hooks/useAutoSave"
 import { useRealtimeNote } from "@/lib/hooks/useRealtimeNote"
 import { triggerGenerationToast } from "@/components/GenerationToast"
-import { toast } from "sonner"
+import { toast } from "@/components/CustomToast"
 
 export default function NoteEditorPage() {
   const { id } = useParams()

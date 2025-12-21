@@ -17,21 +17,12 @@ export default function RegisterPage() {
   const [isSuccess, setIsSuccess] = useState(false)
   const [isError, setIsError] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
   const [emailError, setEmailError] = useState("")
   const [passwordError, setPasswordError] = useState("")
 
 
   const supabase = createClient()
   const router = useRouter()
-
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      setMousePosition({ x: e.clientX, y: e.clientY })
-    }
-    window.addEventListener("mousemove", handleMouseMove, { passive: true })
-    return () => window.removeEventListener("mousemove", handleMouseMove)
-  }, [])
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -129,58 +120,45 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-muted/10 to-background text-foreground relative overflow-hidden flex items-center justify-center p-4">
-      {/* Grille de fond subtile */}
-      <div className="fixed inset-0 z-0" style={{
-        backgroundImage: `
-          linear-gradient(to right, hsl(var(--border)) 1px, transparent 1px),
-          linear-gradient(to bottom, hsl(var(--border)) 1px, transparent 1px)
-        `,
-        backgroundSize: '100px 100px',
-        opacity: 0.3
-      }} />
+    <div className="min-h-screen bg-pink-50 flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Abstract Background pattern */}
+      <div className="absolute inset-0 z-0 opacity-10" style={{
+        backgroundImage: 'radial-gradient(#000 1px, transparent 1px)',
+        backgroundSize: '20px 20px'
+      }}></div>
 
-      {/* Gradient suivant la souris */}
-      <div
-        className="fixed inset-0 z-0 opacity-20 transition-opacity duration-700"
-        style={{
-          background: `radial-gradient(600px circle at ${mousePosition.x}px ${mousePosition.y}px, hsl(var(--primary) / 0.08), transparent 50%)`,
-        }}
-      />
+      {/* Decorative elements */}
+      <div className="absolute top-20 left-10 md:left-20 w-32 h-32 bg-yellow-400 rounded-full border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hidden md:block animate-pulse"></div>
+      <div className="absolute bottom-10 right-10 w-24 h-24 bg-violet-400 rotate-45 border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hidden md:block animate-bounce delay-1000"></div>
 
-      {/* Blobs animés subtils */}
-      <div className="fixed inset-0 z-0 opacity-5">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-gradient-to-br from-nothly-blue to-nothly-violet rounded-full blur-[100px] animate-blob" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-gradient-to-br from-nothly-violet to-nothly-blue rounded-full blur-[100px] animate-blob animation-delay-2000" />
-      </div>
-
-      {/* Card de register */}
+      {/* Main Card */}
       <div className="relative z-10 w-full max-w-md">
-        <div className="rounded-3xl border-2 border-border bg-card/80 backdrop-blur-xl p-6 md:p-8 shadow-2xl">
+        <div className="bg-white border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] rounded-2xl p-6 md:p-8">
+
           {/* Header */}
-          <div className="text-center mb-6">
-            <div className="flex items-center justify-center mb-4">
-              <Logo size={40} showText={true} href="/" className="justify-center" />
+          <div className="text-center mb-8">
+            <div className="flex items-center justify-center mb-6">
+              <Logo size={48} showText={true} href="/" className="justify-center" />
             </div>
-            <h1 className="text-2xl font-black mb-1 text-foreground">
-              Create your account
+            <h1 className="text-3xl font-black mb-2 text-black uppercase tracking-tight">
+              Create Account
             </h1>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-base font-medium text-gray-500">
               Start your learning journey today
             </p>
           </div>
 
           {isSuccess ? (
-            <div className="text-center space-y-4 py-6">
-              <div className="w-16 h-16 mx-auto bg-gradient-to-r from-nothly-blue to-nothly-violet rounded-full flex items-center justify-center">
-                <Mail className="h-8 w-8 text-white" />
+            <div className="text-center space-y-6 py-6">
+              <div className="w-20 h-20 mx-auto bg-green-400 rounded-full border-4 border-black flex items-center justify-center shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                <Mail className="h-10 w-10 text-black" />
               </div>
               <div>
-                <h3 className="text-xl font-bold mb-1 text-foreground">Check your email</h3>
-                <p className="text-muted-foreground">{message}</p>
+                <h3 className="text-xl font-black mb-2 text-black uppercase">Check your email</h3>
+                <p className="text-gray-600 font-medium">{message}</p>
               </div>
-              <Link href="/login">
-                <Button className="bg-muted/20 border-2 border-border hover:bg-muted/50 text-foreground rounded-2xl px-6 py-4">
+              <Link href="/login" className="block w-full">
+                <Button className="w-full text-base py-6 bg-black text-white hover:bg-gray-800">
                   Go to login
                 </Button>
               </Link>
@@ -188,12 +166,13 @@ export default function RegisterPage() {
           ) : (
             <>
               {/* Google Sign Up */}
-              <div className="mb-6">
+              <div className="mb-8">
                 <Button
                   type="button"
+                  variant="outline"
                   onClick={handleGoogleSignUp}
                   disabled={isLoading}
-                  className="w-full py-4 rounded-2xl bg-muted/30 border-2 border-border hover:bg-muted/50 hover:border-border/80 transition-all duration-300 text-foreground font-semibold"
+                  className="w-full py-6 text-base"
                 >
                   <svg className="mr-3 h-5 w-5" viewBox="0 0 24 24">
                     <path
@@ -218,70 +197,68 @@ export default function RegisterPage() {
 
                 <div className="relative my-6">
                   <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-border" />
+                    <div className="w-full border-t-2 border-dashed border-gray-300" />
                   </div>
-                  <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-card px-3 text-muted-foreground font-semibold">Or</span>
+                  <div className="relative flex justify-center text-xs uppercase font-bold tracking-widest">
+                    <span className="bg-white px-3 text-gray-400">Or sign up with email</span>
                   </div>
                 </div>
               </div>
 
               {/* Form */}
-              <form onSubmit={handleRegister} className="space-y-4">
+              <form onSubmit={handleRegister} className="space-y-5">
                 <div>
-                  <label className="block text-sm font-semibold text-foreground mb-2">
+                  <label className="block text-sm font-bold text-black mb-2 uppercase tracking-wide">
                     Email address
                   </label>
                   <div className="relative">
-                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500 z-10" />
                     <Input
                       type="email"
                       placeholder="you@email.com"
                       value={email}
                       onChange={(e) => { setEmail(e.target.value); setEmailError("") }}
                       disabled={isLoading}
-                      className={`w-full pl-12 py-4 rounded-2xl bg-muted/20 border-2 text-foreground placeholder:text-muted-foreground focus:bg-muted/30 transition-all ${emailError ? "border-red-500 focus:border-red-500" : "border-border focus:border-primary"
-                        }`}
+                      className={`pl-12 ${emailError ? "border-red-500 focus:border-red-500" : ""}`}
                     />
                   </div>
                   {emailError && (
-                    <p className="mt-2 text-sm text-red-400 flex items-center gap-1.5">
-                      <span className="inline-block w-1 h-1 bg-red-400 rounded-full" />
+                    <p className="mt-2 text-sm font-bold text-red-500 flex items-center gap-1.5">
+                      <span className="inline-block w-2 h-2 bg-red-500 rounded-full" />
                       {emailError}
                     </p>
                   )}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-foreground mb-2">
+                  <label className="block text-sm font-bold text-black mb-2 uppercase tracking-wide">
                     Password
                   </label>
                   <div className="relative">
-                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500 z-10" />
                     <Input
                       type={showPassword ? "text" : "password"}
                       placeholder="Enter your password"
                       value={password}
                       onChange={(e) => { setPassword(e.target.value); setPasswordError("") }}
                       disabled={isLoading}
-                      className={`w-full pl-12 pr-12 py-4 rounded-2xl bg-muted/20 border-2 text-foreground placeholder:text-muted-foreground focus:bg-muted/30 transition-all ${passwordError ? "border-red-500 focus:border-red-500" : "border-border focus:border-primary"
-                        }`}
+                      className={`pl-12 pr-12 ${passwordError ? "border-red-500 focus:border-red-500" : ""}`}
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition"
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-black transition"
                     >
                       {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                     </button>
                   </div>
                   {passwordError ? (
-                    <p className="mt-2 text-sm text-red-400 flex items-center gap-1.5">
-                      <span className="inline-block w-1 h-1 bg-red-400 rounded-full" />
+                    <p className="mt-2 text-sm font-bold text-red-500 flex items-center gap-1.5">
+                      <span className="inline-block w-2 h-2 bg-red-500 rounded-full" />
                       {passwordError}
                     </p>
                   ) : (
-                    <p className="text-xs text-muted-foreground mt-2">
+                    <p className="text-xs text-gray-500 font-bold mt-2 uppercase tracking-wide">
                       Must be at least 6 characters long
                     </p>
                   )}
@@ -289,9 +266,9 @@ export default function RegisterPage() {
 
                 {message && (
                   <div
-                    className={`p-4 rounded-2xl text-sm font-medium ${isError
-                      ? "bg-red-500/10 text-red-400 border-2 border-red-500/20"
-                      : "bg-emerald-500/10 text-emerald-400 border-2 border-emerald-500/20"
+                    className={`p-4 rounded-xl border-2 font-bold ${isError
+                        ? "bg-red-100 text-red-700 border-red-700"
+                        : "bg-green-100 text-green-700 border-green-700"
                       }`}
                   >
                     {message}
@@ -301,7 +278,7 @@ export default function RegisterPage() {
                 <Button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full py-5 rounded-2xl bg-gradient-to-r from-nothly-blue to-nothly-violet text-white font-bold text-base shadow-lg shadow-nothly-blue/30 hover:shadow-xl hover:shadow-nothly-violet/40 hover:scale-105 transition-all duration-300"
+                  className="w-full py-6 text-base bg-violet-600 hover:bg-violet-700 text-white"
                 >
                   {isLoading ? (
                     <span className="flex items-center gap-2">
@@ -313,10 +290,10 @@ export default function RegisterPage() {
                   )}
                 </Button>
 
-                <div className="text-center mt-4">
-                  <p className="text-sm text-muted-foreground">
+                <div className="text-center mt-6">
+                  <p className="text-sm font-medium text-gray-600">
                     Already have an account?{" "}
-                    <Link href="/login" className="text-primary hover:text-primary/80 font-semibold transition">
+                    <Link href="/login" className="text-black font-black hover:underline uppercase">
                       Log in
                     </Link>
                   </p>
@@ -327,8 +304,8 @@ export default function RegisterPage() {
         </div>
 
         {/* Back to home */}
-        <div className="mt-6 text-center">
-          <Link href="/" className="text-sm text-muted-foreground hover:text-foreground transition inline-flex items-center gap-2">
+        <div className="mt-8 text-center">
+          <Link href="/" className="text-sm font-bold text-gray-500 hover:text-black transition inline-flex items-center gap-2 uppercase tracking-wide">
             ← Back to homepage
           </Link>
         </div>

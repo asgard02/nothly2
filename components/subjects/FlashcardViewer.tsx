@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useCallback } from "react"
+import { useEffect, useState, useCallback, useMemo } from "react"
 import { RotateCcw, X, Zap, Brain, ChevronRight, ChevronLeft, ArrowRight, HelpCircle } from "lucide-react"
 import MarkdownRenderer from "@/components/MarkdownRenderer"
 import { Button } from "@/components/ui/button"
@@ -74,11 +74,11 @@ export default function FlashcardViewer({ cards, onClose, studySubjectId }: Flas
     setIsFlipped(false)
   }, [mode, cards, stats])
 
-  // Fonction pour tronquer le texte si trop long
-  const truncateText = (text: string, maxLength: number = 300): string => {
+  // Fonction pour tronquer le texte si trop long - Memoized pour éviter les recalculs
+  const truncateText = useCallback((text: string, maxLength: number = 300): string => {
     if (text.length <= maxLength) return text
     return text.substring(0, maxLength).trim() + "..."
-  }
+  }, [])
 
   const handleFlip = useCallback(() => {
     const newFlippedState = !isFlipped
@@ -232,57 +232,74 @@ export default function FlashcardViewer({ cards, onClose, studySubjectId }: Flas
             {/* Carte qui va tourner */}
             <div
               className={cn(
-                "w-full h-full relative transition-all duration-700 transform-style-preserve-3d",
-                isFlipped && "rotate-y-180"
+                "w-full h-full relative transition-all duration-700"
               )}
-            >
+              style={{
+                transformStyle: 'preserve-3d',
+                transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
+              }}>
               {/* Face avant (Question) */}
               <div
-                className="absolute inset-0 w-full h-full bg-white rounded-3xl border-2 border-black shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] flex flex-col backface-hidden overflow-hidden hover:-translate-y-1 transition-transform"
+                className="absolute inset-0 w-full h-full bg-[#FDF6E3] rounded-3xl border-4 border-black shadow-[16px_16px_0px_0px_rgba(0,0,0,1)] flex flex-col overflow-hidden hover:-translate-y-2 hover:shadow-[20px_20px_0px_0px_rgba(0,0,0,1)] transition-all duration-300"
                 style={{
-                  transform: 'translateZ(0)',
+                  backfaceVisibility: 'hidden',
+                  WebkitBackfaceVisibility: 'hidden',
                 }}
               >
-                <div className="absolute top-0 left-0 w-full h-2 bg-black" />
+                {/* Barre décorative en haut */}
+                <div className="absolute top-0 left-0 w-full h-3 bg-black" />
+
+                {/* Badge Question */}
+                <div className="absolute top-8 left-8">
+                  <span className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white text-black border-3 border-black text-xs font-black tracking-wider uppercase shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
+                    <span className="text-lg">❓</span>
+                    Question
+                  </span>
+                </div>
 
                 {/* Contenu de la question */}
-                <div className="flex-1 flex flex-col items-center justify-center p-12 text-center relative">
-                  <div className="absolute top-6 left-6">
-                    <span className="inline-block px-3 py-1 rounded-md bg-gray-100 text-gray-500 border-2 border-black text-[10px] font-black tracking-widest uppercase">
-                      Question
-                    </span>
+                <div className="flex-1 flex flex-col items-center justify-center px-16 py-20 text-center">
+                  <div className="text-3xl md:text-5xl font-black text-black leading-tight max-w-2xl">
+                    <MarkdownRenderer content={truncateText(current.question, 200)} />
                   </div>
+                </div>
 
-                  <div className="text-2xl md:text-4xl font-black text-black leading-tight max-w-3xl prose prose-xl">
-                    <MarkdownRenderer content={truncateText(current.question)} />
-                  </div>
-
-                  <div className="absolute bottom-6 flex flex-col items-center animate-bounce-slow opacity-50">
-                    <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Cliquez pour retourner</span>
-                  </div>
+                {/* Indicateur subtil en bas */}
+                <div className="absolute bottom-8 left-1/2 -translate-x-1/2">
+                  <div className="w-12 h-1 bg-black/20 rounded-full" />
                 </div>
               </div>
 
               {/* Face arrière (Réponse) - Pré-rotée de 180deg */}
               <div
-                className="absolute inset-0 w-full h-full bg-[#FBCFE8] rounded-3xl border-2 border-black shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] flex flex-col backface-hidden overflow-hidden"
+                className="absolute inset-0 w-full h-full bg-[#DDD6FE] rounded-3xl border-4 border-black shadow-[16px_16px_0px_0px_rgba(0,0,0,1)] flex flex-col overflow-hidden"
                 style={{
-                  transform: 'rotateY(180deg) translateZ(0)',
+                  backfaceVisibility: 'hidden',
+                  WebkitBackfaceVisibility: 'hidden',
+                  transform: 'rotateY(180deg)',
                 }}
               >
-                <div className="absolute top-0 left-0 w-full h-2 bg-black" />
+                {/* Barre décorative en haut */}
+                <div className="absolute top-0 left-0 w-full h-3 bg-black" />
+
+                {/* Badge Réponse */}
+                <div className="absolute top-8 left-8">
+                  <span className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white text-black border-3 border-black text-xs font-black tracking-wider uppercase shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
+                    <span className="text-lg">💡</span>
+                    Réponse
+                  </span>
+                </div>
 
                 {/* Contenu de la réponse */}
-                <div className="flex-1 flex flex-col items-center justify-center p-12 text-center relative">
-                  <div className="absolute top-6 left-6">
-                    <span className="inline-block px-3 py-1 rounded-md bg-white text-black border-2 border-black text-[10px] font-black tracking-widest uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
-                      Réponse
-                    </span>
+                <div className="flex-1 flex flex-col items-center justify-center px-16 py-20 text-center">
+                  <div className="text-2xl md:text-4xl font-bold text-black leading-relaxed max-w-2xl">
+                    <MarkdownRenderer content={truncateText(current.answer, 250)} />
                   </div>
+                </div>
 
-                  <div className="text-2xl md:text-3xl font-bold text-black leading-relaxed max-w-3xl">
-                    <MarkdownRenderer content={truncateText(current.answer)} />
-                  </div>
+                {/* Indicateur subtil en bas */}
+                <div className="absolute bottom-8 left-1/2 -translate-x-1/2">
+                  <div className="w-12 h-1 bg-black/20 rounded-full" />
                 </div>
               </div>
             </div>

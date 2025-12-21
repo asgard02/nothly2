@@ -1,0 +1,99 @@
+      </div>
+
+      {/* Chat Input - Interface conversationnelle simplifiée */}
+      <div className="relative">
+        {documents.length > 0 && showChatInput && (
+          <div className="absolute bottom-[100px] left-0 right-0 z-10 animate-in slide-in-from-bottom-3 fade-in duration-300">
+            <div className="max-w-2xl mx-auto bg-white border-2 border-black rounded-2xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] overflow-hidden flex flex-col max-h-[550px]">
+              {/* Header simplifié */}
+              <div className="flex justify-between items-center px-5 py-3 border-b-2 border-black bg-white">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-purple-500 border-2 border-black flex items-center justify-center">
+                    <Sparkles className="h-4 w-4 text-white" strokeWidth={2.5} />
+                  </div>
+                  <span className="text-sm font-black uppercase text-black">Assistant IA</span>
+                </div>
+                <button
+                  onClick={() => setShowChatInput(false)}
+                  className="w-8 h-8 rounded-lg hover:bg-gray-100 flex items-center justify-center transition-colors"
+                >
+                  <X className="h-4 w-4 text-gray-600" strokeWidth={2.5} />
+                </button>
+              </div>
+
+              {/* Zone de messages épurée */}
+              <div 
+                ref={scrollRef}
+                className="flex-1 overflow-y-auto p-5 space-y-3 min-h-[280px] bg-gray-50/50"
+              >
+                {messages.length === 0 ? (
+                  <div className="h-full flex flex-col items-center justify-center text-center py-10">
+                    <div className="w-16 h-16 rounded-xl bg-purple-100 border-2 border-black flex items-center justify-center mb-3">
+                      <Sparkles className="h-8 w-8 text-purple-600" strokeWidth={2} />
+                    </div>
+                    <h4 className="text-sm font-bold text-black mb-1">Posez votre question</h4>
+                    <p className="text-xs text-gray-500 max-w-xs">Discutez avec l'assistant pour mieux comprendre vos documents</p>
+                  </div>
+                ) : (
+                  messages.map((msg, i) => (
+                    <div key={i} className={cn("flex w-full", msg.role === 'user' ? "justify-end" : "justify-start")}>
+                      <div className={cn(
+                        "max-w-[80%] rounded-xl px-4 py-2.5 text-sm",
+                        msg.role === 'user' 
+                          ? "bg-black text-white" 
+                          : "bg-white border-2 border-black text-gray-800"
+                      )}>
+                        <div className={cn(
+                          "prose prose-sm max-w-none",
+                          msg.role === 'user' 
+                            ? "prose-invert prose-p:text-white prose-p:leading-relaxed" 
+                            : "prose-p:text-gray-800 prose-p:leading-relaxed"
+                        )}>
+                          <MarkdownRenderer content={msg.content} />
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+                {isSending && messages.length > 0 && messages[messages.length - 1].role === 'user' && (
+                  <div className="flex justify-start">
+                    <div className="bg-white border-2 border-black rounded-xl px-4 py-2.5 flex items-center gap-2">
+                      <Loader2 className="h-3.5 w-3.5 animate-spin text-purple-600" strokeWidth={2.5} />
+                      <span className="text-xs font-medium text-gray-600">Réflexion...</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Input simplifié */}
+              <div className="p-3 border-t-2 border-black bg-white">
+                <MentionInput
+                  value={chatInput}
+                  onChange={setChatInput}
+                  onSend={() => handleSendMessage(undefined, undefined, undefined, 'conversation')}
+                  onUpload={() => setIsUploadOpen(true)}
+                  disabled={isSending}
+                  isLoading={isSending}
+                  placeholder="Tapez votre message..."
+                  documents={documents.map((doc: any) => ({
+                    id: doc.id,
+                    title: doc.title,
+                    filename: doc.filename,
+                  }))}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {
+        isUploadOpen && (
+          <UploadDialog
+            open={isUploadOpen}
+            onOpenChange={setIsUploadOpen}
+            subjectId={subject.id}
+            subjectTitle={subject.title}
+          />
+        )
+      }

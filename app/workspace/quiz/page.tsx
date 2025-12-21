@@ -1,13 +1,15 @@
 "use client"
 
 import { useState } from "react"
-import { Search, Brain, Clock, BarChart, ArrowRight, X, Check, Play, AlertTriangle, Sparkles, Loader2 } from "lucide-react"
+import { Search, Brain, Clock, BarChart, ArrowRight, X, Check, Play, AlertTriangle, Sparkles, Loader2, Trophy } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { motion, AnimatePresence } from "framer-motion"
 import { useQuery } from "@tanstack/react-query"
+import { useTranslations } from "next-intl"
 
-export default function QuizPage() {
+export default function QuizHub() {
+    const t = useTranslations("Quiz")
     const [activeQuiz, setActiveQuiz] = useState<any | null>(null)
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
     const [selectedOption, setSelectedOption] = useState<number | null>(null)
@@ -109,11 +111,16 @@ export default function QuizPage() {
             {/* Header */}
             <div className="mb-12 border-b-2 border-black pb-8 flex flex-col md:flex-row justify-between items-end">
                 <div>
-                    <h1 className="text-5xl md:text-8xl font-black tracking-tighter text-black flex items-center gap-4">
-                        Quiz Hub <span className="bg-[#DDD6FE] border-2 border-black rounded-full px-4 text-3xl md:text-5xl rotate-6 inline-block shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">🧠</span>
-                    </h1>
-                    <p className="font-bold text-gray-500 mt-4 text-lg">
-                        Train your brain. No pain, no gain.
+                    <div className="flex items-center gap-4 mb-2">
+                        <div className="p-3 bg-black rounded-xl">
+                            <Brain className="h-8 w-8 text-[#FBBF24]" />
+                        </div>
+                        <h1 className="text-5xl md:text-8xl font-black tracking-tighter text-black">
+                            {t('title')}
+                        </h1>
+                    </div>
+                    <p className="font-bold text-gray-500 mt-4 text-lg ml-20 uppercase tracking-widest">
+                        {t('subtitle')}
                     </p>
                 </div>
             </div>
@@ -133,17 +140,17 @@ export default function QuizPage() {
                                         <Brain className="h-32 w-32" />
                                     </div>
                                     <div>
-                                        <span className="bg-[#BBF7D0] border-2 border-black px-3 py-1 rounded-full text-xs font-black uppercase mb-4 inline-block">
-                                            {quiz.total_quiz || "?"} Questions
+                                        <span className="bg-[#BBF7D0] text-black border-2 border-black px-3 py-1 rounded-full text-xs font-black uppercase mb-4 inline-block">
+                                            {quiz.total_quiz || "?"} {t('questions')}
                                         </span>
                                         <h3 className="text-2xl font-black uppercase tracking-tight leading-none mb-2">{quiz.title}</h3>
-                                        <p className="text-sm font-bold text-gray-400 uppercase">Adding {new Date(quiz.created_at).toLocaleDateString()}</p>
+                                        <p className="text-sm font-bold text-gray-400 uppercase">{t('adding')} {new Date(quiz.created_at).toLocaleDateString()}</p>
                                     </div>
                                     <button
                                         onClick={() => startQuiz(quiz)}
                                         className="mt-6 w-full py-3 bg-black text-white font-bold rounded-xl border-2 border-transparent hover:bg-[#FBBF24] hover:text-black hover:border-black transition-colors flex items-center justify-center gap-2"
                                     >
-                                        START QUIZ <ArrowRight className="h-4 w-4" />
+                                        {t('startQuiz')} <ArrowRight className="h-4 w-4" />
                                     </button>
                                 </div>
                             ))}
@@ -156,12 +163,12 @@ export default function QuizPage() {
                             <div className="absolute bottom-10 left-10 w-16 h-16 bg-[#BAE6FD] border-2 border-black rotate-12"></div>
 
                             <div className="z-10 bg-[#F3F4F6] p-6 rounded-full border-2 border-black mb-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-                                <Brain className="h-12 w-12 text-black" strokeWidth={2} />
+                                <Trophy className="h-12 w-12 text-black" strokeWidth={2} />
                             </div>
 
-                            <h3 className="text-3xl font-black mb-2">It's quiet in here...</h3>
+                            <h3 className="text-3xl font-black mb-2">{t('emptyTitle')}</h3>
                             <p className="font-bold text-gray-500 max-w-sm mx-auto mb-8">
-                                Generate exams from your subjects to populate this area.
+                                {t('emptyDesc')}
                             </p>
 
                             {/* DEMO BUTTON */}
@@ -171,7 +178,7 @@ export default function QuizPage() {
                             >
                                 <span className="flex items-center gap-3">
                                     <Sparkles className="h-5 w-5 fill-white" />
-                                    Launch Pop Demo
+                                    {t('launchDemo')}
                                 </span>
                             </button>
                         </div>
@@ -183,10 +190,10 @@ export default function QuizPage() {
                     <div className="bg-[#FFF1F2] border-2 border-black rounded-2xl p-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
                         <h3 className="font-black text-xl mb-6 flex items-center gap-2">
                             <BarChart className="h-6 w-6" />
-                            Leaderboard
+                            {t('leaderboard')}
                         </h3>
                         <div className="font-bold text-sm text-gray-400 py-8 text-center border-2 border-dashed border-black/20 rounded-xl bg-white/50">
-                            NO DATA YET
+                            {t('noData')}
                         </div>
                     </div>
                 </div>
@@ -206,7 +213,7 @@ export default function QuizPage() {
                             {/* Modal Header */}
                             <div className="p-6 md:p-8 border-b-2 border-black flex items-center justify-between bg-white">
                                 <div className="flex items-center gap-4">
-                                    <span className="bg-black text-white px-3 py-1 rounded-lg font-bold text-xs uppercase">Question {currentQuestionIndex + 1} / {activeQuiz.questions.length}</span>
+                                    <span className="bg-black text-white px-3 py-1 rounded-lg font-bold text-xs uppercase">{t('question')} {currentQuestionIndex + 1} / {activeQuiz.questions.length}</span>
                                     <div className="h-3 w-32 md:w-64 bg-gray-200 rounded-full border-2 border-black overflow-hidden relative">
                                         <motion.div
                                             className="absolute left-0 top-0 bottom-0 bg-[#8B5CF6] h-full"
@@ -284,15 +291,15 @@ export default function QuizPage() {
                             {/* Footer */}
                             <div className="p-6 md:p-8 bg-white border-t-2 border-black flex justify-between items-center">
                                 <div className="font-black text-xl">
-                                    SCORE: {score}
+                                    {t('score')}: {score}
                                 </div>
                                 {isAnswerRevealed ? (
                                     <Button onClick={nextQuestion} className="h-14 px-10 rounded-xl border-2 border-black bg-black text-white hover:bg-[#8B5CF6] text-xl font-bold shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-y-[2px] active:translate-y-[4px] active:shadow-none transition-all">
-                                        {currentQuestionIndex < activeQuiz.questions.length - 1 ? "Next Question" : "Finish Quiz"} <ArrowRight className="ml-3 h-6 w-6" strokeWidth={3} />
+                                        {currentQuestionIndex < activeQuiz.questions.length - 1 ? t('nextQuestion') : t('finishQuiz')} <ArrowRight className="ml-3 h-6 w-6" strokeWidth={3} />
                                     </Button>
                                 ) : (
                                     <Button onClick={checkAnswer} disabled={selectedOption === null} className="h-14 px-10 rounded-xl border-2 border-black bg-[#FBBF24] text-black hover:bg-[#F59E0B] text-xl font-bold shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-y-[2px] active:translate-y-[4px] active:shadow-none transition-all disabled:opacity-50 disabled:shadow-none disabled:translate-y-[4px]">
-                                        Check Answer
+                                        {t('checkAnswer')}
                                     </Button>
                                 )}
                             </div>
