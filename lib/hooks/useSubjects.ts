@@ -27,7 +27,7 @@ export function useSubjects() {
         throw new Error(error.error || "Erreur lors du chargement des sujets")
       }
       const data = await response.json()
-      console.log("[useSubjects] Sujets chargés:", data.length)
+
       return data
     },
     staleTime: 30 * 1000, // 30 secondes

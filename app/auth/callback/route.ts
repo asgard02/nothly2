@@ -92,6 +92,6 @@ export async function GET(request: NextRequest) {
   }
 
   // Redirige vers le dashboard après authentification réussie
-  return NextResponse.redirect(new URL('/workspace', request.url))
+  return NextResponse.redirect(new URL('/workspace?fresh_login=true', request.url))
 }
 

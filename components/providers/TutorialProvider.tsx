@@ -20,11 +20,30 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
     }
 
     // Initial check on mount
+    // Initial check on mount
     useEffect(() => {
+        // Check session storage
+        const isFreshLoginSession = sessionStorage.getItem("nothly_fresh_login")
+
+        // Check URL params (for OAuth/Magic Link redirects)
+        const searchParams = new URLSearchParams(window.location.search)
+        const isFreshLoginParam = searchParams.get("fresh_login") === "true"
+
         const hasSeen = localStorage.getItem("nothly_tutorial_completed")
-        if (!hasSeen) {
+
+        if ((isFreshLoginSession || isFreshLoginParam) && !hasSeen) {
             // Small delay to ensure smooth entry
             const timer = setTimeout(() => setIsOpen(true), 1000)
+
+            // Consume the flags
+            sessionStorage.removeItem("nothly_fresh_login")
+
+            // Clean up URL if needed
+            if (isFreshLoginParam) {
+                const newUrl = window.location.pathname + window.location.hash
+                window.history.replaceState({}, '', newUrl)
+            }
+
             return () => clearTimeout(timer)
         }
     }, [])
