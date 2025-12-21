@@ -13,6 +13,13 @@ function escapeInlineHeadings(content: string): string {
   return content.replace(/([^\n])###/g, "$1\\###")
 }
 
+// Fonction pour normaliser les délimiteurs mathématiques LaTeX
+function normalizeMathDelimiters(content: string): string {
+  return content
+    .replace(/\\\[([\s\S]*?)\\\]/g, '$$$$$1$$$$') // \[ ... \] -> $$ ... $$
+    .replace(/\\\(([\s\S]*?)\\\)/g, '$$$1$$')     // \( ... \) -> $ ... $
+}
+
 export default function MarkdownRenderer({ content }: { content: string }) {
   const { theme, resolvedTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
@@ -53,8 +60,12 @@ export default function MarkdownRenderer({ content }: { content: string }) {
     // Pas de nettoyage (cleanup) pour éviter le clignotement/lag lors du démontage
   }, [theme, resolvedTheme])
 
-  // Échapper le contenu avant de le rendre
-  const escapedContent = useMemo(() => escapeInlineHeadings(content), [content])
+  // Échapper le contenu avant de le rendre et normaliser les maths
+  const processedContent = useMemo(() => {
+    let newContent = escapeInlineHeadings(content)
+    newContent = normalizeMathDelimiters(newContent)
+    return newContent
+  }, [content])
 
   return (
     <div
@@ -108,7 +119,7 @@ export default function MarkdownRenderer({ content }: { content: string }) {
           },
         }}
       >
-        {escapedContent}
+        {processedContent}
       </ReactMarkdown>
     </div>
   )

@@ -15,7 +15,7 @@ export default function MainContent({ children, className }: MainContentProps) {
     <div
       className={cn(
         "flex-1 h-screen overflow-hidden transition-all duration-300 ease-in-out",
-        isOpen ? "ml-64" : "ml-20",
+        isOpen ? "ml-72" : "ml-28",
         className
       )}
     >

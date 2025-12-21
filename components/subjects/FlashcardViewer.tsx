@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState, useCallback } from "react"
-import { RotateCcw, X, Zap, Brain, ChevronRight, ChevronLeft } from "lucide-react"
+import { RotateCcw, X, Zap, Brain, ChevronRight, ChevronLeft, ArrowRight, HelpCircle } from "lucide-react"
 import MarkdownRenderer from "@/components/MarkdownRenderer"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -161,25 +161,23 @@ export default function FlashcardViewer({ cards, onClose, studySubjectId }: Flas
   }
 
   return (
-    <div className="h-full w-full flex flex-col items-center justify-center p-6 md:p-8 bg-gradient-to-b from-background to-muted/20">
-      <div className="w-full max-w-4xl mx-auto flex flex-col h-full justify-center">
+    <div className="h-full w-full flex flex-col items-center justify-start py-6 px-4 md:px-8 bg-transparent max-w-5xl mx-auto">
+      <div className="w-full flex flex-col h-full">
         {/* Header avec mode et progression */}
-        <div className="flex justify-between items-center mb-8">
+        <div className="flex justify-between items-center mb-8 px-2">
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-              <span className="text-foreground font-bold">{currentIndex + 1}</span>
-              <span className="text-muted-foreground/50">/</span>
-              <span>{activeCards.length}</span>
+            <div className="flex items-center gap-2 px-4 py-2 bg-white border-2 border-black rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+              <span className="text-black font-black text-lg">{currentIndex + 1}</span>
+              <span className="text-gray-400 font-bold">/</span>
+              <span className="text-gray-500 font-bold">{activeCards.length}</span>
             </div>
 
-            <div className="h-8 w-[1px] bg-border/60 mx-2" />
-
-            <div className="flex bg-muted/50 p-1 rounded-lg border border-border/40">
+            <div className="flex bg-white p-1 rounded-xl border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
               <button
                 onClick={() => setMode("all")}
                 className={cn(
-                  "px-3 py-1 text-xs font-medium rounded-md transition-all",
-                  mode === "all" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
+                  "px-4 py-1.5 text-xs font-black uppercase rounded-lg transition-all border-2",
+                  mode === "all" ? "bg-black text-white border-black" : "bg-transparent text-gray-500 border-transparent hover:bg-gray-100"
                 )}
               >
                 Tout
@@ -187,163 +185,173 @@ export default function FlashcardViewer({ cards, onClose, studySubjectId }: Flas
               <button
                 onClick={() => setMode("smart")}
                 className={cn(
-                  "px-3 py-1 text-xs font-medium rounded-md transition-all flex items-center gap-1.5",
-                  mode === "smart" ? "bg-background shadow-sm text-purple-600 dark:text-purple-400" : "text-muted-foreground hover:text-foreground"
+                  "px-4 py-1.5 text-xs font-black uppercase rounded-lg transition-all flex items-center gap-1.5 border-2",
+                  mode === "smart" ? "bg-[#FBCFE8] text-black border-black" : "bg-transparent text-gray-500 border-transparent hover:bg-gray-100"
                 )}
               >
-                <Zap className="h-3 w-3" />
+                <Zap className="h-3.5 w-3.5" strokeWidth={2.5} />
                 Smart Review
               </button>
             </div>
           </div>
 
-          {onClose && (
-            <button
-              onClick={onClose}
-              className="p-2 rounded-full hover:bg-muted transition-colors text-muted-foreground hover:text-foreground border border-transparent hover:border-border/50"
-              aria-label="Fermer"
-            >
-              <X className="h-5 w-5" />
-            </button>
-          )}
-        </div>
+          <div className="flex items-center gap-4">
+            {/* Info sur la carte actuelle (Box Leitner) */}
+            <div className={cn(
+              "hidden md:inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black tracking-wide uppercase transition-colors border-2",
+              currentStat?.box
+                ? "bg-[#BBF7D0] text-black border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
+                : "bg-white text-gray-500 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
+            )}>
+              <Brain className="h-4 w-4" strokeWidth={2.5} />
+              {currentStat ? `Niveau ${currentStat.box}/5` : "Nouvelle carte"}
+            </div>
 
-        {/* Info sur la carte actuelle (Box Leitner) */}
-        <div className="flex justify-center mb-6">
-          <div className={cn(
-            "inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold tracking-wide uppercase transition-colors",
-            currentStat?.box
-              ? "bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20"
-              : "bg-muted text-muted-foreground border border-border/50"
-          )}>
-            <Brain className="h-3.5 w-3.5" />
-            {currentStat ? `Niveau ${currentStat.box}/5` : "Nouvelle carte"}
+            {onClose && (
+              <button
+                onClick={onClose}
+                className="p-2.5 rounded-xl bg-white hover:bg-black hover:text-white transition-all text-black border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-y-[2px] active:shadow-none"
+                aria-label="Fermer"
+              >
+                <X className="h-5 w-5" strokeWidth={3} />
+              </button>
+            )}
           </div>
         </div>
 
         {/* Scène 3D pour l'animation de flip */}
-        <div
-          className="w-full relative group"
-          style={{
-            perspective: '1200px',
-            height: '450px',
-            maxHeight: '60vh'
-          }}
-        >
-          {/* Carte qui va tourner */}
+        <div className="flex-1 flex flex-col justify-center items-center min-h-[400px]">
           <div
-            className={cn(
-              "w-full h-full relative cursor-pointer transition-all duration-700 transform-style-preserve-3d",
-              isFlipped && "rotate-y-180"
-            )}
+            className="w-full max-w-2xl relative group cursor-pointer"
+            style={{
+              perspective: '1200px',
+              height: '400px',
+            }}
             onClick={handleFlip}
           >
-            {/* Face avant (Question) */}
+            {/* Carte qui va tourner */}
             <div
-              className="absolute inset-0 w-full h-full bg-card/80 backdrop-blur-xl rounded-3xl shadow-xl border border-border/50 flex flex-col backface-hidden overflow-hidden hover:shadow-2xl hover:border-purple-500/20 transition-all"
-              style={{
-                transform: 'translateZ(0)',
-              }}
+              className={cn(
+                "w-full h-full relative transition-all duration-700 transform-style-preserve-3d",
+                isFlipped && "rotate-y-180"
+              )}
             >
-              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-purple-500/50 to-transparent opacity-50" />
+              {/* Face avant (Question) */}
+              <div
+                className="absolute inset-0 w-full h-full bg-white rounded-3xl border-2 border-black shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] flex flex-col backface-hidden overflow-hidden hover:-translate-y-1 transition-transform"
+                style={{
+                  transform: 'translateZ(0)',
+                }}
+              >
+                <div className="absolute top-0 left-0 w-full h-2 bg-black" />
 
-              {/* Contenu de la question */}
-              <div className="flex-1 flex flex-col items-center justify-center p-12 text-center">
-                <span className="inline-block px-3 py-1 rounded-full bg-muted/50 text-muted-foreground text-[10px] font-bold tracking-widest uppercase mb-8 border border-border/50">
-                  Question
-                </span>
-                <div className="text-2xl md:text-3xl font-medium text-foreground leading-relaxed max-w-3xl prose dark:prose-invert">
-                  <MarkdownRenderer content={truncateText(current.question)} />
+                {/* Contenu de la question */}
+                <div className="flex-1 flex flex-col items-center justify-center p-12 text-center relative">
+                  <div className="absolute top-6 left-6">
+                    <span className="inline-block px-3 py-1 rounded-md bg-gray-100 text-gray-500 border-2 border-black text-[10px] font-black tracking-widest uppercase">
+                      Question
+                    </span>
+                  </div>
+
+                  <div className="text-2xl md:text-4xl font-black text-black leading-tight max-w-3xl prose prose-xl">
+                    <MarkdownRenderer content={truncateText(current.question)} />
+                  </div>
+
+                  <div className="absolute bottom-6 flex flex-col items-center animate-bounce-slow opacity-50">
+                    <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Cliquez pour retourner</span>
+                  </div>
                 </div>
-                <p className="text-muted-foreground/60 text-sm mt-8 font-medium animate-pulse">
-                  Cliquez pour retourner
-                </p>
               </div>
-            </div>
 
-            {/* Face arrière (Réponse) - Pré-rotée de 180deg */}
-            <div
-              className="absolute inset-0 w-full h-full bg-card/90 backdrop-blur-xl rounded-3xl shadow-xl border border-purple-500/20 flex flex-col backface-hidden overflow-hidden"
-              style={{
-                transform: 'rotateY(180deg) translateZ(0)',
-              }}
-            >
-              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-500 to-indigo-500" />
+              {/* Face arrière (Réponse) - Pré-rotée de 180deg */}
+              <div
+                className="absolute inset-0 w-full h-full bg-[#FBCFE8] rounded-3xl border-2 border-black shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] flex flex-col backface-hidden overflow-hidden"
+                style={{
+                  transform: 'rotateY(180deg) translateZ(0)',
+                }}
+              >
+                <div className="absolute top-0 left-0 w-full h-2 bg-black" />
 
-              {/* Contenu de la réponse */}
-              <div className="flex-1 flex flex-col items-center justify-center p-12 text-center bg-gradient-to-b from-purple-500/5 to-transparent">
-                <span className="inline-block px-3 py-1 rounded-full bg-purple-500/10 text-purple-600 dark:text-purple-400 text-[10px] font-bold tracking-widest uppercase mb-8 border border-purple-500/20">
-                  Réponse
-                </span>
-                <div className="text-2xl md:text-3xl font-medium text-foreground leading-relaxed max-w-3xl prose dark:prose-invert">
-                  <MarkdownRenderer content={truncateText(current.answer)} />
+                {/* Contenu de la réponse */}
+                <div className="flex-1 flex flex-col items-center justify-center p-12 text-center relative">
+                  <div className="absolute top-6 left-6">
+                    <span className="inline-block px-3 py-1 rounded-md bg-white text-black border-2 border-black text-[10px] font-black tracking-widest uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                      Réponse
+                    </span>
+                  </div>
+
+                  <div className="text-2xl md:text-3xl font-bold text-black leading-relaxed max-w-3xl">
+                    <MarkdownRenderer content={truncateText(current.answer)} />
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
 
-        {/* Boutons d'action */}
-        <div className="min-h-[100px] mt-8 flex justify-center items-center">
-          <AnimatePresence mode="wait">
-            {showButtons ? (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 10 }}
-                className="flex items-center gap-4 md:gap-8"
-              >
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    handleStatus("difficile")
-                  }}
-                  className="flex flex-col items-center gap-2 group"
+          {/* Boutons d'action */}
+          <div className="h-[120px] mt-12 flex justify-center items-center w-full max-w-2xl">
+            <AnimatePresence mode="wait">
+              {showButtons ? (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 10 }}
+                  className="grid grid-cols-3 gap-6 w-full"
                 >
-                  <div className="w-14 h-14 rounded-2xl bg-red-500/10 text-red-600 dark:text-red-400 flex items-center justify-center border border-red-500/20 group-hover:bg-red-500 group-hover:text-white group-hover:shadow-lg group-hover:shadow-red-500/30 transition-all duration-300">
-                    <X className="h-6 w-6" />
-                  </div>
-                  <span className="text-xs font-medium text-muted-foreground group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors">Difficile</span>
-                </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleStatus("difficile")
+                    }}
+                    className="flex flex-col items-center gap-3 group translate-y-2 hover:translate-y-0 transition-transform"
+                  >
+                    <div className="w-full h-16 rounded-xl bg-[#CD3244] border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center group-hover:bg-red-600 transition-colors">
+                      <X className="h-8 w-8 text-white" strokeWidth={3} />
+                    </div>
+                    <span className="text-xs font-black uppercase text-gray-500 group-hover:text-black">Difficile</span>
+                  </button>
 
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    handleStatus("moyen")
-                  }}
-                  className="flex flex-col items-center gap-2 group"
-                >
-                  <div className="w-14 h-14 rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center border border-amber-500/20 group-hover:bg-amber-500 group-hover:text-white group-hover:shadow-lg group-hover:shadow-amber-500/30 transition-all duration-300">
-                    <div className="text-lg font-bold">~</div>
-                  </div>
-                  <span className="text-xs font-medium text-muted-foreground group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">Moyen</span>
-                </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleStatus("moyen")
+                    }}
+                    className="flex flex-col items-center gap-3 group translate-y-2 hover:translate-y-0 transition-transform"
+                  >
+                    <div className="w-full h-16 rounded-xl bg-[#F59E0B] border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center group-hover:bg-amber-500 transition-colors">
+                      <div className="text-2xl font-black text-white">~</div>
+                    </div>
+                    <span className="text-xs font-black uppercase text-gray-500 group-hover:text-black">Moyen</span>
+                  </button>
 
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    handleStatus("acquis")
-                  }}
-                  className="flex flex-col items-center gap-2 group"
-                >
-                  <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center border border-emerald-500/20 group-hover:bg-emerald-500 group-hover:text-white group-hover:shadow-lg group-hover:shadow-emerald-500/30 transition-all duration-300">
-                    <div className="text-lg font-bold">✓</div>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleStatus("acquis")
+                    }}
+                    className="flex flex-col items-center gap-3 group translate-y-2 hover:translate-y-0 transition-transform"
+                  >
+                    <div className="w-full h-16 rounded-xl bg-[#10B981] border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center group-hover:bg-emerald-500 transition-colors">
+                      <div className="text-2xl font-black text-white">✓</div>
+                    </div>
+                    <span className="text-xs font-black uppercase text-gray-500 group-hover:text-black">Facile</span>
+                  </button>
+                </motion.div>
+              ) : (
+                <div className="flex flex-col items-center gap-2 animate-pulse">
+                  <div className="px-6 py-3 bg-white border-2 border-black rounded-full shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] text-xs font-black uppercase tracking-wider">
+                    Espace pour retourner
                   </div>
-                  <span className="text-xs font-medium text-muted-foreground group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">Facile</span>
-                </button>
-              </motion.div>
-            ) : (
-              <div className="h-14 flex items-center text-muted-foreground/40 text-sm font-medium">
-                Appuyez sur Espace pour retourner
-              </div>
-            )}
-          </AnimatePresence>
+                </div>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
 
         {/* Barre de progression globale */}
-        <div className="w-full h-1 bg-muted rounded-full overflow-hidden mt-8">
+        <div className="w-full max-w-2xl mx-auto h-2 bg-gray-200 rounded-full overflow-hidden border-2 border-black mt-8">
           <motion.div
-            className="h-full bg-gradient-to-r from-purple-500 to-indigo-500"
+            className="h-full bg-black"
             initial={{ width: 0 }}
             animate={{ width: `${progress}%` }}
             transition={{ duration: 0.3 }}

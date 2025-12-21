@@ -156,7 +156,7 @@ export async function processAIGenerationJob(
   const textMode = mode as TextMode
   await emitProgress(onProgress, 0.2)
 
-  const result = await runTextMode(textMode, text)
+  const result = await runTextMode(textMode, text, metadata ?? undefined)
 
   await emitProgress(onProgress, 0.9)
 

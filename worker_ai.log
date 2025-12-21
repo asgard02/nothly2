@@ -1,0 +1,5 @@
+
+> nothly@1.0.0 worker:ai
+> tsx --env-file=.env.local scripts/process-ai-jobs.ts
+
+[process-ai-jobs] Worker started

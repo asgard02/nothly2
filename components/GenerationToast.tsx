@@ -2,30 +2,38 @@
 
 import { useState, useEffect } from "react"
 import { toast } from "sonner"
-import { CheckCircle2 } from "lucide-react"
+import { Check, Loader2 } from "lucide-react"
 
 const GenerationToastInner = ({ status = 'loading' }: { status?: 'loading' | 'success' }) => {
   if (status === 'success') {
     return (
-      <div className="generation-loader-card flex items-center justify-center gap-3 border border-border/50 shadow-xl backdrop-blur-md">
-        <CheckCircle2 className="h-6 w-6 text-green-500" />
-        <span className="text-lg font-medium text-foreground">
-          Créé avec succès !
-        </span>
+      <div className="flex items-center gap-4 bg-white border-2 border-black p-4 rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] w-full max-w-sm">
+        <div className="h-10 w-10 bg-[#BBF7D0] border-2 border-black rounded-lg flex items-center justify-center shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+          <Check className="h-6 w-6 text-black" strokeWidth={3} />
+        </div>
+        <div>
+          <h4 className="font-black text-black uppercase text-lg leading-tight">Succès !</h4>
+          <p className="font-bold text-gray-500 text-xs uppercase">Contenu généré</p>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="generation-loader-card border border-border/50 shadow-xl backdrop-blur-md">
-      <div className="generation-loader">
-        <p>génération</p>
-        <div className="generation-words">
-          <span className="generation-word">flashcards</span>
-          <span className="generation-word">quiz</span>
-          <span className="generation-word">résumés</span>
-          <span className="generation-word">notes</span>
-          <span className="generation-word">flashcards</span>
+    <div className="flex items-center gap-4 bg-white border-2 border-black p-4 rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] w-full max-w-sm">
+      <div className="relative h-10 w-10 bg-[#FDE68A] border-2 border-black rounded-lg flex items-center justify-center shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+        <Loader2 className="h-6 w-6 text-black animate-spin" strokeWidth={3} />
+      </div>
+      <div className="flex-1 min-w-0">
+        <h4 className="font-black text-black uppercase text-lg leading-tight">Génération...</h4>
+        <div className="h-4 overflow-hidden relative">
+          <div className="animate-slide-up-infinite">
+            <p className="font-bold text-gray-500 text-xs uppercase">Flashcards</p>
+            <p className="font-bold text-gray-500 text-xs uppercase">Quiz</p>
+            <p className="font-bold text-gray-500 text-xs uppercase">Résumés</p>
+            <p className="font-bold text-gray-500 text-xs uppercase">Notes</p>
+            <p className="font-bold text-gray-500 text-xs uppercase">Flashcards</p>
+          </div>
         </div>
       </div>
     </div>

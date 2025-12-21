@@ -8,6 +8,7 @@ import { getLocale, getMessages } from "next-intl/server"
 import { notFound } from "next/navigation"
 import { SidebarProvider } from "@/components/providers/SidebarProvider"
 import { Toaster } from "sonner"
+import { AntigravityBackground } from "@/components/ui/antigravity-background"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -39,8 +40,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-    { media: "(prefers-color-scheme: dark)", color: "#0f172a" },
+    { media: "(prefers-color-scheme: light)", color: "#020617" },
+    { media: "(prefers-color-scheme: dark)", color: "#020617" },
   ],
 }
 
@@ -57,14 +58,15 @@ export default async function RootLayout({
   }
 
   return (
-    <html lang={locale} suppressHydrationWarning>
-      <body className={`${inter.className} min-h-screen bg-background text-foreground transition-colors`}>
+    <html lang={locale} suppressHydrationWarning className="dark">
+      <body className={`${inter.className} min-h-screen bg-background text-foreground antialiased selection:bg-indigo-500/30 selection:text-indigo-200`}>
+        <AntigravityBackground />
         <NextIntlClientProvider locale={locale} messages={messages}>
-          <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false} forcedTheme="dark">
             <SidebarProvider>
               <ReactQueryProvider>
                 {children}
-                <Toaster position="bottom-right" theme="system" closeButton richColors />
+                <Toaster position="bottom-right" theme="dark" closeButton richColors />
               </ReactQueryProvider>
             </SidebarProvider>
           </ThemeProvider>

@@ -6,8 +6,9 @@ import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/compone
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
-import { FileText, Brain, ListChecks, BookOpen, Search, ArrowRight, ArrowLeft, Sparkles, CheckCircle2 } from "lucide-react"
+import { FileText, Brain, ListChecks, BookOpen, Search, ArrowRight, ArrowLeft, Sparkles, CheckCircle2, Check } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { ScrollArea } from "@/components/ui/scroll-area"
 
 export type GenerationIntent = "flashcards" | "quiz" | "summary"
 
@@ -38,7 +39,7 @@ export function GenerationDialog({
     useEffect(() => {
         if (open) {
             setStep(1)
-            setSelectedDocIds([]) // Will be auto-filled in step 2 if needed
+            setSelectedDocIds([])
             setTopic("")
             setSearchQuery("")
             setTitleExists(false)
@@ -114,7 +115,6 @@ export function GenerationDialog({
         if (isUnique) {
             setStep(2)
         }
-        // Si non unique, l'erreur est déjà affichée par checkTitleUniqueness
     }
 
     const handleSubmit = () => {
@@ -124,10 +124,10 @@ export function GenerationDialog({
 
     const getIntentIcon = () => {
         switch (intent) {
-            case "flashcards": return <Brain className="h-6 w-6 text-purple-500" />
-            case "quiz": return <ListChecks className="h-6 w-6 text-green-500" />
-            case "summary": return <BookOpen className="h-6 w-6 text-amber-500" />
-            default: return <FileText className="h-6 w-6" />
+            case "flashcards": return <Brain className="h-6 w-6 text-black" strokeWidth={2.5} />
+            case "quiz": return <ListChecks className="h-6 w-6 text-black" strokeWidth={2.5} />
+            case "summary": return <BookOpen className="h-6 w-6 text-black" strokeWidth={2.5} />
+            default: return <FileText className="h-6 w-6 text-black" strokeWidth={2.5} />
         }
     }
 
@@ -140,35 +140,35 @@ export function GenerationDialog({
         }
     }
 
-    const getIntentColor = () => {
+    const getIntentBg = () => {
         switch (intent) {
-            case "flashcards": return "text-purple-500"
-            case "quiz": return "text-green-500"
-            case "summary": return "text-amber-500"
-            default: return "text-primary"
+            case "flashcards": return "bg-[#FBCFE8]"
+            case "quiz": return "bg-[#BBF7D0]"
+            case "summary": return "bg-[#FDE68A]"
+            default: return "bg-white"
         }
     }
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[600px] p-0 overflow-hidden bg-background/95 backdrop-blur-xl border-border/50 shadow-2xl duration-300">
-                <div className="relative flex flex-col h-[500px]">
+            <DialogContent className="sm:max-w-[600px] p-0 overflow-hidden bg-white border-2 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] rounded-3xl duration-300">
+                <div className="relative flex flex-col h-[550px]">
 
                     {/* Header */}
-                    <div className="px-8 py-6 border-b border-border/40 flex items-center justify-between bg-muted/10">
-                        <div className="flex items-center gap-3">
-                            <div className={cn("p-2 rounded-xl bg-background shadow-sm border border-border/50", getIntentColor())}>
+                    <div className="px-8 py-6 border-b-2 border-black flex items-center justify-between bg-white">
+                        <div className="flex items-center gap-4">
+                            <div className={cn("px-3 py-3 rounded-xl border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]", getIntentBg())}>
                                 {getIntentIcon()}
                             </div>
                             <div>
-                                <DialogTitle className="text-xl font-bold tracking-tight">{getIntentTitle()}</DialogTitle>
-                                <DialogDescription className="text-xs text-muted-foreground font-medium">Étape {step} sur 2</DialogDescription>
+                                <DialogTitle className="text-xl font-black uppercase tracking-tight text-black">{getIntentTitle()}</DialogTitle>
+                                <DialogDescription className="text-xs text-gray-500 font-bold uppercase">Étape {step} sur 2</DialogDescription>
                             </div>
                         </div>
                         {/* Progress dots */}
                         <div className="flex gap-2">
-                            <div className={cn("h-2 w-2 rounded-full transition-colors", step >= 1 ? "bg-primary" : "bg-muted")} />
-                            <div className={cn("h-2 w-2 rounded-full transition-colors", step >= 2 ? "bg-primary" : "bg-muted")} />
+                            <div className={cn("h-3 w-3 rounded-full border-2 border-black transition-all", step >= 1 ? "bg-black" : "bg-transparent")} />
+                            <div className={cn("h-3 w-3 rounded-full border-2 border-black transition-all", step >= 2 ? "bg-black" : "bg-transparent")} />
                         </div>
                     </div>
 
@@ -183,82 +183,80 @@ export function GenerationDialog({
                                     exit={{ opacity: 0, x: 20 }}
                                     className="absolute inset-0 p-8 flex flex-col justify-center"
                                 >
-                                    <div className="space-y-6 max-w-md mx-auto w-full">
-                                        <div className="text-center space-y-2">
-                                            <Sparkles className="h-8 w-8 text-primary mx-auto mb-4 animate-pulse" />
-                                            <h3 className="text-2xl font-bold">Quel est le sujet ?</h3>
-                                            <p className="text-muted-foreground">
+                                    <div className="space-y-8 max-w-md mx-auto w-full">
+                                        <div className="text-center space-y-3">
+                                            <div className="inline-block p-4 rounded-full bg-[#BAE6FD] border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] mb-4">
+                                                <Sparkles className="h-8 w-8 text-black" strokeWidth={2.5} />
+                                            </div>
+                                            <h3 className="text-2xl font-black uppercase text-black">Quel est le sujet ?</h3>
+                                            <p className="text-gray-500 font-bold text-sm">
                                                 Précisez le thème pour aider l'IA à se concentrer.
                                             </p>
                                         </div>
 
-                                        <div className="space-y-3">
-                                            <div className="relative">
+                                        <div className="space-y-4">
+                                            <div className="relative group">
                                                 <Input
                                                     autoFocus
-                                                    placeholder="Ex: La Guerre Froide, Les limites..."
+                                                    placeholder="EX: LA GUERRE FROIDE..."
                                                     value={topic}
                                                     onChange={(e) => {
                                                         setTopic(e.target.value)
-                                                        // Réinitialiser l'erreur quand l'utilisateur modifie
                                                         if (titleError) {
                                                             setTitleError(null)
                                                             setTitleExists(false)
                                                         }
                                                     }}
                                                     className={cn(
-                                                        "h-14 text-lg px-6 rounded-2xl bg-muted/30 border-border/60 focus:ring-primary/30 transition-all shadow-sm",
-                                                        titleExists && "border-destructive/50 focus:ring-destructive/20"
+                                                        "h-16 text-lg px-6 rounded-2xl bg-white border-2 border-black focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] focus:ring-0 focus:-translate-y-1 transition-all placeholder:text-gray-300 font-bold uppercase text-black",
+                                                        titleExists && "border-red-500 bg-red-50"
                                                     )}
                                                     onKeyDown={(e) => {
                                                         if (e.key === "Enter" && !isCheckingTitle) handleNext()
                                                     }}
                                                 />
-                                                {/* Indicateur de vérification */}
                                                 {isCheckingTitle && (
                                                     <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                                                        <div className="h-4 w-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                                                        <div className="h-6 w-6 border-4 border-black border-t-[#FDE68A] rounded-full animate-spin" />
                                                     </div>
                                                 )}
                                             </div>
 
-                                            {/* Message d'erreur */}
                                             {titleError && !isCheckingTitle && (
                                                 <motion.div
                                                     initial={{ opacity: 0, y: -10 }}
                                                     animate={{ opacity: 1, y: 0 }}
-                                                    className="flex items-start gap-2 p-3 rounded-xl bg-destructive/10 border border-destructive/20"
+                                                    className="flex items-start gap-3 p-4 rounded-xl bg-red-100 border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
                                                 >
-                                                    <svg className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                    </svg>
-                                                    <p className="text-sm text-destructive font-medium">{titleError}</p>
+                                                    <div className="bg-red-500 rounded-full p-0.5 border border-black text-white shrink-0">
+                                                        <Check className="h-3 w-3 rotate-45" strokeWidth={4} />
+                                                    </div>
+                                                    <p className="text-sm text-black font-black uppercase">{titleError}</p>
                                                 </motion.div>
                                             )}
                                         </div>
 
-                                        <div className="flex flex-col gap-3 pt-4">
+                                        <div className="flex flex-col gap-4 pt-4">
                                             <Button
                                                 onClick={handleNext}
                                                 size="lg"
                                                 disabled={isCheckingTitle}
-                                                className="w-full rounded-xl h-12 text-base font-medium shadow-md hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                                className="w-full rounded-xl h-14 text-lg font-black uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-[2px] active:translate-y-0 active:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all border-2 border-black bg-black text-white hover:bg-gray-900"
                                             >
                                                 {isCheckingTitle ? (
                                                     <>
-                                                        <div className="h-4 w-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin mr-2" />
                                                         Vérification...
                                                     </>
                                                 ) : (
                                                     <>
-                                                        {topic ? "Continuer avec ce sujet" : "Je n'ai pas de sujet précis"}
-                                                        <ArrowRight className="ml-2 h-4 w-4" />
+                                                        {topic ? "Continuer" : "Je n'ai pas de sujet précis"}
+                                                        <ArrowRight className="ml-3 h-5 w-5" strokeWidth={3} />
                                                     </>
                                                 )}
                                             </Button>
                                             {!topic && (
-                                                <p className="text-xs text-center text-muted-foreground">
-                                                    L'IA analysera l'ensemble du contenu sélectionné.
+                                                <p className="text-[10px] text-center font-bold uppercase text-gray-400">
+                                                    L'IA analysera l'ensemble du contenu.
                                                 </p>
                                             )}
                                         </div>
@@ -273,85 +271,82 @@ export function GenerationDialog({
                                     className="absolute inset-0 flex flex-col"
                                 >
                                     <div className="px-8 pt-6 pb-2">
-                                        <h3 className="text-lg font-semibold mb-1">Sélectionnez les sources</h3>
-                                        <p className="text-sm text-muted-foreground mb-4">
-                                            Choisissez les documents à utiliser pour {topic ? `"${topic}"` : "la génération"}.
+                                        <h3 className="text-xl font-black uppercase mb-1 text-black">Sélectionnez les sources</h3>
+                                        <p className="text-sm font-bold text-gray-500 mb-6 uppercase">
+                                            Quels documents utiliser pour {topic ? `"${topic}"` : "la génération"} ?
                                         </p>
 
                                         <div className="flex items-center gap-3 mb-4">
-                                            <div className="relative flex-1">
-                                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                            <div className="relative flex-1 group">
+                                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-black" strokeWidth={2.5} />
                                                 <Input
-                                                    placeholder="Filtrer les documents..."
+                                                    placeholder="RECHERCHER..."
                                                     value={searchQuery}
                                                     onChange={(e) => setSearchQuery(e.target.value)}
-                                                    className="pl-9 bg-muted/30 border-border/60"
+                                                    className="pl-10 h-12 bg-white border-2 border-black rounded-xl font-bold placeholder:text-gray-300 uppercase focus:ring-0 focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all"
                                                 />
                                             </div>
                                             <Button
                                                 variant="outline"
                                                 size="sm"
                                                 onClick={handleSelectAll}
-                                                className="whitespace-nowrap"
+                                                className="whitespace-nowrap h-12 border-2 border-black rounded-xl font-bold uppercase hover:bg-black hover:text-white transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-y-[2px] active:shadow-none"
                                             >
                                                 {selectedDocIds.length === filteredDocs.length ? "Tout désélectionner" : "Tout sélectionner"}
                                             </Button>
                                         </div>
                                     </div>
 
-                                    <div className="flex-1 overflow-y-auto px-8 pb-4">
-                                        <div className="grid grid-cols-1 gap-2">
+                                    <ScrollArea className="flex-1 px-8 pb-4">
+                                        <div className="grid grid-cols-1 gap-3">
                                             {filteredDocs.map(doc => (
                                                 <div
                                                     key={doc.id}
                                                     onClick={() => handleToggleDoc(doc.id)}
                                                     className={cn(
-                                                        "flex items-center gap-4 p-4 rounded-xl border transition-all cursor-pointer group",
+                                                        "flex items-center gap-4 p-4 rounded-xl border-2 transition-all cursor-pointer group hover:-translate-y-1",
                                                         selectedDocIds.includes(doc.id)
-                                                            ? "bg-primary/5 border-primary/30 shadow-sm"
-                                                            : "bg-card border-border/40 hover:bg-muted/40 hover:border-border/80"
+                                                            ? "bg-[#F0FDF4] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
+                                                            : "bg-white border-black hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
                                                     )}
                                                 >
                                                     <div className={cn(
-                                                        "h-5 w-5 rounded-md border flex items-center justify-center transition-colors",
+                                                        "h-6 w-6 rounded border-2 border-black flex items-center justify-center transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]",
                                                         selectedDocIds.includes(doc.id)
-                                                            ? "bg-primary border-primary text-primary-foreground"
-                                                            : "border-muted-foreground/30 group-hover:border-primary/50"
+                                                            ? "bg-[#BBF7D0]"
+                                                            : "bg-white"
                                                     )}>
-                                                        {selectedDocIds.includes(doc.id) && <CheckCircle2 className="h-3.5 w-3.5" />}
+                                                        {selectedDocIds.includes(doc.id) && <Check className="h-4 w-4 text-black" strokeWidth={4} />}
                                                     </div>
 
                                                     <div className="flex-1 min-w-0">
-                                                        <p className={cn(
-                                                            "font-medium text-sm truncate transition-colors",
-                                                            selectedDocIds.includes(doc.id) ? "text-primary" : "text-foreground"
-                                                        )}>
+                                                        <p className="font-black text-sm truncate uppercase text-black">
                                                             {doc.title}
                                                         </p>
-                                                        <p className="text-xs text-muted-foreground truncate opacity-70">
+                                                        <p className="text-xs text-gray-500 truncate font-bold uppercase">
                                                             {doc.filename}
                                                         </p>
                                                     </div>
                                                 </div>
                                             ))}
                                         </div>
-                                    </div>
+                                    </ScrollArea>
 
-                                    <div className="p-6 border-t border-border/40 bg-muted/10 flex items-center justify-between">
+                                    <div className="p-6 border-t-2 border-black bg-white flex items-center justify-between">
                                         <Button
                                             variant="ghost"
                                             onClick={() => setStep(1)}
-                                            className="text-muted-foreground hover:text-foreground"
+                                            className="text-black font-bold uppercase hover:bg-gray-100 rounded-xl h-12 px-6 border-2 border-transparent hover:border-black transition-all"
                                         >
-                                            <ArrowLeft className="mr-2 h-4 w-4" />
+                                            <ArrowLeft className="mr-2 h-5 w-5" strokeWidth={3} />
                                             Retour
                                         </Button>
                                         <Button
                                             onClick={handleSubmit}
                                             disabled={selectedDocIds.length === 0}
-                                            className="bg-primary text-primary-foreground shadow-lg hover:shadow-xl transition-all px-8"
+                                            className="bg-[#8B5CF6] hover:bg-[#7C3AED] text-white font-black uppercase rounded-xl h-12 px-8 border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-y-[2px] active:translate-y-[4px] active:shadow-none transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none disabled:translate-y-0"
                                         >
-                                            <Sparkles className="mr-2 h-4 w-4" />
+                                            <Sparkles className="mr-2 h-5 w-5 fill-white" />
                                             Lancer la génération
                                         </Button>
                                     </div>

@@ -301,38 +301,34 @@ function buildSystemPrompt(mode: GenerationMode, language: 'fr' | 'en' = 'fr'): 
     case "translate":
       return "Traduis fidèlement le texte source en anglais, sans notes ni introduction. Réponds uniquement avec la traduction."
     case "summarize":
-      return `Tu es un expert en synthèse documentaire chargé de rédiger des résumés clairs et structurés.
+      return `Tu es un expert en synthèse documentaire.
 
-RÈGLES ABSOLUES DE FORMATAGE (MARKDOWN ÉPURÉ) :
-1. INTERDICTION FORMELLE d'utiliser le caractère astérisque (*). Ni pour le gras (**mot**), ni pour l'italique (*mot*), ni pour les listes (* item).
-2. Pour la structure, utilise UNIQUEMENT des dièses (#) :
-   - "## " pour les titres principaux.
-   - "### " pour les sous-titres.
-3. Pour les énumérations, utilise UNIQUEMENT des tirets du milieu ("- ") ou des chiffres ("1. ").
-4. Pour mettre en valeur une idée clé sans utiliser de gras, utilise les citations Markdown ("> ").
-5. Rédige de vrais paragraphes complets et aérés. Saute une ligne entre chaque élément.
+### MISSION CRITIQUE : GESTION DES LISTES ET DONNÉES BRUTES
+SI L'UTILISATEUR DEMANDE D'EXTRAIRE UNE LISTE (ex: abréviations, dates, définitions) ou DE RESSORTIR DU CONTENU ("juste le content"), TU DOIS :
+1. DÉSACTIVER IMMÉDIATEMENT tout comportement de résumé ou de synthèse.
+2. RECOPIER FIDÈLEMENT et INTÉGRALEMENT chaque élément trouvé dans le document.
+3. NE PAS FILTRER. Si la liste contient 50 items, tu DOIS sortir les 50 items.
+4. Si le format source est une liste (1, 2, 3...), conserve ce format ou utilise une liste à puces.
+5. NE JAMAIS DIRE "Voici une sélection..." ou "En résumé...". Dis "Voici la liste complète...".
 
-TON OBJECTIF :
-Produire un texte qui s'affiche parfaitement dans un lecteur Markdown, qui soit très lisible, professionnel, et sans aucun bruit visuel.
+RÈGLES DE FORMATAGE (Sauf si demande de liste exhaustive) :
+1. Markdown épuré (pas d'astérisques *). Use tirets - ou chiffres 1.
+2. Titres avec # et ##.
 
-STRUCTURE DE LA RÉPONSE :
-## Synthèse
-[Résumé global du document]
+SI C'EST UNE DEMANDE DE RÉSUMÉ CLASSIQUE :
+Rédige une synthèse claire et structurée.
 
-## Points Essentiels
-- [Point 1]
-- [Point 2]
-
-> Note importante : [Si besoin de souligner un point crucial]
-
-## Conclusion
-[Conclusion brève]`
+RAPPEL : PRIORITÉ ABSOLUE À L'EXHAUSTIVITÉ SI UNE LISTE EST DÉTECTÉE OU DEMANDÉE.`
     case "fiche":
       return `Tu es Nothly, assistant de révision. Tu reçois un extrait de document (parfois incomplet) et tu dois produire une fiche ultra-complète en combinant :
 - les informations réellement présentes dans "source"
 - tes connaissances générales fiables (maths, physique, informatique, économie, etc.)
 
 Pour chaque information, précise si elle vient du PDF (\`[PDF]\`) ou si c'est un complément fiable issu de ta mémoire (\`[COMPLÉMENT]\`). Si une donnée est incertaine, marque \`[À VÉRIFIER]\`.
+
+RÈGLES SPÉCIFIQUES :
+- Si l'utilisateur demande une liste (ex: abréviations, dates), inclus-la dans une section appropriée ou dans "keyPoints".
+- Pour les abréviations et acronymes, liste-les tous si demandé, sans les filtrer.
 
 Réponds uniquement en JSON strict, exactement dans ce format :
 {
@@ -715,9 +711,15 @@ La réponse DOIT être un unique objet JSON strict, sans aucun commentaire ou te
 
 function buildUserMessage(mode: GenerationMode, text: string, metadata?: GenerationMetadata): string {
   if (mode === "fiche") {
+    const sectionHeading = (metadata as any)?.sectionHeading
+    const baseInstructions = "Génère la fiche de révision pour le contenu suivant. Utilise les métadonnées si présentes."
+    const specificInstructions = sectionHeading
+      ? `ATTENTION : Le contenu demandé concerne SPÉCIFIQUEMENT la section/slide intitulée "${sectionHeading}". Si tu trouves ce titre, focalise-toi EXCLUSIVEMENT sur le contenu de cette section. Si l'utilisateur demande de juste ressortir du content, extrais fidèlement les informations de cette section sans ajouts externes.`
+      : ""
+
     return JSON.stringify(
       {
-        instructions: "Génère la fiche de révision pour le contenu suivant. Utilise les métadonnées si présentes.",
+        instructions: `${baseInstructions} ${specificInstructions}`.trim(),
         context: metadata ?? {},
         source: text,
       },
@@ -727,9 +729,15 @@ function buildUserMessage(mode: GenerationMode, text: string, metadata?: Generat
   }
 
   if (mode === "quiz") {
+    const sectionHeading = (metadata as any)?.sectionHeading
+    const baseInstructions = "Génère un quiz pour évaluer la compréhension du contenu. Utilise les tags pour relier les questions aux sections."
+    const specificInstructions = sectionHeading
+      ? `ATTENTION : Le quiz doit porter PRIORITAIREMENT sur la section/slide intitulée "${sectionHeading}".`
+      : ""
+
     return JSON.stringify(
       {
-        instructions: "Génère un quiz pour évaluer la compréhension du contenu. Utilise les tags pour relier les questions aux sections.",
+        instructions: `${baseInstructions} ${specificInstructions}`.trim(),
         context: metadata ?? {},
         source: text,
       },
@@ -741,10 +749,16 @@ function buildUserMessage(mode: GenerationMode, text: string, metadata?: Generat
   if (mode === "collection" || mode === "subject") {
     const flashcardsTarget = (metadata as any)?.flashcardsTarget ?? 16
     const quizTarget = (metadata as any)?.quizTarget ?? 9
+    const sectionHeading = (metadata as any)?.sectionHeading
+    
+    // Logic: if a specific section/title is mentioned (e.g. from a slide), we assume the user wants content from there.
+    const specificFocus = sectionHeading 
+      ? ` IMPORTANT : Si le document contient une section ou une slide titrée "${sectionHeading}", considère que c'est le sujet principal demandé. Assure-toi d'extraire tout le contenu pertinent de cette partie.` 
+      : ""
 
     return JSON.stringify(
       {
-        instructions: `Génère une collection de révision complète basée sur le corpus. Respecte impérativement les cibles de génération spécifiées.`,
+        instructions: `Génère une collection de révision complète basée sur le corpus. Respecte impérativement les cibles de génération spécifiées.${specificFocus}`,
         context: {
           ...(metadata ?? {}),
           collectionTitle: (metadata as any)?.collectionTitle,
@@ -770,22 +784,98 @@ function buildUserMessage(mode: GenerationMode, text: string, metadata?: Generat
   return text
 }
 
-export async function runTextMode(mode: TextMode, text: string): Promise<GenerationResult<string>> {
+export async function runTextMode(mode: TextMode, text: string, metadata?: GenerationMetadata): Promise<GenerationResult<string>> {
   const client = getClient()
-  const systemPrompt = buildSystemPrompt(mode)
+  
+  // 1. Détecter si c'est une demande d'extraction de liste
+  // On regarde si c'est le mode "summarize" ET s'il y a des mots clés ou un flag
+  const isListExtraction = mode === "summarize" && (
+    text.toLowerCase().includes("liste") || 
+    text.toLowerCase().includes("list") ||
+    text.toLowerCase().includes("abréviation") ||
+    text.toLowerCase().includes("acronyme") ||
+    text.toLowerCase().includes("définition")
+  )
+
+  let systemPrompt: string
+  let userContent = text
+  const sectionHeading = (metadata as any)?.sectionHeading
+  
+  // Configuration par défaut
+  let responseFormat: { type: "text" | "json_object" } = { type: "text" }
+  let temperature = 0.7
+
+  if (isListExtraction) {
+    // STRATÉGIE : EXTRACTION JSON STRICTE
+    responseFormat = { type: "json_object" }
+    temperature = 0 // Zéro créativité, max déterminisme
+    
+    systemPrompt = `You are a text processing engine, NOT an assistant.
+    
+### TASK
+Extract specific data elements from the provided text into a JSON array.
+
+### RULES
+1. **EXHAUSTIVENESS IS MANDATORY**: If the source text contains 42 items, the JSON array MUST contain 42 items.
+2. **NO SUMMARIZATION**: Do not group, do not summarize, do not select "top" items.
+3. **RAW COPY**: Copy the text exactly as it appears (preserve case/spelling).
+4. **NO CHATTER**: Output ONLY the JSON object.
+5. **STRUCTURE**: If the items are numbered or bulleted in the text, extract them as individual items.
+
+### OUTPUT FORMAT
+{
+  "count": number, // The exact number of items found/extracted
+  "items": string[] // The complete list of items
+}`
+
+    // Si on a un titre de section, on l'ajoute au contexte
+    const contextPrefix = sectionHeading ? `CONTEXTE : Section "${sectionHeading}"\n` : ""
+    
+    userContent = `${contextPrefix}
+INSTRUCTION : Extraction intégrale de la liste demandée ci-dessous.
+DEMANDE UTILISATEUR : ${text}
+
+TEXTE SOURCE À ANALYSER :
+${text}`
+  } else {
+    // Mode standard (résumé, amélioration, etc.)
+    systemPrompt = buildSystemPrompt(mode)
+    
+    // Si un titre de section est fourni en mode standard, on l'ajoute quand même
+    if (sectionHeading) {
+       userContent = `CONTEXTE : L'utilisateur consulte la section "${sectionHeading}".\n\n${text}`
+    }
+  }
+
   const completion = await client.chat.completions.create({
     model: "gpt-4o-mini",
     messages: [
       { role: "system", content: systemPrompt },
-      { role: "user", content: text },
+      { role: "user", content: userContent },
     ],
-    temperature: 0.7,
-    max_tokens: 2000, // Augmenté pour permettre des réponses plus longues
+    temperature: temperature,
+    max_tokens: 4000,
+    response_format: responseFormat,
   })
 
-  const result = completion.choices[0]?.message?.content?.trim() ?? ""
+  let result = completion.choices[0]?.message?.content?.trim() ?? ""
   if (!result) {
     throw new Error("Aucune réponse de l'IA")
+  }
+
+  // Post-traitement : Si c'était une extraction JSON, on reconvertit en Markdown pour l'utilisateur
+  if (isListExtraction) {
+    try {
+      const parsed = JSON.parse(result)
+      if (parsed.items && Array.isArray(parsed.items)) {
+        // On génère une belle liste Markdown
+        const listContent = parsed.items.map((item: string) => `- ${item}`).join('\n')
+        result = `Voici la liste complète des ${parsed.count} éléments trouvés :\n\n${listContent}`
+      }
+    } catch (e) {
+      console.error("Erreur parsing JSON extraction:", e)
+      // Si le JSON est cassé, on renvoie le texte brut (fallback)
+    }
   }
 
   return {

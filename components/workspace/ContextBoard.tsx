@@ -4,7 +4,7 @@ import { useState } from "react"
 import { FileText, BrainCircuit, BookOpen, LayoutGrid, GraduationCap, FolderOpen } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { LibraryView } from "./LibraryView"
-import { SubjectView } from "./SubjectView"
+import SubjectView from "./SubjectView"
 
 import type { Subject } from "@/lib/hooks/useSubjects"
 import { useTranslations } from "next-intl"

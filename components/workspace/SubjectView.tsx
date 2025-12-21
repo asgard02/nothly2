@@ -1,9 +1,9 @@
 "use client"
 
-import { useState, useTransition, useMemo } from "react"
+import { useState, useTransition, useMemo, useEffect } from "react"
 import { motion } from "framer-motion"
 import { useRouter } from "next/navigation"
-import { ArrowLeft, ArrowRight, FileText, Plus, Search, Sparkles, BookOpen, MessageSquare, Send, Loader2, X, Brain, ListChecks, ChevronDown, ChevronUp, Calendar, Trash2, Pencil, Check, Zap } from "lucide-react"
+import { ArrowLeft, ArrowRight, FileText, Plus, Search, Sparkles, BookOpen, MessageSquare, Send, Loader2, X, Brain, ListChecks, ChevronDown, ChevronUp, Calendar, Trash2, Pencil, Check, Zap, Star } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -12,18 +12,17 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Progress } from "@/components/ui/progress"
 import { cn } from "@/lib/utils"
 import type { Subject } from "@/lib/hooks/useSubjects"
+import { useUpdateSubject } from "@/lib/hooks/useSubjects"
 import { UploadDialog } from "./UploadDialog"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { MentionInput, extractMentionedDocumentIds } from "./MentionInput"
 import QuizViewer, { type QuizQuestionItem } from "@/components/subjects/QuizViewer"
 import FlashcardViewer from "@/components/subjects/FlashcardViewer"
 import type { FlashcardItem } from "@/components/subjects/FlashcardViewer"
-import ReactMarkdown from "react-markdown"
 import { GenerationOverlay, type GenerationStep } from "@/components/GenerationOverlay"
 import { GenerationDialog, type GenerationIntent } from "./GenerationDialog"
 import DeleteConfirmationDialog from "@/components/DeleteConfirmationDialog"
-
-import remarkGfm from "remark-gfm"
+import MarkdownRenderer from "@/components/MarkdownRenderer"
 import { useTranslations } from "next-intl"
 
 interface SubjectViewProps {
@@ -33,7 +32,7 @@ interface SubjectViewProps {
   onUpdate?: (subject: Subject) => void
 }
 
-export function SubjectView({ subject, onBack, onSelectDocument, onUpdate }: SubjectViewProps) {
+export default function SubjectView({ subject, onBack, onSelectDocument, onUpdate }: SubjectViewProps) {
   // Refresh translations
   const t = useTranslations("CollectionView")
   const tCommon = useTranslations("Common")
@@ -77,6 +76,14 @@ export function SubjectView({ subject, onBack, onSelectDocument, onUpdate }: Sub
   const [editColor, setEditColor] = useState(subject.color || "from-blue-500/20 via-blue-400/10 to-purple-500/20")
   const [isUpdating, setIsUpdating] = useState(false)
 
+  const updateSubjectMutation = useUpdateSubject()
+  const handleToggleFavorite = () => {
+    updateSubjectMutation.mutate({
+      id: subject.id,
+      is_favorite: !subject.is_favorite
+    })
+  }
+
   // État pour la boîte de dialogue de suppression
   const [deleteConfirmation, setDeleteConfirmation] = useState<{
     isOpen: boolean
@@ -90,6 +97,22 @@ export function SubjectView({ subject, onBack, onSelectDocument, onUpdate }: Sub
     title: "",
   })
   const [isDeletingItem, setIsDeletingItem] = useState(false)
+
+  // Update recently visited status
+  useEffect(() => {
+    const updateLastActive = async () => {
+      try {
+        await fetch(`/api/subjects/${subject.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ touch: true }),
+        })
+      } catch (error) {
+        console.error("Failed to update last active status", error)
+      }
+    }
+    updateLastActive()
+  }, [subject.id])
 
   const gradients = [
     { label: "Blue", value: "from-blue-500/20 via-blue-400/10 to-purple-500/20" },
@@ -139,8 +162,9 @@ export function SubjectView({ subject, onBack, onSelectDocument, onUpdate }: Sub
     gcTime: 5 * 60 * 1000, // 5 minutes
     refetchInterval: (query) => {
       const data = query.state.data as any[]
-      const hasProcessingDocs = data?.some((doc: any) => doc.status === "processing")
-      return hasProcessingDocs ? 1000 : false
+      if (!data) return false
+      const hasProcessingDocs = data.some((doc: any) => doc.status === "processing")
+      return hasProcessingDocs ? 5000 : false
     },
   })
 
@@ -253,7 +277,7 @@ export function SubjectView({ subject, onBack, onSelectDocument, onUpdate }: Sub
     }
   }
 
-  const handleSendMessage = async (messageOverride?: string, explicitDocIds?: string[]) => {
+  const handleSendMessage = async (messageOverride?: string, explicitDocIds?: string[], sectionIds?: string[]) => {
     const messageToSend = typeof messageOverride === 'string' ? messageOverride : chatInput
     if (!messageToSend.trim() || isSending) return
 
@@ -291,7 +315,8 @@ export function SubjectView({ subject, onBack, onSelectDocument, onUpdate }: Sub
         body: JSON.stringify({
           subjectId: subject.id,
           message: messageToSend.trim(),
-          mentionedDocumentIds: mentionedDocumentIds.length > 0 ? mentionedDocumentIds : undefined
+          mentionedDocumentIds: mentionedDocumentIds.length > 0 ? mentionedDocumentIds : undefined,
+          sectionIds: sectionIds && sectionIds.length > 0 ? sectionIds : undefined
         })
       })
 
@@ -322,29 +347,53 @@ export function SubjectView({ subject, onBack, onSelectDocument, onUpdate }: Sub
       // Attendre un peu pour que l'utilisateur voie le succès
       await new Promise(resolve => setTimeout(resolve, 1500))
 
-      // Si des flashcards ou quiz ont été créés, on prépare la sélection mais on ne change pas d'onglet
-      if (data.studyCollectionId && (data.flashcards || data.quizQuestions)) {
-        const flashcardCount = data.flashcards?.length || 0
-        const quizCount = data.quizQuestions?.length || 0
+      // Si du contenu a été créé, on le charge pour avoir les IDs corrects et les données complètes
+      if (data.studyCollectionId) {
+        try {
+          // Attendre un court instant pour s'assurer que la DB est à jour (réplication, etc.)
+          await new Promise(resolve => setTimeout(resolve, 500))
 
-        if (flashcardCount > 0) {
-          setPendingGenerationResult({ type: 'flashcards', data: data.studyCollectionId })
-        } else if (quizCount > 0) {
-          setPendingGenerationResult({
-            type: 'quiz',
-            data: {
-              id: data.studyCollectionId,
-              title: data.searchTopic || "Quiz",
-              quizQuestions: data.quizQuestions
+          const studyRes = await fetch(`/api/study-subjects/${data.studyCollectionId}`)
+          if (studyRes.ok) {
+            const studyData = await studyRes.json()
+            console.log("Study Data loaded:", studyData)
+
+            const hasQuizQuestions = (studyData.quiz && studyData.quiz.length > 0) || (studyData.quizQuestions && studyData.quizQuestions.length > 0)
+            const hasFlashcards = studyData.flashcards && studyData.flashcards.length > 0
+
+            if (studyData.type === 'flashcard' || hasFlashcards) {
+              setPendingGenerationResult({ type: 'flashcards', data: data.studyCollectionId })
+            } else if (studyData.type === 'quiz' || hasQuizQuestions) {
+              setPendingGenerationResult({
+                type: 'quiz',
+                data: {
+                  ...studyData,
+                  quizQuestions: studyData.quiz || studyData.quizQuestions
+                }
+              })
+            } else if (studyData.type === 'summary') {
+              setPendingGenerationResult({
+                type: 'summary',
+                data: {
+                  id: studyData.id,
+                  title: studyData.title,
+                  summary: studyData.metadata?.summary || data.response,
+                  createdAt: studyData.created_at,
+                  isDocumentSummary: false
+                }
+              })
             }
-          })
+          }
+        } catch (err) {
+          console.error("Error fetching generated study content:", err)
         }
-      } else if (data.summary) {
+      } else if (data.isSummaryRequest && !data.isQuizRequest && !data.isFlashcardRequest && data.response) {
+        // Fallback pour le résumé si pas de studyCollectionId (ex: erreur sauvegarde DB mais généré ok)
         setPendingGenerationResult({
           type: 'summary',
           data: {
             title: t("summaryPrefix"),
-            summary: data.summary,
+            summary: data.response,
             createdAt: new Date().toISOString()
           }
         })
@@ -413,7 +462,7 @@ export function SubjectView({ subject, onBack, onSelectDocument, onUpdate }: Sub
     setIsGenerationDialogOpen(true)
   }
 
-  const handleConfirmGeneration = (selectedDocIds: string[], topic: string) => {
+  const handleConfirmGeneration = (selectedDocIds: string[], topic: string, sectionIds?: string[]) => {
     // Construire le message pour l'IA
     let prompt = ""
     switch (generationIntent) {
@@ -434,13 +483,8 @@ export function SubjectView({ subject, onBack, onSelectDocument, onUpdate }: Sub
       prompt += ` sur le sujet : "${topic}"`
     }
 
-    // Ajouter les mentions des documents sélectionnés
-    // On utilise le format @[Titre](id) que MentionInput utilise ou juste les IDs
-    // Mais handleSendMessage utilise extractMentionedDocumentIds qui parse le texte
-    // OU on peut passer directement les IDs à l'API si on modifie handleSendMessage
-    // Pour l'instant, on va modifier handleSendMessage pour accepter une liste d'IDs explicite
-
-    handleSendMessage(prompt, selectedDocIds)
+    handleSendMessage(prompt, selectedDocIds, sectionIds)
+    setIsGenerationDialogOpen(false)
   }
 
   const handleUpdateCollection = async () => {
@@ -518,7 +562,7 @@ export function SubjectView({ subject, onBack, onSelectDocument, onUpdate }: Sub
   }
 
   return (
-    <div className="h-full flex flex-col bg-gradient-to-br from-background via-background to-muted/10 overflow-hidden relative">
+    <div className="h-full flex flex-col bg-transparent overflow-hidden relative">
       <GenerationOverlay
         isVisible={isGenerating}
         currentStep={generationStep}
@@ -563,95 +607,105 @@ export function SubjectView({ subject, onBack, onSelectDocument, onUpdate }: Sub
 
       {/* Header avec design premium - Caché quand on affiche flashcards/quiz */}
       {!isViewingStudy && (
-        <div className="flex-shrink-0 bg-background/80 backdrop-blur-xl border-b border-border/40 z-10 sticky top-0">
-          <div className="max-w-7xl mx-auto px-6 py-6">
-            <div className="flex items-center justify-between mb-8">
-              <div className="flex items-center gap-4">
-                <Button
-                  variant="ghost"
-                  onClick={onBack}
-                  size="icon"
-                  className="rounded-full hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  <ArrowLeft className="h-5 w-5" />
-                </Button>
-                <div>
-                  <h1 className="text-3xl font-bold tracking-tight text-foreground flex items-center gap-3">
-                    {subject.title}
-                    <button
-                      onClick={() => {
-                        setEditTitle(subject.title)
-                        setEditColor(subject.color || "from-blue-500/20 via-blue-400/10 to-purple-500/20")
-                        setIsEditDialogOpen(true)
-                      }}
-                      className="p-1.5 rounded-full hover:bg-muted text-muted-foreground/50 hover:text-foreground transition-colors"
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </button>
-                    <span className="text-sm font-normal text-muted-foreground bg-muted/50 px-2.5 py-0.5 rounded-full border border-border/50">
-                      {subject.doc_count} doc{subject.doc_count > 1 ? "s" : ""}
-                    </span>
-                  </h1>
-                </div>
-              </div>
+        <div className="flex-shrink-0 z-20 px-6 pt-6 mb-4">
+          <div className="bg-white border-2 border-black rounded-3xl p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] relative overflow-hidden">
+            {/* Ambient background glow inside header */}
+            <div className="absolute top-0 right-0 w-64 h-64 bg-[#DDD6FE] rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2 opacity-50 pointer-events-none" />
 
-              <div className="flex items-center gap-3">
-                <div className="relative group">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
-                  <input
-                    type="text"
-                    placeholder={t("searchPlaceholder")}
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-64 pl-10 pr-4 py-2 text-sm rounded-full border border-border/60 bg-muted/30 focus:bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all placeholder:text-muted-foreground/60"
-                  />
+            <div className="relative z-10">
+              <div className="flex items-center justify-between mb-8">
+                <div className="flex items-center gap-4">
+                  <Button
+                    variant="ghost"
+                    onClick={onBack}
+                    size="icon"
+                    className="h-12 w-12 rounded-xl border-2 border-black hover:bg-black hover:text-white transition-colors"
+                  >
+                    <ArrowLeft className="h-6 w-6" strokeWidth={3} />
+                  </Button>
+                  <div>
+                    <h1 className="text-4xl font-black tracking-tight text-black flex items-center gap-3 uppercase">
+                      {subject.title}
+                      <button
+                        onClick={() => {
+                          setEditTitle(subject.title)
+                          setEditColor(subject.color || "from-blue-500/20 via-blue-400/10 to-purple-500/20")
+                          setIsEditDialogOpen(true)
+                        }}
+                        className="p-2 rounded-lg hover:bg-gray-100 hover:text-black transition-colors"
+                      >
+                        <Pencil className="h-5 w-5" />
+                      </button>
+                      <button
+                        onClick={handleToggleFavorite}
+                        className={cn(
+                          "p-2 rounded-lg hover:bg-gray-100 transition-colors",
+                          subject.is_favorite ? "text-yellow-500 hover:text-yellow-600" : "text-gray-400 hover:text-yellow-500"
+                        )}
+                      >
+                        <Star className={cn("h-6 w-6", subject.is_favorite && "fill-yellow-500")} strokeWidth={2.5} />
+                      </button>
+                      <span className="text-sm font-bold text-black bg-[#FBCFE8] px-3 py-1 rounded-full border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                        {subject.doc_count} DOC{subject.doc_count > 1 ? "S" : ""}
+                      </span>
+                    </h1>
+                  </div>
                 </div>
-                <Button
-                  onClick={() => setIsUploadOpen(true)}
-                  className="rounded-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20 px-6"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  {t("addDocument")}
-                </Button>
-              </div>
-            </div>
 
-            {/* Onglets Premium */}
-            <div className="flex items-center gap-8 border-b border-border/40">
-              {[
-                { id: "pdf", label: t("tabPdf"), icon: FileText, count: filteredDocs.length, color: "blue" },
-                { id: "flashcards", label: t("tabFlashcards"), icon: Brain, count: flashcardsCollections.length, color: "purple" },
-                { id: "quiz", label: t("tabQuiz"), icon: ListChecks, count: quizCollections.length, color: "green" },
-                { id: "resume", label: t("tabSummaries"), icon: BookOpen, count: totalSummaries, color: "amber" },
-              ].map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id as any)}
-                  className={cn(
-                    "relative pb-4 px-2 flex items-center gap-2 text-sm font-medium transition-colors",
-                    activeTab === tab.id ? "text-foreground" : "text-muted-foreground hover:text-foreground/80"
-                  )}
-                >
-                  <tab.icon className={cn("h-4 w-4", activeTab === tab.id && `text-${tab.color}-500`)} />
-                  <span>{tab.label}</span>
-                  {tab.count > 0 && (
-                    <span className={cn(
-                      "px-1.5 py-0.5 rounded-full text-[10px] font-bold",
-                      activeTab === tab.id
-                        ? `bg-${tab.color}-500/10 text-${tab.color}-600 dark:text-${tab.color}-400`
-                        : "bg-muted text-muted-foreground"
-                    )}>
-                      {tab.count}
-                    </span>
-                  )}
-                  {activeTab === tab.id && (
-                    <motion.div
-                      layoutId="activeTab"
-                      className={cn("absolute bottom-0 left-0 right-0 h-0.5 rounded-t-full", `bg-${tab.color}-500`)}
+                <div className="flex items-center gap-3">
+                  <div className="relative group">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-black pointer-events-none z-10" strokeWidth={2.5} />
+                    <input
+                      type="text"
+                      placeholder={t("searchPlaceholder")}
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-64 pl-10 pr-4 py-3 text-sm font-bold rounded-xl border-2 border-black bg-white focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] focus:outline-none transition-all placeholder:text-gray-400 text-black uppercase"
                     />
-                  )}
-                </button>
-              ))}
+                  </div>
+                  <Button
+                    onClick={() => setIsUploadOpen(true)}
+                    className="h-12 rounded-xl bg-[#8B5CF6] hover:bg-[#7C3AED] text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-y-[2px] active:translate-y-[4px] active:shadow-none transition-all px-6 border-2 border-black font-bold uppercase"
+                  >
+                    <Plus className="h-5 w-5 mr-2" strokeWidth={3} />
+                    {t("addDocument")}
+                  </Button>
+                </div>
+              </div>
+
+              {/* Onglets Premium */}
+              <div className="flex items-center gap-3">
+                {[
+                  { id: "pdf", label: t("tabPdf"), icon: FileText, count: filteredDocs.length, color: "bg-[#BAE6FD]" },
+                  { id: "flashcards", label: t("tabFlashcards"), icon: Brain, count: flashcardsCollections.length, color: "bg-[#FBCFE8]" },
+                  { id: "quiz", label: t("tabQuiz"), icon: ListChecks, count: quizCollections.length, color: "bg-[#BBF7D0]" },
+                  { id: "resume", label: t("tabSummaries"), icon: BookOpen, count: totalSummaries, color: "bg-[#FDE68A]" },
+                ].map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id as any)}
+                    className={cn(
+                      "relative py-3 px-5 rounded-xl flex items-center gap-2 text-sm font-black uppercase transition-all duration-200 border-2 border-transparent",
+                      activeTab === tab.id
+                        ? cn("border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] -translate-y-1", tab.color, "text-black")
+                        : "text-gray-500 hover:text-black hover:bg-gray-100 hover:border-black"
+                    )}
+                  >
+                    <tab.icon className={cn("h-5 w-5", activeTab === tab.id ? "text-black" : "text-gray-400 group-hover:text-black")} strokeWidth={2.5} />
+                    <span>{tab.label}</span>
+                    {tab.count > 0 && (
+                      <span className={cn(
+                        "px-2 py-0.5 rounded-lg text-[10px] font-black ml-1 border-2 border-black",
+                        activeTab === tab.id
+                          ? "bg-white text-black"
+                          : "bg-gray-200 text-gray-500 border-transparent"
+                      )}>
+                        {tab.count}
+                      </span>
+                    )}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -675,27 +729,31 @@ export function SubjectView({ subject, onBack, onSelectDocument, onUpdate }: Sub
                 {isLoading ? (
                   <div className="flex items-center justify-center py-12">
                     <div className="flex flex-col items-center gap-4">
-                      <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                      <p className="text-sm text-muted-foreground font-medium">{t("loadingDocuments")}</p>
+                      <Loader2 className="h-8 w-8 animate-spin text-black" />
+                      <p className="text-sm text-gray-500 font-bold uppercase">{t("loadingDocuments")}</p>
                     </div>
                   </div>
                 ) : filteredDocs.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-16 text-center">
-                    <div className="w-20 h-20 rounded-3xl bg-blue-500/10 flex items-center justify-center mb-6">
-                      <FileText className="h-10 w-10 text-blue-500" />
+                  <div className="flex flex-col items-center justify-center text-center">
+                    <div className="rounded-3xl bg-white border-2 border-black p-16 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] max-w-lg w-full relative overflow-hidden group">
+                      <div className="absolute top-0 left-0 w-full h-2 bg-[#FDE68A] border-b-2 border-black"></div>
+
+                      <div className="w-24 h-24 rounded-full bg-[#BAE6FD] border-2 border-black flex items-center justify-center mb-6 mx-auto shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] group-hover:scale-110 transition-transform">
+                        <FileText className="h-10 w-10 text-black" strokeWidth={2.5} />
+                      </div>
+                      <h3 className="text-2xl font-black uppercase mb-2">{t("noDocuments")}</h3>
+                      <p className="text-gray-500 font-medium max-w-md mb-8 leading-relaxed mx-auto">
+                        {t("noDocumentsDesc")}
+                      </p>
+                      <Button
+                        onClick={() => setIsUploadOpen(true)}
+                        size="lg"
+                        className="h-14 rounded-xl px-8 bg-[#8B5CF6] hover:bg-[#7C3AED] text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-y-[2px] active:translate-y-[4px] active:shadow-none transition-all border-2 border-black font-black uppercase"
+                      >
+                        <Plus className="h-5 w-5 mr-2" strokeWidth={3} />
+                        {t("addDocument")}
+                      </Button>
                     </div>
-                    <h3 className="text-xl font-bold text-foreground mb-2">{t("noDocuments")}</h3>
-                    <p className="text-muted-foreground max-w-md mb-8 leading-relaxed">
-                      {t("noDocumentsDesc")}
-                    </p>
-                    <Button
-                      onClick={() => setIsUploadOpen(true)}
-                      size="lg"
-                      className="rounded-full px-8 shadow-lg shadow-primary/20"
-                    >
-                      <Plus className="h-5 w-5 mr-2" />
-                      {t("addDocument")}
-                    </Button>
                   </div>
                 ) : (
                   <div className="grid gap-4">
@@ -703,113 +761,104 @@ export function SubjectView({ subject, onBack, onSelectDocument, onUpdate }: Sub
                       <div
                         key={doc.id}
                         onClick={() => handleViewPdf(doc.id)}
-                        className="group relative bg-card hover:bg-muted/30 border border-border/40 rounded-2xl p-4 transition-all hover:shadow-md cursor-pointer"
+                        className="group relative bg-white border-2 border-black rounded-2xl p-5 transition-all duration-200 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 cursor-pointer flex items-center gap-5"
                       >
-                        <div className="flex items-start gap-4">
-                          <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-600 dark:text-blue-400">
-                            <FileText className="h-6 w-6" />
-                          </div>
+                        <div className="flex-shrink-0 w-16 h-16 rounded-xl bg-[#F3F4F6] border-2 border-black flex items-center justify-center text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] group-hover:bg-[#BAE6FD] transition-colors">
+                          <FileText className="h-8 w-8" strokeWidth={2} />
+                        </div>
 
-                          <div className="flex-1 min-w-0 pt-1">
-                            <div className="flex items-center justify-between gap-4">
-                              <div className="flex-shrink">
-                                <h3 className="font-semibold text-foreground text-base mb-1 group-hover:text-primary transition-colors">
-                                  {doc.title}
-                                </h3>
-                                <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                                  <span className="flex items-center gap-1.5">
-                                    <Calendar className="h-3.5 w-3.5" />
-                                    {new Date(doc.created_at).toLocaleDateString()}
-                                  </span>
-                                  <span className="w-1 h-1 rounded-full bg-border" />
-                                  <span className="flex items-center gap-1.5">
-                                    <BookOpen className="h-3.5 w-3.5" />
-                                    {doc.note_count} {doc.note_count > 1 ? t("notes") : t("note")}
-                                  </span>
-                                </div>
-                              </div>
-
-                              {/* AI Generation Suggestions - center-right */}
-                              {doc.status === "ready" && (
-                                <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation()
-                                      handleOpenGenerationDialog("flashcards")
-                                    }}
-                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-white dark:bg-card text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-500/10 transition-colors border border-border shadow-sm"
-                                  >
-                                    <Brain className="h-3.5 w-3.5" />
-                                    {t("generateFlashcards")}
-                                  </button>
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation()
-                                      handleOpenGenerationDialog("quiz")
-                                    }}
-                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-white dark:bg-card text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-500/10 transition-colors border border-border shadow-sm"
-                                  >
-                                    <ListChecks className="h-3.5 w-3.5" />
-                                    {t("generateQuiz")}
-                                  </button>
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation()
-                                      handleOpenGenerationDialog("summary")
-                                    }}
-                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-white dark:bg-card text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-colors border border-border shadow-sm"
-                                  >
-                                    <FileText className="h-3.5 w-3.5" />
-                                    {t("summarize")}
-                                  </button>
-                                </div>
-                              )}
-
-                              <div className="flex items-center gap-2 flex-shrink-0">
-                                <span className={cn(
-                                  "px-2.5 py-1 rounded-full text-xs font-medium border",
-                                  doc.status === "ready"
-                                    ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
-                                    : "bg-amber-500/10 text-amber-600 border-amber-500/20"
-                                )}>
-                                  {doc.status === "ready" ? tStatus("ready") : tStatus("analyzing")}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-4">
+                            <div>
+                              <h3 className="font-black text-lg text-black mb-1 group-hover:underline decoration-2 underline-offset-2">
+                                {doc.title}
+                              </h3>
+                              <div className="flex items-center gap-3 text-xs font-bold text-gray-500 uppercase">
+                                <span className="flex items-center gap-1.5">
+                                  <Calendar className="h-4 w-4" />
+                                  {new Date(doc.created_at).toLocaleDateString()}
                                 </span>
+                                <span className="w-1.5 h-1.5 rounded-full bg-black" />
+                                <span className="flex items-center gap-1.5">
+                                  <BookOpen className="h-4 w-4" />
+                                  {doc.note_count || 0} {t("notes")}
+                                </span>
+                              </div>
+                            </div>
 
+                            {/* AI Buttons */}
+                            {doc.status === "ready" && (
+                              <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                 <button
-                                  onClick={(e) => handleDeleteDocument(doc.id, e, doc.title)}
-                                  className="p-2 rounded-full hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors opacity-0 group-hover:opacity-100"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    handleOpenGenerationDialog("flashcards")
+                                  }}
+                                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-black uppercase bg-[#FBCFE8] text-black border-2 border-black hover:bg-[#F9A8D4] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-[1px] transition-all"
                                 >
-                                  <Trash2 className="h-4 w-4" />
+                                  <Brain className="h-4 w-4" strokeWidth={2.5} />
+                                  Flashcards
+                                </button>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    handleOpenGenerationDialog("quiz")
+                                  }}
+                                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-black uppercase bg-[#BBF7D0] text-black border-2 border-black hover:bg-[#86EFAC] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-[1px] transition-all"
+                                >
+                                  <ListChecks className="h-4 w-4" strokeWidth={2.5} />
+                                  Quiz
                                 </button>
                               </div>
+                            )}
+
+                            <div className="flex items-center gap-2">
+                              <span className={cn(
+                                "px-3 py-1 rounded-lg text-xs font-black border-2 border-black uppercase",
+
+                                doc.status === "ready"
+                                  ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+                                  : "bg-amber-500/10 text-amber-600 border-amber-500/20"
+                              )}>
+                                {doc.status === "ready" ? tStatus("ready") : tStatus("analyzing")}
+                              </span>
+
+                              <button
+                                onClick={(e) => handleDeleteDocument(doc.id, e, doc.title)}
+                                className="p-2 rounded-full hover:bg-red-100 text-gray-400 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </button>
                             </div>
                           </div>
                         </div>
 
                         {/* Résumés rapides */}
-                        {doc.summaries && doc.summaries.length > 0 && (
-                          <div className="mt-4 pl-16">
-                            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-                              {doc.summaries.slice(0, 3).map((summary: any, idx: number) => (
-                                <div
-                                  key={summary.sectionId || idx}
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    if (summary.sectionId) {
-                                      router.push(`/documents/${doc.id}/sections/${summary.sectionId}`)
-                                    }
-                                  }}
-                                  className="flex-shrink-0 w-64 p-3 rounded-xl bg-muted/50 hover:bg-muted border border-border/50 transition-colors text-xs cursor-pointer"
-                                >
-                                  <h4 className="font-semibold mb-1 line-clamp-1">{summary.heading}</h4>
-                                  <p className="text-muted-foreground line-clamp-2">
-                                    {summary.summary.replace(/#{1,6}\s?/g, '').replace(/\*\*/g, '').replace(/\*/g, '').replace(/\[([^\]]+)\]\([^\)]+\)/g, '$1').replace(/`{3}[\s\S]*?`{3}/g, '').replace(/`([^`]+)`/g, '$1')}
-                                  </p>
-                                </div>
-                              ))}
+                        {
+                          doc.summaries && doc.summaries.length > 0 && (
+                            <div className="mt-4 pl-16">
+                              <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                                {doc.summaries.slice(0, 3).map((summary: any, idx: number) => (
+                                  <div
+                                    key={summary.sectionId || idx}
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      if (summary.sectionId) {
+                                        router.push(`/documents/${doc.id}/sections/${summary.sectionId}`)
+                                      }
+                                    }}
+                                    className="flex-shrink-0 w-64 p-3 rounded-xl bg-gray-50 hover:bg-gray-100 border-2 border-black transition-colors text-xs cursor-pointer shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+                                  >
+                                    <h4 className="font-bold mb-1 line-clamp-1 uppercase text-black">{summary.heading}</h4>
+                                    <p className="text-gray-500 line-clamp-2">
+                                      {summary.summary.replace(/#{1,6}\s?/g, '').replace(/\*\*/g, '').replace(/\*/g, '').replace(/\[([^\]]+)\]\([^\)]+\)/g, '$1').replace(/`{3}[\s\S]*?`{3}/g, '').replace(/`([^`]+)`/g, '$1')}
+                                    </p>
+                                  </div>
+                                ))}
+                              </div>
                             </div>
-                          </div>
-                        )}
+                          )
+                        }
                       </div>
                     ))}
                   </div>
@@ -823,97 +872,58 @@ export function SubjectView({ subject, onBack, onSelectDocument, onUpdate }: Sub
                 {isLoadingStudy ? (
                   <div className="flex items-center justify-center py-12">
                     <div className="flex flex-col items-center gap-4">
-                      <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                      <p className="text-sm text-muted-foreground font-medium">{tCommon("loading")}</p>
+                      <Loader2 className="h-8 w-8 animate-spin text-black" />
+                      <p className="text-sm text-gray-500 font-bold uppercase">{tCommon("loading")}</p>
                     </div>
                   </div>
                 ) : flashcardsCollections.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-16 text-center">
-                    <div className="w-20 h-20 rounded-3xl bg-purple-500/10 flex items-center justify-center mb-6">
-                      <Brain className="h-10 w-10 text-purple-600 dark:text-purple-400" />
+                  <div className="flex flex-col items-center justify-center py-16 text-center bg-white border-2 border-dashed border-black rounded-3xl">
+                    <div className="w-24 h-24 rounded-full bg-[#FBCFE8] border-2 border-black flex items-center justify-center mb-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                      <Brain className="h-10 w-10 text-black" strokeWidth={2.5} />
                     </div>
-                    <h3 className="text-xl font-bold text-foreground mb-2">{t("noFlashcards")}</h3>
-                    <p className="text-muted-foreground max-w-md mb-8 leading-relaxed">
+                    <h3 className="text-2xl font-black uppercase mb-2">{t("noFlashcards")}</h3>
+                    <p className="text-gray-500 font-medium max-w-md mb-8">
                       {t("noFlashcardsDesc")}
                     </p>
                     <Button
-                      onClick={() => {
-                        setActiveTab("pdf")
-                        handleOpenGenerationDialog("flashcards")
-                      }}
-                      size="lg"
-                      className="rounded-full px-8 bg-purple-600 hover:bg-purple-700 text-white shadow-lg shadow-purple-500/20"
+                      onClick={() => handleOpenGenerationDialog("flashcards")}
+                      className="h-12 rounded-xl px-8 bg-black text-white hover:bg-[#8B5CF6] hover:text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-y-[2px] active:translate-y-[4px] active:shadow-none transition-all border-2 border-black font-black uppercase"
                     >
-                      <Brain className="h-5 w-5 mr-2" />
+                      <Sparkles className="h-5 w-5 mr-2" />
                       {t("createFlashcardsNow")}
                     </Button>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {flashcardsCollections.map((studyCollection: any) => (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {flashcardsCollections.map((collection: any) => (
                       <div
-                        key={studyCollection.id}
-                        className="group relative flex flex-col bg-card hover:bg-muted/30 border border-border/40 rounded-2xl p-5 transition-all hover:shadow-lg hover:border-purple-500/30 overflow-hidden"
+                        key={collection.id}
+                        onClick={() => {
+                          setSelectedFlashcardCollectionId(collection.id)
+                        }}
+                        className="group bg-white border-2 border-black rounded-3xl p-6 hover:shadow-[8px_8px_0px_0px_#FBCFE8] hover:-translate-y-1 transition-all cursor-pointer relative overflow-hidden"
                       >
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:bg-purple-500/10 transition-colors" />
-
-                        <div className="relative z-10 flex flex-col h-full">
-                          <div className="flex items-start justify-between mb-4">
-                            <div className="p-3 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400">
-                              <Brain className="h-6 w-6" />
-                            </div>
-                            <button
-                              onClick={(e) => handleDeleteStudyCollection(studyCollection.id, e, studyCollection.title, "flashcards")}
-                              className="p-2 rounded-full hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors opacity-0 group-hover:opacity-100"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </button>
-                          </div>
-
-                          <h3 className="text-lg font-bold text-foreground mb-2 line-clamp-2 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
-                            {studyCollection.title}
-                          </h3>
-
-                          <div className="flex items-center gap-2 mb-6">
-                            <span className="px-2.5 py-1 rounded-full bg-purple-500/10 text-purple-600 dark:text-purple-400 text-xs font-bold">
-                              {studyCollection.flashcards.length} {studyCollection.flashcards.length > 1 ? t("cards") : t("card")}
-                            </span>
-                            {(() => {
-                              const totalCards = studyCollection.flashcards.length
-                              const stats = studyCollection.flashcardStats || []
-                              const masteredCount = stats.filter((s: any) => s.box >= 4).length
-                              const progress = totalCards > 0 ? Math.round((masteredCount / totalCards) * 100) : 0
-
-                              if (progress > 0) {
-                                return (
-                                  <div className="flex items-center gap-2 ml-auto">
-                                    <span className="text-xs font-medium text-purple-600 dark:text-purple-400">{progress}%</span>
-                                    <Progress value={progress} className="w-16 h-1.5 bg-purple-100 dark:bg-purple-950/30" />
-                                  </div>
-                                )
-                              }
-                              return null
-                            })()}
-                          </div>
-
-                          {/* Aperçu des cartes */}
-                          <div className="flex-1 space-y-2 mb-6">
-                            {studyCollection.flashcards.slice(0, 2).map((fc: any, idx: number) => (
-                              <div key={fc.id} className="p-3 rounded-lg bg-muted/50 border border-border/50 text-xs">
-                                <p className="font-medium mb-1 line-clamp-1">{fc.question}</p>
-                                <p className="text-muted-foreground line-clamp-1">{fc.answer}</p>
-                              </div>
-                            ))}
-                          </div>
-
-                          <Button
-                            onClick={() => setSelectedFlashcardCollectionId(studyCollection.id)}
-                            className="w-full rounded-xl bg-purple-600 hover:bg-purple-700 text-white shadow-md shadow-purple-500/20"
-                          >
-                            {t("studyNow")}
-                            <ArrowRight className="h-4 w-4 ml-2" />
-                          </Button>
+                        <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                          <Brain className="h-24 w-24" />
                         </div>
+                        <div className="flex justify-between items-start mb-4 relative z-10">
+                          <div className="w-12 h-12 bg-[#FBCFE8] rounded-xl border-2 border-black flex items-center justify-center shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                            <Brain className="h-6 w-6 text-black" strokeWidth={2.5} />
+                          </div>
+                          <span className="bg-black text-white px-2 py-1 rounded-lg text-xs font-black uppercase">
+                            {collection.flashcards?.length || 0} Cards
+                          </span>
+                        </div>
+                        <h3 className="font-black text-xl mb-1 relative z-10 line-clamp-2 uppercase">{collection.title}</h3>
+                        <p className="text-gray-500 text-xs font-bold uppercase relative z-10">
+                          {new Date(collection.created_at).toLocaleDateString()}
+                        </p>
+                        <button
+                          onClick={(e) => handleDeleteStudyCollection(collection.id, e, collection.title, "flashcards")}
+                          className="absolute bottom-4 right-4 p-2 rounded-lg hover:bg-red-100 text-gray-400 hover:text-red-600 transition-colors z-20"
+                        >
+                          <Trash2 className="h-5 w-5" />
+                        </button>
                       </div>
                     ))}
                   </div>
@@ -927,146 +937,89 @@ export function SubjectView({ subject, onBack, onSelectDocument, onUpdate }: Sub
                 {isLoadingStudy ? (
                   <div className="flex items-center justify-center py-12">
                     <div className="flex flex-col items-center gap-4">
-                      <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                      <p className="text-sm text-muted-foreground font-medium">{tCommon("loading")}</p>
+                      <Loader2 className="h-8 w-8 animate-spin text-black" />
+                      <p className="text-sm text-gray-500 font-bold uppercase">{tCommon("loading")}</p>
                     </div>
                   </div>
                 ) : quizCollections.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-16 text-center">
-                    <div className="w-20 h-20 rounded-3xl bg-green-500/10 flex items-center justify-center mb-6">
-                      <ListChecks className="h-10 w-10 text-green-600 dark:text-green-400" />
+                  <div className="flex flex-col items-center justify-center py-16 text-center bg-white border-2 border-dashed border-black rounded-3xl">
+                    <div className="w-24 h-24 rounded-full bg-[#BBF7D0] border-2 border-black flex items-center justify-center mb-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                      <ListChecks className="h-10 w-10 text-black" strokeWidth={2.5} />
                     </div>
-                    <h3 className="text-xl font-bold text-foreground mb-2">{t("noQuiz")}</h3>
-                    <p className="text-muted-foreground max-w-md mb-8 leading-relaxed">
+                    <h3 className="text-2xl font-black uppercase mb-2">{t("noQuiz")}</h3>
+                    <p className="text-gray-500 font-medium max-w-md mb-8">
                       {t("noQuizDesc")}
                     </p>
                     <Button
-                      onClick={() => {
-                        setActiveTab("pdf")
-                        handleOpenGenerationDialog("quiz")
-                      }}
-                      size="lg"
-                      className="rounded-full px-8 bg-green-600 hover:bg-green-700 text-white shadow-lg shadow-green-500/20"
+                      onClick={() => handleOpenGenerationDialog("quiz")}
+                      className="h-12 rounded-xl px-8 bg-black text-white hover:bg-[#8B5CF6] hover:text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-y-[2px] active:translate-y-[4px] active:shadow-none transition-all border-2 border-black font-black uppercase"
                     >
-                      <ListChecks className="h-5 w-5 mr-2" />
+                      <Sparkles className="h-5 w-5 mr-2" />
                       {t("createQuizNow")}
                     </Button>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {quizCollections.map((studyCollection: any) => {
-                      // Compter les types de questions
-                      const questionTypes = studyCollection.quizQuestions?.reduce((acc: any, q: any) => {
-                        const type = q.question_type === "multiple_choice" ? t("typeQCM") : q.question_type === "true_false" ? t("typeTrueFalse") : t("typeCompletion")
-                        acc[type] = (acc[type] || 0) + 1
-                        return acc
-                      }, {}) || {}
-
-                      return (
-                        <div
-                          key={studyCollection.id}
-                          className="group relative flex flex-col bg-card hover:bg-muted/30 border border-border/40 rounded-2xl p-5 transition-all hover:shadow-lg hover:border-green-500/30 overflow-hidden"
-                        >
-                          <div className="absolute top-0 right-0 w-32 h-32 bg-green-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:bg-green-500/10 transition-colors" />
-
-                          <div className="relative z-10 flex flex-col h-full">
-                            <div className="flex items-start justify-between mb-4">
-                              <div className="p-3 rounded-xl bg-green-500/10 text-green-600 dark:text-green-400">
-                                <ListChecks className="h-6 w-6" />
-                              </div>
-                              <button
-                                onClick={(e) => handleDeleteStudyCollection(studyCollection.id, e, studyCollection.title, "quiz")}
-                                className="p-2 rounded-full hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors opacity-0 group-hover:opacity-100"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </button>
-                            </div>
-
-                            <h3 className="text-lg font-bold text-foreground mb-2 line-clamp-2 group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors">
-                              {studyCollection.title}
-                            </h3>
-
-                            <div className="flex items-center gap-2 mb-6 flex-wrap">
-                              <span className="px-2.5 py-1 rounded-full bg-green-500/10 text-green-600 dark:text-green-400 text-xs font-bold">
-                                {studyCollection.quizQuestions.length} {studyCollection.quizQuestions.length > 1 ? t("questions") : t("question")}
-                              </span>
-                              {Object.entries(questionTypes).map(([type, count]: [string, any]) => (
-                                <span key={type} className="px-2 py-1 rounded-full bg-muted text-muted-foreground text-[10px] font-medium border border-border/50">
-                                  {count} {type}
-                                </span>
-                              ))}
-                              {(() => {
-                                const totalQuestions = studyCollection.quizQuestions.length
-                                const stats = studyCollection.quizStats || []
-                                const masteredCount = stats.filter((s: any) => s.mastery_level === 'mastered').length
-                                const progress = totalQuestions > 0 ? Math.round((masteredCount / totalQuestions) * 100) : 0
-
-                                if (progress > 0) {
-                                  return (
-                                    <div className="flex items-center gap-2 ml-auto w-full mt-2">
-                                      <span className="text-xs font-medium text-green-600 dark:text-green-400 min-w-[30px]">{progress}%</span>
-                                      <Progress value={progress} className="flex-1 h-1.5 bg-green-100 dark:bg-green-950/30" />
-                                    </div>
-                                  )
-                                }
-                                return null
-                              })()}
-                            </div>
-
-                            {/* Aperçu des questions */}
-                            <div className="flex-1 space-y-2 mb-6">
-                              {studyCollection.quizQuestions.slice(0, 2).map((q: any, idx: number) => (
-                                <div key={q.id} className="p-3 rounded-lg bg-muted/50 border border-border/50 text-xs">
-                                  <p className="font-medium mb-1 line-clamp-1">{q.prompt}</p>
-                                  <div className="flex items-center gap-2 text-muted-foreground">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-green-500/50" />
-                                    <span>{q.options?.length || 2} options</span>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-
-                            <Button
-                              onClick={() => setSelectedQuizCollection(studyCollection)}
-                              className="w-full rounded-xl bg-green-600 hover:bg-green-700 text-white shadow-md shadow-green-500/20"
-                            >
-                              {t("startQuiz")}
-                              <ArrowRight className="h-4 w-4 ml-2" />
-                            </Button>
-                          </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {quizCollections.map((collection: any) => (
+                      <div
+                        key={collection.id}
+                        onClick={() => {
+                          setSelectedQuizCollection(collection)
+                        }}
+                        className="group bg-white border-2 border-black rounded-3xl p-6 hover:shadow-[8px_8px_0px_0px_#BBF7D0] hover:-translate-y-1 transition-all cursor-pointer relative overflow-hidden"
+                      >
+                        <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                          <ListChecks className="h-24 w-24" />
                         </div>
-                      )
-                    })}
+                        <div className="flex justify-between items-start mb-4 relative z-10">
+                          <div className="w-12 h-12 bg-[#BBF7D0] rounded-xl border-2 border-black flex items-center justify-center shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                            <ListChecks className="h-6 w-6 text-black" strokeWidth={2.5} />
+                          </div>
+                          <span className="bg-black text-white px-2 py-1 rounded-lg text-xs font-black uppercase">
+                            {collection.quizQuestions?.length || 0} Questions
+                          </span>
+                        </div>
+                        <h3 className="font-black text-xl mb-1 relative z-10 line-clamp-2 uppercase">{collection.title}</h3>
+                        <p className="text-gray-500 text-xs font-bold uppercase relative z-10">
+                          {new Date(collection.created_at).toLocaleDateString()}
+                        </p>
+                        <button
+                          onClick={(e) => handleDeleteStudyCollection(collection.id, e, collection.title, "quiz")}
+                          className="absolute bottom-4 right-4 p-2 rounded-lg hover:bg-red-100 text-gray-400 hover:text-red-600 transition-colors z-20"
+                        >
+                          <Trash2 className="h-5 w-5" />
+                        </button>
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>
             )}
 
-            {/* Section Résumés */}
+            {/* Section Resume (Summaries) */}
             {activeTab === "resume" && (
               <div className="space-y-6">
                 {isLoading ? (
                   <div className="flex items-center justify-center py-12">
                     <div className="flex flex-col items-center gap-4">
-                      <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                      <p className="text-sm text-muted-foreground font-medium">{t("loadingSummaries")}</p>
+                      <Loader2 className="h-8 w-8 animate-spin text-black" />
+                      <p className="text-sm text-gray-500 font-bold uppercase">{t("loadingSummaries")}</p>
                     </div>
                   </div>
                 ) : totalSummaries === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-16 text-center">
-                    <div className="w-20 h-20 rounded-3xl bg-amber-500/10 flex items-center justify-center mb-6">
-                      <BookOpen className="h-10 w-10 text-amber-600 dark:text-amber-400" />
+                  <div className="flex flex-col items-center justify-center py-16 text-center bg-white border-2 border-dashed border-black rounded-3xl">
+                    <div className="w-24 h-24 rounded-full bg-[#FDE68A] border-2 border-black flex items-center justify-center mb-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                      <BookOpen className="h-10 w-10 text-black" strokeWidth={2.5} />
                     </div>
-                    <h3 className="text-xl font-bold text-foreground mb-2">{t("noSummaries")}</h3>
-                    <p className="text-muted-foreground max-w-md mb-8 leading-relaxed">
+                    <h3 className="text-2xl font-black uppercase mb-2">{t("noSummaries")}</h3>
+                    <p className="text-gray-500 font-medium max-w-md mb-8">
                       {t("noSummariesDesc")}
                     </p>
                     <Button
                       onClick={() => {
                         handleOpenGenerationDialog("summary")
                       }}
-                      size="lg"
-                      className="rounded-full px-8 bg-amber-600 hover:bg-amber-700 text-white shadow-lg shadow-amber-500/20"
+                      className="h-12 rounded-xl px-8 bg-black text-white hover:bg-[#8B5CF6] hover:text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-y-[2px] active:translate-y-[4px] active:shadow-none transition-all border-2 border-black font-black uppercase"
                     >
                       <BookOpen className="h-5 w-5 mr-2" />
                       {t("generateSummaryNow")}
@@ -1077,38 +1030,36 @@ export function SubjectView({ subject, onBack, onSelectDocument, onUpdate }: Sub
                     {/* Résumés de collection */}
                     {collectionSummaries.length > 0 && (
                       <div className="space-y-4">
-                        <div className="flex items-center gap-2 pb-2 border-b border-border/40">
-                          <Sparkles className="h-4 w-4 text-amber-500" />
-                          <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">{t("collectionSummaries")}</h3>
+                        <div className="flex items-center gap-2 pb-2 border-b-2 border-black">
+                          <Sparkles className="h-5 w-5 text-black fill-[#FDE68A]" />
+                          <h3 className="text-sm font-black uppercase tracking-wider text-black">{t("collectionSummaries")}</h3>
                         </div>
 
                         <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
                           {collectionSummaries.map((summary: any) => (
                             <div
                               key={summary.id}
-                              className="group relative flex flex-col bg-card hover:bg-muted/30 border border-border/40 rounded-2xl p-5 transition-all hover:shadow-lg hover:border-amber-500/30 overflow-hidden"
+                              className="group relative flex flex-col bg-white border-2 border-black rounded-3xl p-6 hover:shadow-[8px_8px_0px_0px_#FDE68A] hover:-translate-y-1 transition-all cursor-pointer overflow-hidden"
                             >
-                              <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:bg-amber-500/10 transition-colors" />
-
                               <div className="relative z-10 flex flex-col h-full">
                                 <div className="flex items-start justify-between mb-4">
-                                  <div className="p-3 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
-                                    <BookOpen className="h-6 w-6" />
+                                  <div className="w-12 h-12 rounded-xl bg-[#FDE68A] border-2 border-black flex items-center justify-center shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                                    <BookOpen className="h-6 w-6 text-black" strokeWidth={2.5} />
                                   </div>
                                   <button
                                     onClick={(e) => handleDeleteStudyCollection(summary.id, e, summary.title, "summary")}
-                                    className="p-2 rounded-full hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors opacity-0 group-hover:opacity-100"
+                                    className="p-2 rounded-lg hover:bg-red-100 text-gray-400 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
                                   >
-                                    <Trash2 className="h-4 w-4" />
+                                    <Trash2 className="h-5 w-5" />
                                   </button>
                                 </div>
 
-                                <h3 className="text-lg font-bold text-foreground mb-3 line-clamp-2 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
+                                <h3 className="text-xl font-black text-black mb-3 line-clamp-2 uppercase">
                                   {summary.title}
                                 </h3>
 
                                 <div className="flex-1 mb-6">
-                                  <p className="text-sm text-muted-foreground leading-relaxed line-clamp-4">
+                                  <p className="text-sm text-gray-600 font-medium leading-relaxed line-clamp-4">
                                     {summary.summary.replace(/#{1,6}\s?/g, '').replace(/\*\*/g, '').replace(/\*/g, '').replace(/\[([^\]]+)\]\([^\)]+\)/g, '$1').replace(/`{3}[\s\S]*?`{3}/g, '').replace(/`([^`]+)`/g, '$1')}
                                   </p>
                                 </div>
@@ -1118,11 +1069,10 @@ export function SubjectView({ subject, onBack, onSelectDocument, onUpdate }: Sub
                                     ...summary,
                                     isDocumentSummary: false
                                   })}
-                                  variant="outline"
-                                  className="w-full rounded-xl border-amber-200 hover:bg-amber-50 hover:text-amber-700 dark:border-amber-800 dark:hover:bg-amber-950/50 dark:hover:text-amber-400 transition-colors"
+                                  className="w-full h-10 rounded-xl bg-white text-black border-2 border-black hover:bg-[#FDE68A] hover:text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-y-[2px] active:translate-y-[4px] active:shadow-none transition-all font-bold uppercase"
                                 >
                                   {t("readSummary")}
-                                  <ArrowRight className="h-4 w-4 ml-2" />
+                                  <ArrowRight className="h-4 w-4 ml-2" strokeWidth={3} />
                                 </Button>
                               </div>
                             </div>
@@ -1161,7 +1111,7 @@ export function SubjectView({ subject, onBack, onSelectDocument, onUpdate }: Sub
                                 </h3>
 
                                 <div className="flex-1 mb-6">
-                                  <p className="text-sm text-muted-foreground leading-relaxed line-clamp-4">
+                                  <p className="text-sm text-muted-foreground dark:text-gray-100 leading-relaxed line-clamp-4">
                                     {summary.summary.replace(/#{1,6}\s?/g, '').replace(/\*\*/g, '').replace(/\*/g, '').replace(/\[([^\]]+)\]\([^\)]+\)/g, '$1').replace(/`{3}[\s\S]*?`{3}/g, '').replace(/`([^`]+)`/g, '$1')}
                                   </p>
                                 </div>
@@ -1190,7 +1140,6 @@ export function SubjectView({ subject, onBack, onSelectDocument, onUpdate }: Sub
               </div>
             )}
           </div>
-
         ) : selectedFlashcardCollectionId && selectedFlashcardCollection && selectedFlashcardCollection.flashcards && selectedFlashcardCollection.flashcards.length > 0 ? (
           // Afficher directement les flashcards dans le contenu
           isLoadingFlashcards ? (
@@ -1233,29 +1182,29 @@ export function SubjectView({ subject, onBack, onSelectDocument, onUpdate }: Sub
             onClose={() => setSelectedQuizCollection(null)}
           />
         ) : selectedSummary ? (
-          <div className="h-full flex flex-col bg-background animate-in fade-in slide-in-from-bottom-4 duration-300">
+          <div className="h-full flex flex-col bg-transparent animate-in fade-in slide-in-from-bottom-4 duration-300">
             {/* Header du résumé */}
-            <div className="flex-shrink-0 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-10">
+            <div className="flex-shrink-0 border-b-2 border-black bg-white/95 backdrop-blur-xl sticky top-0 z-10">
               <div className="flex items-center justify-between px-6 py-4 max-w-5xl mx-auto w-full">
                 <div className="flex items-center gap-4">
                   <Button
                     variant="ghost"
                     onClick={() => setSelectedSummary(null)}
                     size="sm"
-                    className="hover:bg-muted rounded-full w-8 h-8 p-0"
+                    className="hover:bg-black hover:text-white text-black rounded-lg w-10 h-10 p-0 border-2 border-transparent hover:border-black transition-all"
                   >
-                    <ArrowLeft className="h-4 w-4" />
+                    <ArrowLeft className="h-5 w-5" strokeWidth={2.5} />
                   </Button>
                   <div>
-                    <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
+                    <h2 className="text-xl font-black text-black flex items-center gap-3 uppercase">
                       {selectedSummary.title}
                       {selectedSummary.isDocumentSummary && (
-                        <span className="text-xs font-normal px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
+                        <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-[#BAE6FD] text-black border-2 border-black">
                           {selectedSummary.documentTitle}
                         </span>
                       )}
                     </h2>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-xs font-bold text-gray-500 uppercase">
                       {selectedSummary.createdAt ? new Date(selectedSummary.createdAt).toLocaleDateString() : t("aiGeneratedSummary")}
                     </p>
                   </div>
@@ -1264,21 +1213,31 @@ export function SubjectView({ subject, onBack, onSelectDocument, onUpdate }: Sub
             </div>
 
             {/* Contenu du résumé */}
-            <div className="flex-1 overflow-y-auto">
-              <div className="max-w-3xl mx-auto px-6 py-8">
-                <div className="prose prose-slate dark:prose-invert max-w-none prose-headings:font-bold prose-h1:text-3xl prose-h2:text-2xl prose-p:leading-relaxed prose-li:marker:text-primary">
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                    {selectedSummary.summary}
-                  </ReactMarkdown>
+            <div className="flex-1 overflow-y-auto custom-scrollbar bg-white">
+              <div className="max-w-3xl mx-auto px-6 py-12">
+                <div className="bg-white border-2 border-black rounded-3xl p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] relative">
+                  {/* Decorative elements */}
+                  <div className="absolute top-0 right-0 p-6 opacity-5 pointer-events-none">
+                    <BookOpen className="h-32 w-32" />
+                  </div>
+
+                  <div className="prose max-w-none prose-headings:font-black prose-headings:uppercase prose-headings:text-black prose-p:text-gray-700 prose-p:leading-relaxed prose-p:font-medium prose-li:text-gray-700 prose-strong:text-black prose-strong:font-black prose-code:text-[#8B5CF6] prose-code:bg-purple-50 prose-code:border prose-code:border-purple-200 prose-code:rounded-md prose-code:px-1 prose-code:before:content-none prose-code:after:content-none">
+                    <div className="flex items-center gap-2 mb-8 pb-4 border-b-2 border-black">
+                      <div className="w-10 h-10 rounded-lg bg-[#FDE68A] border-2 border-black flex items-center justify-center">
+                        <Sparkles className="h-5 w-5 text-black" />
+                      </div>
+                      <span className="text-sm font-black uppercase tracking-widest text-gray-500">Résumé généré par IA</span>
+                    </div>
+                    <MarkdownRenderer content={selectedSummary.summary} />
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         ) : null
         }
-      </div>
+      </div >
 
-      {/* Chat intégré en bas - Style ChatGPT amélioré - Caché quand on affiche flashcards/quiz */}
       {/* Chat intégré en bas - Style ChatGPT amélioré - Caché quand on affiche flashcards/quiz */}
       {
         !selectedFlashcardCollectionId && !selectedQuizCollection && !selectedSummary && (
@@ -1301,7 +1260,7 @@ export function SubjectView({ subject, onBack, onSelectDocument, onUpdate }: Sub
                       <p className="text-sm font-medium text-foreground mb-1">
                         {t("noDocsInCollection")}
                       </p>
-                      <p className="text-xs text-muted-foreground mb-3">
+                      <p className="text-xs text-muted-foreground dark:text-gray-400 mb-3">
                         {t("noDocsInCollectionDesc")}
                       </p>
                       <Button
@@ -1319,33 +1278,33 @@ export function SubjectView({ subject, onBack, onSelectDocument, onUpdate }: Sub
 
               {/* Suggestions de prompts rapides */}
               {documents.length > 0 && chatInput.length === 0 && (
-                <div className="mb-3 space-y-2 flex flex-col items-center animate-in slide-in-from-bottom-2 fade-in duration-300">
-                  <div className="flex flex-wrap justify-center gap-2">
+                <div className="mb-4 space-y-2 flex flex-col items-center animate-in slide-in-from-bottom-2 fade-in duration-300">
+                  <div className="flex flex-wrap justify-center gap-3">
                     <button
                       onClick={() => {
                         handleOpenGenerationDialog("flashcards")
                       }}
-                      className="px-3 py-1.5 text-xs rounded-full border border-border/60 bg-background/80 backdrop-blur-md hover:bg-muted hover:border-primary/50 transition-all flex items-center gap-2 text-foreground shadow-sm"
+                      className="px-4 py-2 text-xs font-black uppercase rounded-full border-2 border-black bg-white hover:bg-[#FBCFE8] hover:text-black transition-all flex items-center gap-2 text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 active:translate-y-0 active:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
                     >
-                      <Brain className="h-3.5 w-3.5 text-purple-500" />
+                      <Brain className="h-4 w-4 text-black" strokeWidth={2.5} />
                       {t("generateFlashcards")}
                     </button>
                     <button
                       onClick={() => {
                         handleOpenGenerationDialog("quiz")
                       }}
-                      className="px-3 py-1.5 text-xs rounded-full border border-border/60 bg-background/80 backdrop-blur-md hover:bg-muted hover:border-primary/50 transition-all flex items-center gap-2 text-foreground shadow-sm"
+                      className="px-4 py-2 text-xs font-black uppercase rounded-full border-2 border-black bg-white hover:bg-[#BBF7D0] hover:text-black transition-all flex items-center gap-2 text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 active:translate-y-0 active:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
                     >
-                      <ListChecks className="h-3.5 w-3.5 text-green-500" />
+                      <ListChecks className="h-4 w-4 text-black" strokeWidth={2.5} />
                       {t("generateQuiz")}
                     </button>
                     <button
                       onClick={() => {
                         handleOpenGenerationDialog("summary")
                       }}
-                      className="px-3 py-1.5 text-xs rounded-full border border-border/60 bg-background/80 backdrop-blur-md hover:bg-muted hover:border-primary/50 transition-all flex items-center gap-2 text-foreground shadow-sm"
+                      className="px-4 py-2 text-xs font-black uppercase rounded-full border-2 border-black bg-white hover:bg-[#FDE68A] hover:text-black transition-all flex items-center gap-2 text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 active:translate-y-0 active:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
                     >
-                      <FileText className="h-3.5 w-3.5 text-blue-500" />
+                      <FileText className="h-4 w-4 text-black" strokeWidth={2.5} />
                       {t("summarize")}
                     </button>
                   </div>
@@ -1358,7 +1317,6 @@ export function SubjectView({ subject, onBack, onSelectDocument, onUpdate }: Sub
                   onChange={setChatInput}
                   onSend={handleSendMessage}
                   onUpload={() => setIsUploadOpen(true)}
-
                   disabled={isSending}
                   isLoading={isSending}
                   documents={documents.map((doc: any) => ({
@@ -1369,7 +1327,7 @@ export function SubjectView({ subject, onBack, onSelectDocument, onUpdate }: Sub
                 />
               </div>
               {documents.length > 0 && (
-                <p className="text-[10px] text-center text-muted-foreground/60 mt-2 font-medium">
+                <p className="text-[10px] text-center text-slate-500/60 mt-2 font-medium">
                   {t("aiDisclaimer")}
                 </p>
               )}
@@ -1484,11 +1442,6 @@ export function SubjectView({ subject, onBack, onSelectDocument, onUpdate }: Sub
           </div>
         )
       }
-
-
-
-
-    </div>
+    </div >
   )
 }
-

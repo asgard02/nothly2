@@ -56,6 +56,14 @@ const config = {
   				blue: '#3B82F6',
   				violet: '#8B5CF6'
   			},
+			neo: {
+				violet: '#8B5CF6',
+				yellow: '#FBBF24',
+				pink: '#F472B6',
+				blue: '#BAE6FD',
+				green: '#BBF7D0',
+				orange: '#FFDDD2',
+			},
   			chart: {
   				'1': 'hsl(var(--chart-1))',
   				'2': 'hsl(var(--chart-2))',

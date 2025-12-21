@@ -17,6 +17,7 @@ export interface DocumentVersionSummary {
 
 export interface DocumentSummary {
   id: string
+  subject_id?: string
   title: string
   original_filename: string
   status: DocumentStatus

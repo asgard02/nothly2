@@ -69,60 +69,29 @@ export default function AppearanceSettingsPage() {
       )}
 
       {/* Thème */}
-      <div className="bg-card rounded-xl border border-border shadow-sm p-6 mb-6 transition-colors">
+      <div className="bg-slate-900/50 rounded-xl border border-white/5 shadow-2xl p-6 mb-6">
         <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
-            <Moon className="h-5 w-5 text-primary" />
+          <div className="w-10 h-10 bg-indigo-500/10 rounded-lg flex items-center justify-center border border-indigo-500/20">
+            <Moon className="h-5 w-5 text-indigo-400" />
           </div>
-          <h2 className="text-lg font-semibold text-foreground">
+          <h2 className="text-lg font-semibold text-white">
             {t("theme")}
           </h2>
         </div>
 
-        {!mounted ? (
-          <div className="space-y-3">
-            <div className="w-full h-20 bg-muted rounded-lg animate-pulse" />
-            <div className="w-full h-20 bg-muted rounded-lg animate-pulse" />
+        <div className="p-4 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center gap-4">
+          <div className="p-2 rounded-full bg-indigo-500/20">
+            <CheckCircle className="h-5 w-5 text-indigo-400" />
           </div>
-        ) : (
-          <div className="grid grid-cols-2 gap-3">
-            <button
-              onClick={() => setTheme("light")}
-              className={`flex items-center gap-4 p-4 rounded-lg border-2 transition-all duration-200 ${theme === "light"
-                ? "border-primary bg-primary/10"
-                : "border-border hover:border-muted-foreground/50"
-                }`}
-            >
-              <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center">
-                <Sun className="h-5 w-5 text-muted-foreground" />
-              </div>
-              <div className="flex-1 text-left">
-                <p className={`font-medium ${theme === "light" ? "text-primary" : "text-foreground"}`}>
-                  {t("light")}
-                </p>
-                <p className="text-xs text-muted-foreground">{t("lightDesc")}</p>
-              </div>
-            </button>
-
-            <button
-              onClick={() => setTheme("dark")}
-              className={`flex items-center gap-4 p-4 rounded-lg border-2 transition-all duration-200 ${theme === "dark"
-                ? "border-primary bg-primary/10"
-                : "border-border hover:border-muted-foreground/50"
-                }`}
-            >
-              <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center">
-                <Moon className="h-5 w-5 text-muted-foreground" />
-              </div>
-              <div className="flex-1 text-left">
-                <p className={`font-medium ${theme === "dark" ? "text-primary" : "text-foreground"}`}>
-                  {t("dark")}
-                </p>
-                <p className="text-xs text-muted-foreground">{t("darkDesc")}</p>
-              </div>
-            </button>
+          <div>
+            <p className="font-medium text-white">
+              Antigravity Dark Mode
+            </p>
+            <p className="text-sm text-slate-400">
+              The unified dark theme is active by default.
+            </p>
           </div>
-        )}
+        </div>
       </div>
 
 

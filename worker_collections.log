@@ -1,0 +1,5 @@
+
+> nothly@1.0.0 worker:collections
+> tsx --env-file=.env.local scripts/process-collection-jobs.ts
+
+[process-collection-jobs] Worker started

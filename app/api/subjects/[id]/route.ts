@@ -137,9 +137,9 @@ export async function PATCH(
     }
 
     const body = await request.json()
-    const { title, color } = body
-
-    if (!title && !color) {
+    const { title, color, touch, is_favorite } = body
+    
+    if (!title && !color && !touch && is_favorite === undefined) {
       return NextResponse.json({ error: "Aucune donnée à mettre à jour" }, { status: 400 })
     }
 
@@ -163,6 +163,8 @@ export async function PATCH(
     const updates: any = {}
     if (title) updates.title = title
     if (color) updates.color = color
+    if (is_favorite !== undefined) updates.is_favorite = is_favorite
+
     updates.updated_at = new Date().toISOString()
 
     const { data: updatedCollection, error: updateError } = await admin

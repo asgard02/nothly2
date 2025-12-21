@@ -1,4 +1,4 @@
--- 🔒 RLS OPTIMISÉ POUR NOTES INSTANTANÉES
+ß-- 🔒 RLS OPTIMISÉ POUR NOTES INSTANTANÉES
 -- Policy combinée "for all" pour meilleures performances
 -- À exécuter dans Supabase SQL Editor
 

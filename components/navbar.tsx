@@ -5,13 +5,10 @@ import Logo from "@/components/Logo"
 import { Button } from "@/components/ui/button"
 import { useState, useEffect, useCallback } from "react"
 import { useRouter, usePathname } from "next/navigation"
-import { useTranslations } from "next-intl"
-
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false)
   const router = useRouter()
   const pathname = usePathname()
-  const t = useTranslations("Navbar")
 
   useEffect(() => {
     const handleScroll = () => {
@@ -46,8 +43,8 @@ export default function Navbar() {
   return (
     <nav
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled
-          ? "bg-background/95 backdrop-blur-xl border-b border-border shadow-lg"
-          : "bg-transparent"
+        ? "bg-background/95 backdrop-blur-xl border-b border-border shadow-lg"
+        : "bg-transparent"
         }`}
     >
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
@@ -62,48 +59,50 @@ export default function Navbar() {
               onClick={(event) => handleAnchorNavigation(event, "flow")}
               className="text-sm font-medium text-foreground hover:text-primary transition-colors duration-200 cursor-pointer"
             >
-              {t("links.flow")}
+              How it works
             </a>
             <a
               href="#value"
               onClick={(event) => handleAnchorNavigation(event, "value")}
               className="text-sm font-medium text-foreground hover:text-primary transition-colors duration-200 cursor-pointer"
             >
-              {t("links.value")}
+              Value
             </a>
             <a
               href="#audience"
               onClick={(event) => handleAnchorNavigation(event, "audience")}
               className="text-sm font-medium text-foreground hover:text-primary transition-colors duration-200 cursor-pointer"
             >
-              {t("links.targets")}
+              Who is it for?
             </a>
             <Link
               href="/login"
               className="text-sm font-medium text-foreground hover:text-primary transition-colors duration-200"
             >
-              {t("links.login")}
+              Log in
             </Link>
-            <Link href="/register">
-              <Button
-                size="sm"
-                className="bg-gradient-to-r from-nothly-blue to-nothly-violet text-white rounded-full px-6 transition-all duration-200 hover:scale-105 shadow-lg hover:shadow-nothly-blue/50"
-              >
-                {t("cta.primary")}
-              </Button>
-            </Link>
+            <Button
+              asChild
+              size="sm"
+              className="bg-gradient-to-r from-nothly-blue to-nothly-violet text-white rounded-full px-6 transition-all duration-200 hover:scale-105 shadow-lg hover:shadow-nothly-blue/50"
+            >
+              <Link href="/register">
+                Start for free
+              </Link>
+            </Button>
           </div>
 
           {/* Mobile menu button */}
           <div className="md:hidden">
-            <Link href="/register">
-              <Button
-                size="sm"
-                className="bg-gradient-to-r from-nothly-blue to-nothly-violet text-white rounded-full px-4 text-xs"
-              >
-                {t("cta.mobile")}
-              </Button>
-            </Link>
+            <Button
+              asChild
+              size="sm"
+              className="bg-gradient-to-r from-nothly-blue to-nothly-violet text-white rounded-full px-4 text-xs"
+            >
+              <Link href="/register">
+                Sign up
+              </Link>
+            </Button>
           </div>
         </div>
       </div>

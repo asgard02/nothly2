@@ -22,7 +22,9 @@ import {
   Loader2,
   Check,
   X,
-  ArrowRight
+  ArrowRight,
+  HelpCircle,
+  Sparkles
 } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 
@@ -63,34 +65,34 @@ interface QuizViewerProps {
   onClose?: () => void
 }
 
-const MASTERY_COLORS: Record<MasteryLevel, { bg: string; text: string; border: string; icon: typeof Brain; gradient: string }> = {
+const MASTERY_COLORS: Record<MasteryLevel, { bg: string; text: string; border: string; icon: typeof Brain; shadow: string }> = {
   new: {
-    bg: "bg-slate-50 dark:bg-slate-900/50",
-    text: "text-slate-700 dark:text-slate-300",
-    border: "border-slate-200 dark:border-slate-700",
+    bg: "bg-white",
+    text: "text-black",
+    border: "border-black",
     icon: CircleDashed,
-    gradient: "from-slate-500 to-slate-600"
+    shadow: "shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
   },
   learning: {
-    bg: "bg-rose-50 dark:bg-rose-950/40",
-    text: "text-rose-700 dark:text-rose-400",
-    border: "border-rose-200 dark:border-rose-800",
+    bg: "bg-[#FBCFE8]", // Pink
+    text: "text-black",
+    border: "border-black",
     icon: AlertCircle,
-    gradient: "from-rose-500 to-rose-600"
+    shadow: "shadow-[4px_4px_0px_0px_#BE185D]"
   },
   reviewing: {
-    bg: "bg-amber-50 dark:bg-amber-950/40",
-    text: "text-amber-700 dark:text-amber-400",
-    border: "border-amber-200 dark:border-amber-800",
+    bg: "bg-[#FDE68A]", // Amber
+    text: "text-black",
+    border: "border-black",
     icon: RotateCcw,
-    gradient: "from-amber-500 to-amber-600"
+    shadow: "shadow-[4px_4px_0px_0px_#B45309]"
   },
   mastered: {
-    bg: "bg-emerald-50 dark:bg-emerald-950/40",
-    text: "text-emerald-700 dark:text-emerald-400",
-    border: "border-emerald-200 dark:border-emerald-800",
+    bg: "bg-[#BBF7D0]", // Green
+    text: "text-black",
+    border: "border-black",
     icon: Award,
-    gradient: "from-emerald-500 to-emerald-600"
+    shadow: "shadow-[4px_4px_0px_0px_#15803D]"
   },
 }
 
@@ -428,178 +430,195 @@ export default function QuizViewer({ questions, studySubjectId, mode = "practice
 
   if (isFinished) {
     return (
-      <div className="flex flex-col items-center justify-center h-full p-8 text-center space-y-8 animate-in fade-in zoom-in-95 duration-500">
-        <div className="space-y-4">
-          <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-primary/10 mb-4 ring-8 ring-primary/5">
-            <Award className="h-12 w-12 text-primary" />
-          </div>
-          <h2 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-600">Session terminée !</h2>
-          <p className="text-muted-foreground text-lg max-w-md mx-auto">
-            Vous avez répondu à toutes les questions. Voici votre résumé.
-          </p>
-        </div>
+      <div className="flex flex-col items-center justify-center h-full p-8 text-center space-y-8 animate-in fade-in zoom-in-95 duration-500 bg-transparent">
+        <div className="bg-white border-2 border-black rounded-3xl p-12 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] relative max-w-2xl w-full">
 
-        <div className="grid grid-cols-3 gap-6 w-full max-w-2xl">
-          <div className="bg-card border rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all">
-            <div className="text-4xl font-bold text-primary mb-2">{accuracyPercent}%</div>
-            <div className="text-sm text-muted-foreground font-medium">Précision</div>
-          </div>
-          <div className="bg-card border rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all">
-            <div className="text-4xl font-bold text-emerald-500 mb-2">{statusCounts.correct}</div>
-            <div className="text-sm text-muted-foreground font-medium">Correctes</div>
-          </div>
-          <div className="bg-card border rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all">
-            <div className="text-4xl font-bold text-rose-500 mb-2">{statusCounts.incorrect}</div>
-            <div className="text-sm text-muted-foreground font-medium">À revoir</div>
-          </div>
-        </div>
+          <div className="space-y-6">
+            <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-[#BBF7D0] border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] mb-4">
+              <Award className="h-10 w-10 text-black" strokeWidth={2.5} />
+            </div>
 
-        <div className="flex items-center gap-4 pt-8">
-          <Button
-            variant="outline"
-            size="lg"
-            onClick={() => handleRestart(false)}
-            className="h-12 px-8 text-base rounded-full"
-          >
-            <RotateCcw className="mr-2 h-5 w-5" />
-            Tout recommencer
-          </Button>
-          {statusCounts.incorrect > 0 && (
+            <h2 className="text-4xl font-black uppercase text-black italic">Session terminée !</h2>
+            <p className="text-gray-500 font-bold text-lg max-w-md mx-auto">
+              Vous avez répondu à toutes les questions. Voici votre résumé.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-3 gap-6 w-full max-w-xl mx-auto mt-10">
+            <div className="bg-[#BAE6FD] border-2 border-black rounded-xl p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+              <div className="text-4xl font-black text-black mb-1">{accuracyPercent}%</div>
+              <div className="text-xs text-black font-bold uppercase">Précision</div>
+            </div>
+            <div className="bg-[#BBF7D0] border-2 border-black rounded-xl p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+              <div className="text-4xl font-black text-black mb-1">{statusCounts.correct}</div>
+              <div className="text-xs text-black font-bold uppercase">Correctes</div>
+            </div>
+            <div className="bg-[#FBCFE8] border-2 border-black rounded-xl p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+              <div className="text-4xl font-black text-black mb-1">{statusCounts.incorrect}</div>
+              <div className="text-xs text-black font-bold uppercase">À revoir</div>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-center gap-4 pt-12">
             <Button
+              variant="default"
               size="lg"
-              onClick={() => handleRestart(true)}
-              className="h-12 px-8 text-base shadow-lg hover:shadow-xl transition-all rounded-full bg-primary hover:bg-primary/90"
+              onClick={() => handleRestart(false)}
+              className="h-14 px-8 text-sm font-black uppercase rounded-xl bg-white text-black border-2 border-black hover:bg-gray-100 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-y-[2px] active:translate-y-[4px] active:shadow-none transition-all"
             >
-              <Target className="mr-2 h-5 w-5" />
-              Revoir les erreurs
+              <RotateCcw className="mr-2 h-5 w-5" />
+              Tout recommencer
             </Button>
-          )}
-          {onClose && (
-            <Button
-              variant="ghost"
-              size="lg"
-              onClick={onClose}
-              className="h-12 px-8 text-base rounded-full"
-            >
-              Fermer
-            </Button>
-          )}
+            {statusCounts.incorrect > 0 && (
+              <Button
+                size="lg"
+                onClick={() => handleRestart(true)}
+                className="h-14 px-8 text-sm font-black uppercase rounded-xl bg-black text-white hover:bg-[#8B5CF6] border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-y-[2px] active:translate-y-[4px] active:shadow-none transition-all"
+              >
+                <Target className="mr-2 h-5 w-5" />
+                Revoir les erreurs
+              </Button>
+            )}
+            {onClose && (
+              <Button
+                variant="ghost"
+                size="lg"
+                onClick={onClose}
+                className="h-14 px-8 text-sm font-bold uppercase rounded-xl hover:bg-transparent hover:underline decoration-2 underline-offset-4"
+              >
+                Fermer
+              </Button>
+            )}
+          </div>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="h-full flex flex-col bg-gradient-to-b from-background to-muted/20">
+    <div className="h-full flex flex-col bg-transparent max-w-4xl mx-auto w-full pt-4">
       {/* Unified Header */}
-      <div className="flex-shrink-0 px-6 py-4 border-b border-border/40 bg-background/80 backdrop-blur-md sticky top-0 z-10 flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <div className="p-2 rounded-xl bg-primary/10 text-primary">
-            <Brain className="h-5 w-5" />
-          </div>
-          <div>
-            <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
-              {title || "Quiz"}
-              <span className="px-2 py-0.5 rounded-full bg-muted text-[10px] font-medium text-muted-foreground uppercase tracking-wider border border-border/50">
-                {mode === "adaptive" ? "Adaptatif" : mode === "review" ? "Révision" : "Pratique"}
-              </span>
-            </h2>
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <span>Question {currentIndex + 1} sur {prioritizedQuestions.length}</span>
-              <span className="w-1 h-1 rounded-full bg-border" />
-              <span className="flex items-center gap-1">
-                <Clock className="h-3 w-3" />
-                {Math.floor(timeSpent / 60)}:{(timeSpent % 60).toString().padStart(2, "0")}
-              </span>
+      <div className="flex-shrink-0 px-6 py-4 mx-4 mb-6 bg-white border-2 border-black rounded-2xl shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] relative z-10">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="p-2.5 rounded-xl bg-black text-white border-2 border-black shadow-sm">
+              <Brain className="h-6 w-6" strokeWidth={2.5} />
             </div>
+            <div>
+              <h2 className="text-xl font-black text-black flex items-center gap-3 uppercase tracking-tighter">
+                {title || "Quiz"}
+                <span className="px-2 py-0.5 rounded-md bg-[#BAE6FD] text-black text-[10px] font-black uppercase border-2 border-black">
+                  {mode === "adaptive" ? "Adaptatif" : mode === "review" ? "Révision" : "Pratique"}
+                </span>
+              </h2>
+              <div className="flex items-center gap-3 text-xs font-bold text-gray-500 uppercase mt-0.5">
+                <span>Q. {currentIndex + 1} / {prioritizedQuestions.length}</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-black/20" />
+                <span className="flex items-center gap-1.5">
+                  <Clock className="h-3.5 w-3.5" />
+                  {Math.floor(timeSpent / 60)}:{(timeSpent % 60).toString().padStart(2, "0")}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-gray-100 border-2 border-black mr-2">
+              <div className="flex items-center gap-1.5 text-xs font-black text-emerald-600">
+                <CheckCircle2 className="h-4 w-4" />
+                {statusCounts.correct}
+              </div>
+              <div className="w-0.5 h-4 bg-gray-300" />
+              <div className="flex items-center gap-1.5 text-xs font-black text-rose-600">
+                <XCircle className="h-4 w-4" />
+                {statusCounts.incorrect}
+              </div>
+            </div>
+
+            {onClose && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-10 w-10 rounded-xl hover:bg-black hover:text-white border-2 border-transparent hover:border-black transition-all"
+                onClick={onClose}
+              >
+                <X className="h-5 w-5" strokeWidth={3} />
+              </Button>
+            )}
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="hidden md:flex items-center gap-3 px-3 py-1.5 rounded-full bg-muted/50 border border-border/50 mr-2">
-            <div className="flex items-center gap-1.5 text-xs font-medium text-emerald-600 dark:text-emerald-400">
-              <CheckCircle2 className="h-3.5 w-3.5" />
-              {statusCounts.correct}
-            </div>
-            <div className="w-px h-3 bg-border" />
-            <div className="flex items-center gap-1.5 text-xs font-medium text-rose-600 dark:text-rose-400">
-              <XCircle className="h-3.5 w-3.5" />
-              {statusCounts.incorrect}
-            </div>
-          </div>
-
-          {onClose && (
-            <Button variant="ghost" size="icon" className="rounded-full hover:bg-muted" onClick={onClose}>
-              <X className="h-5 w-5" />
-            </Button>
-          )}
+        {/* Progress Bar styled as a bottom border indicator actually */}
+        <div className="absolute bottom-0 left-0 right-0 h-1.5 bg-gray-100 rounded-b-xl overflow-hidden border-t-2 border-black">
+          <motion.div
+            className="h-full bg-[#8B5CF6]"
+            initial={{ width: 0 }}
+            animate={{ width: `${progressPercent}%` }}
+            transition={{ duration: 0.3 }}
+          />
         </div>
       </div>
 
-      {/* Progress Bar */}
-      <div className="w-full h-1 bg-muted">
-        <motion.div
-          className="h-full bg-primary"
-          initial={{ width: 0 }}
-          animate={{ width: `${progressPercent}%` }}
-          transition={{ duration: 0.3 }}
-        />
-      </div>
-
-      {/* Main Content Area - Centered & Scrollable */}
-      <div className="flex-1 overflow-hidden relative flex flex-col items-center justify-center p-4 md:p-6">
-        <div className="w-full max-w-3xl h-full max-h-[800px] flex flex-col">
+      {/* Main Question Card */}
+      <div className="flex-1 overflow-visible relative flex flex-col px-4 pb-6">
+        <div className="w-full h-full flex flex-col">
           <AnimatePresence mode="wait">
             {current && (
               <motion.div
                 key={current.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.3, ease: "easeOut" }}
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.3, ease: "circOut" }}
                 className="w-full h-full flex flex-col"
               >
                 <div className={cn(
-                  "flex-1 flex flex-col bg-card border rounded-3xl shadow-xl overflow-hidden transition-all duration-500",
-                  revealAnswer && questionStatuses[current.id] === "correct" && "border-emerald-500/50 shadow-emerald-500/10",
-                  revealAnswer && questionStatuses[current.id] === "incorrect" && "border-rose-500/50 shadow-rose-500/10"
+                  "flex-1 flex flex-col bg-white border-2 border-black rounded-3xl shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] overflow-hidden transition-all duration-500",
+                  revealAnswer && questionStatuses[current.id] === "correct" && "shadow-[8px_8px_0px_0px_#BBF7D0] border-emerald-600",
+                  revealAnswer && questionStatuses[current.id] === "incorrect" && "shadow-[8px_8px_0px_0px_#FBCFE8] border-rose-600"
                 )}>
-                  {/* Card Header & Question - Scrollable part 1 */}
+
+                  {/* Question Content */}
                   <div className="flex-1 overflow-y-auto custom-scrollbar">
-                    <div className="p-8 border-b border-border/50 bg-muted/30 sticky top-0 z-10 backdrop-blur-sm supports-[backdrop-filter]:bg-muted/30">
-                      <div className="flex items-center justify-between mb-4">
+                    {/* Header of Card */}
+                    <div className="p-8 border-b-2 border-black bg-gray-50/50">
+                      <div className="flex items-center justify-between mb-6">
                         <span className={cn(
-                          "px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider",
-                          masteryMeta.bg, masteryMeta.text, masteryMeta.border, "border"
+                          "px-3 py-1 rounded-lg text-xs font-black uppercase tracking-wider border-2 flex items-center gap-2",
+                          masteryMeta.bg, masteryMeta.text, masteryMeta.border,
+                          // masteryMeta.shadow
                         )}>
+                          <masteryMeta.icon className="h-3.5 w-3.5" />
                           {currentMastery === "new" ? "Nouvelle" : currentMastery === "learning" ? "À apprendre" : currentMastery === "reviewing" ? "En révision" : "Maîtrisée"}
                         </span>
+
                         {revealAnswer && (
                           <motion.div
-                            initial={{ scale: 0 }}
-                            animate={{ scale: 1 }}
+                            initial={{ scale: 0, rotate: -10 }}
+                            animate={{ scale: 1, rotate: 0 }}
                             className={cn(
-                              "flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border",
+                              "flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-black uppercase tracking-wider border-2 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]",
                               questionStatuses[current.id] === "correct"
-                                ? "bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800"
-                                : "bg-rose-100 text-rose-700 border-rose-200 dark:bg-rose-900/30 dark:text-rose-400 dark:border-rose-800"
+                                ? "bg-[#BBF7D0] text-emerald-800 border-black"
+                                : "bg-[#FBCFE8] text-rose-800 border-black"
                             )}
                           >
                             {questionStatuses[current.id] === "correct" ? (
-                              <>Correct <Check className="h-3 w-3" /></>
+                              <>Correct <Check className="h-4 w-4" strokeWidth={3} /></>
                             ) : (
-                              <>Incorrect <X className="h-3 w-3" /></>
+                              <>Incorrect <X className="h-4 w-4" strokeWidth={3} /></>
                             )}
                           </motion.div>
                         )}
                       </div>
-                      <div className="text-xl md:text-2xl font-medium leading-relaxed">
+
+                      <div className="text-xl md:text-2xl font-bold leading-relaxed text-black">
                         <MarkdownRenderer content={current.prompt} />
                       </div>
                     </div>
 
-                    {/* Options */}
-                    <div className="p-8 space-y-3 bg-background">
+                    {/* Options List */}
+                    <div className="p-8 space-y-4 bg-white">
                       {normalisedOptions.map((option, index) => {
                         const isSelected = selectedOption === index
                         const isCorrectOption = revealAnswer && isOptionCorrect(option)
@@ -608,52 +627,57 @@ export default function QuizViewer({ questions, studySubjectId, mode = "practice
                         return (
                           <motion.button
                             key={`${current.id}-${index}`}
-                            whileHover={!revealAnswer ? { scale: 1.01 } : {}}
+                            whileHover={!revealAnswer ? { scale: 1.01, x: 4 } : {}}
                             whileTap={!revealAnswer ? { scale: 0.99 } : {}}
                             onClick={() => !revealAnswer && setSelectedOption(index)}
                             disabled={revealAnswer}
                             className={cn(
-                              "w-full p-4 rounded-xl border-2 text-left transition-all duration-200 flex items-center gap-4 group relative overflow-hidden",
-                              !revealAnswer && isSelected && "border-primary bg-primary/5 shadow-md ring-1 ring-primary/20",
-                              !revealAnswer && !isSelected && "border-border hover:border-primary/50 hover:bg-muted/50",
-                              isCorrectOption && "border-emerald-500 bg-emerald-50 dark:bg-emerald-950/20 shadow-md",
-                              isIncorrectSelection && "border-rose-500 bg-rose-50 dark:bg-rose-950/20 shadow-md",
-                              revealAnswer && !isSelected && !isCorrectOption && "opacity-40 grayscale"
+                              "w-full p-5 rounded-xl border-2 text-left transition-all duration-200 flex items-center gap-5 group relative overflow-hidden",
+                              // Default state
+                              !revealAnswer && !isSelected && "bg-white border-black hover:bg-gray-50 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]",
+                              // Selected state
+                              !revealAnswer && isSelected && "bg-black border-black text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] translate-x-1 -translate-y-1",
+                              // Correct state (revealed)
+                              isCorrectOption && "bg-[#BBF7D0] border-black text-black shadow-[4px_4px_0px_0px_green]",
+                              // Incorrect state (revealed)
+                              isIncorrectSelection && "bg-[#FBCFE8] border-black text-black shadow-[4px_4px_0px_0px_red]",
+                              // Unselected & Revealed
+                              revealAnswer && !isSelected && !isCorrectOption && "opacity-40 grayscale border-gray-200"
                             )}
                           >
                             <div className={cn(
-                              "flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold transition-colors",
-                              isCorrectOption ? "bg-emerald-500 text-white" :
-                                isIncorrectSelection ? "bg-rose-500 text-white" :
-                                  isSelected ? "bg-primary text-white" :
-                                    "bg-muted text-muted-foreground group-hover:bg-primary/20 group-hover:text-primary"
+                              "flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center text-sm font-black border-2 transition-colors",
+                              isCorrectOption ? "bg-white border-black text-emerald-600" :
+                                isIncorrectSelection ? "bg-white border-black text-rose-600" :
+                                  isSelected ? "bg-[#8B5CF6] border-white text-white" :
+                                    "bg-gray-100 border-black text-gray-500 group-hover:bg-black group-hover:text-white"
                             )}>
                               {String.fromCharCode(65 + index)}
                             </div>
-                            <div className="flex-1 text-base">
+                            <div className={cn("flex-1 text-base font-bold", isSelected && !revealAnswer ? "text-white" : "text-black")}>
                               <MarkdownRenderer content={option} />
                             </div>
-                            {isCorrectOption && <CheckCircle2 className="h-5 w-5 text-emerald-500" />}
-                            {isIncorrectSelection && <XCircle className="h-5 w-5 text-rose-500" />}
+                            {isCorrectOption && <CheckCircle2 className="h-6 w-6 text-black" fill="#4ade80" />}
+                            {isIncorrectSelection && <XCircle className="h-6 w-6 text-black" fill="#f43f5e" />}
                           </motion.button>
                         )
                       })}
 
-                      {/* Explanation - Inside scrollable area */}
+                      {/* Explanation */}
                       <AnimatePresence>
                         {revealAnswer && current.explanation && (
                           <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: "auto", opacity: 1 }}
+                            initial={{ height: 0, opacity: 0, y: 10 }}
+                            animate={{ height: "auto", opacity: 1, y: 0 }}
                             exit={{ height: 0, opacity: 0 }}
-                            className="pt-6 border-t border-border mt-6"
+                            className="pt-6 mt-6"
                           >
-                            <div className="p-4 rounded-xl bg-muted/50 border border-border/50">
-                              <div className="flex items-center gap-2 mb-2 text-sm font-semibold text-muted-foreground">
-                                <Brain className="h-4 w-4" />
+                            <div className="p-6 rounded-2xl bg-[#BAE6FD] border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                              <div className="flex items-center gap-2 mb-3 text-sm font-black uppercase text-black">
+                                <Sparkles className="h-4 w-4" />
                                 Explication
                               </div>
-                              <div className="text-sm text-foreground leading-relaxed">
+                              <div className="text-black font-medium leading-relaxed">
                                 <MarkdownRenderer content={current.explanation} />
                               </div>
                             </div>
@@ -663,15 +687,15 @@ export default function QuizViewer({ questions, studySubjectId, mode = "practice
                     </div>
                   </div>
 
-                  {/* Footer Controls - Fixed at bottom of card */}
-                  <div className="flex-shrink-0 p-6 border-t border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 flex items-center justify-between z-10">
+                  {/* Footer Controls */}
+                  <div className="flex-shrink-0 p-6 border-t-2 border-black bg-gray-50 flex items-center justify-between z-10 w-full">
                     <Button
                       variant="ghost"
                       onClick={handlePrevious}
                       disabled={currentIndex === 0}
-                      className="text-muted-foreground hover:text-foreground"
+                      className="text-gray-500 hover:text-black hover:bg-transparent font-bold"
                     >
-                      <ChevronLeft className="h-4 w-4 mr-2" />
+                      <ChevronLeft className="h-5 w-5 mr-1" />
                       Précédent
                     </Button>
 
@@ -680,19 +704,22 @@ export default function QuizViewer({ questions, studySubjectId, mode = "practice
                         size="lg"
                         onClick={handleReveal}
                         disabled={selectedOption === null && normalisedOptions.length > 0}
-                        className="rounded-full px-8 shadow-lg shadow-primary/20"
+                        className={cn(
+                          "h-14 rounded-xl px-10 text-white border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-y-[2px] active:translate-y-[4px] active:shadow-none transition-all font-black uppercase text-base",
+                          selectedOption !== null ? "bg-[#8B5CF6] hover:bg-[#7C3AED]" : "bg-gray-300 cursor-not-allowed text-gray-400"
+                        )}
                       >
                         Vérifier
-                        <ArrowRight className="h-4 w-4 ml-2" />
+                        <ArrowRight className="h-5 w-5 ml-2" strokeWidth={3} />
                       </Button>
                     ) : (
                       <Button
                         size="lg"
                         onClick={handleNext}
-                        className="rounded-full px-8 shadow-lg shadow-primary/20"
+                        className="h-14 rounded-xl px-10 bg-black text-white hover:bg-gray-900 border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-y-[2px] active:translate-y-[4px] active:shadow-none transition-all font-black uppercase text-base"
                       >
                         {currentIndex === prioritizedQuestions.length - 1 ? "Terminer" : "Suivant"}
-                        <ArrowRight className="h-4 w-4 ml-2" />
+                        <ArrowRight className="h-5 w-5 ml-2" strokeWidth={3} />
                       </Button>
                     )}
                   </div>

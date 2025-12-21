@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { subjectId, message, mentionedDocumentIds } = body
+    const { subjectId, message, mentionedDocumentIds, sectionIds } = body
     
     // Support backward compatibility if client sends collectionId
     const targetId = subjectId || body.collectionId
@@ -149,7 +149,7 @@ Examples:
     if (!isFlashcardRequest && !isQuizRequest && !isSummaryRequest) {
       const flashcardKeywords = ["flashcard", "carte", "cartes", "révision", "mémorisation", "apprendre", "étudier", "réviser", "mémoriser", "card", "cards", "study", "memorize", "review"]
       const quizKeywords = ["quiz", "question", "questions", "test", "examen", "évaluation", "interro", "qcm", "teste", "tester", "exam", "evaluation"]
-      const summaryKeywords = ["résumé", "résumer", "synthèse", "synthétiser", "récapitulatif", "récapituler", "resumer", "synthese", "summary", "summarize", "synthesis", "recap"]
+      const summaryKeywords = ["résumé", "résumer", "synthèse", "synthétiser", "récapitulatif", "récapituler", "resumer", "synthese", "summary", "summarize", "synthesis", "recap", "liste", "lister", "list"]
       
       isFlashcardRequest = flashcardKeywords.some(keyword => message.toLowerCase().includes(keyword))
       isQuizRequest = quizKeywords.some(keyword => message.toLowerCase().includes(keyword))
@@ -249,37 +249,43 @@ Examples:
         // Utiliser les sections si disponibles
         console.log(`[POST /api/chat/subject] Document ${docId} (${doc.title}) - ${sections.length} sections found`)
         
-        if ((isFlashcardRequest || isQuizRequest || isSummaryRequest) && searchTopic) {
+        let filteredSections = sections
+
+        if (sectionIds && sectionIds.length > 0) {
+          // PRIORITY 1: Explicit Section IDs (Heatmap selection)
+          filteredSections = sections.filter((s: any) => sectionIds.includes(s.id))
+          console.log(`[POST /api/chat/subject] Document ${docId} - Filtered by sectionIds: ${filteredSections.length} sections kept`)
+        } else if ((isFlashcardRequest || isQuizRequest) && searchTopic) {
+          // PRIORITY 2: Topic-based filtering (Legacy/Auto)
           // Rechercher les sections pertinentes au sujet
           const topicWords = searchTopic.toLowerCase().split(/\s+/)
           
-          const filteredSections = sections.filter((s: any) => {
+          filteredSections = sections.filter((s: any) => {
             const contentLower = s.content.toLowerCase()
             return topicWords.some(word => contentLower.includes(word))
           })
+        }
 
-          if (filteredSections.length > 0) {
-            // Utiliser seulement les sections pertinentes
-            relevantSections = filteredSections.map((s: any) => ({
-              content: s.content,
-              order_index: s.order_index
-            }))
-            relevantContent = filteredSections.map((s: any) => s.content).join("\n\n")
+        if (filteredSections.length > 0) {
+          // Utiliser seulement les sections pertinentes
+          relevantSections = filteredSections.map((s: any) => ({
+            content: s.content,
+            order_index: s.order_index
+          }))
+          relevantContent = filteredSections.map((s: any) => s.content).join("\n\n")
+        } else {
+          // Si aucune section ne correspond (ou filtrage vide), utiliser toutes les sections
+          // SAUF si on avait des sectionIds explicites (dans ce cas, on respecte la sélection vide pour ce doc)
+          if (sectionIds && sectionIds.length > 0) {
+             relevantSections = []
+             relevantContent = ""
           } else {
-            // Si aucune section ne correspond, utiliser toutes les sections
             relevantSections = sections.map((s: any) => ({
               content: s.content,
               order_index: s.order_index
             }))
             relevantContent = sections.map((s: any) => s.content).join("\n\n")
           }
-        } else {
-          // Pour les questions normales ou résumé global, utiliser toutes les sections
-          relevantSections = sections.map((s: any) => ({
-            content: s.content,
-            order_index: s.order_index
-          }))
-          relevantContent = sections.map((s: any) => s.content).join("\n\n")
         }
       } else if (version && version.raw_text && version.raw_text.trim().length > 0) {
         // Utiliser raw_text comme fallback si pas de sections
@@ -309,7 +315,7 @@ Examples:
       documentContents.push({
         id: doc.id,
         title: doc.title,
-        content: relevantContent.substring(0, 20000), // Limite pour les flashcards/résumés
+        content: relevantContent.substring(0, 100000), // Limite augmentée pour éviter de tronquer le contenu
         sections: relevantSections,
       })
     }
@@ -446,7 +452,7 @@ RÈGLES STRICTES:
 - Génère entre 5 et 15 flashcards selon la quantité de contenu disponible
 
 Contexte des documents (UTILISE UNIQUEMENT CE CONTENU):
-${context.substring(0, 20000)}`
+${context.substring(0, 100000)}`
     } else if (isQuizRequest) {
       systemPrompt = `Tu es un assistant IA spécialisé dans la création de quiz éducatifs à partir de documents PDF.
 
@@ -474,59 +480,229 @@ RÈGLES STRICTES:
 - Génère entre 5 et 15 questions selon la quantité de contenu disponible
 
 Contexte des documents (UTILISE UNIQUEMENT CE CONTENU):
-${context.substring(0, 20000)}`
+${context.substring(0, 100000)}`
     } else if (isSummaryRequest) {
-      systemPrompt = `Tu es un assistant IA expert en synthèse de documents.
+      systemPrompt = `Tu es un assistant IA expert en analyse de documents.
       
 ⚠️ IMPORTANT : Tu DOIS utiliser UNIQUEMENT le contenu fourni dans les documents ci-dessous.
 
-L'utilisateur veut un résumé sur le sujet: "${searchTopic || 'le contenu global'}".
+L'utilisateur veut un résumé ou une extraction sur le sujet: "${searchTopic || 'le contenu global'}".
 
-Rédige un résumé structuré, clair et complet du contenu fourni.
-Le résumé doit être bien formaté (Markdown accepté) et mettre en avant les points clés.
+RÈGLES CRITIQUES :
+1. Si l'utilisateur demande une LISTE (abréviations, dates, définitions, vocabulaire, etc.) :
+   - TU DOIS ÊTRE EXHAUSTIF. Ne fais AUCUNE sélection.
+   - Recopie TOUS les éléments trouvés dans le document, un par un.
+   - Ne résume pas, ne synthétise pas. Agis comme un extracteur de données.
+   - Si la liste est longue (ex: 50 items), donne les 50 items.
+
+2. Sinon (pour un résumé classique) :
+   - Rédige un résumé structuré, clair et complet.
+   - Mets en avant les points clés.
 
 Contexte des documents (UTILISE UNIQUEMENT CE CONTENU):
-${context.substring(0, 20000)}`
+${context.substring(0, 100000)}`
     } else {
       systemPrompt = `Tu es un assistant IA qui aide l'utilisateur à comprendre et analyser ses documents PDF dans la matière "${collection.title}". 
             
 Tu as accès au contenu des documents suivants. Utilise ce contexte pour répondre aux questions de l'utilisateur de manière précise et détaillée.
 
+RÈGLE IMPORTANTE : Si l'utilisateur demande une liste (ex: "liste les abréviations"), fournis la liste COMPLÈTE et EXHAUSTIVE sans rien omettre. Ne fais pas de sélection.
+
 Contexte des documents:
-${context.substring(0, 15000)}`
+${context.substring(0, 100000)}`
     }
 
-    const openaiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: "gpt-4o-mini",
-        messages: [
-          {
-            role: "system",
-            content: systemPrompt
-          },
-          {
-            role: "user",
-            content: message,
-          },
-        ],
-        max_tokens: isFlashcardRequest || isQuizRequest || isSummaryRequest ? 4000 : 2000, // Plus de tokens pour les générations
-        temperature: isFlashcardRequest || isQuizRequest ? 0.5 : 0.7, // Plus bas pour les flashcards/quiz
-      }),
-    })
+    // STRATÉGIE D'EXTRACTION EXHAUSTIVE (Deep Extraction)
+    // Si c'est une demande de liste/résumé, on ne peut pas se fier à un seul appel avec tout le contexte
+    // car le modèle va "résumer" au lieu de "lister".
+    // On doit itérer sur les sections et extraire morceau par morceau.
+    
+    let aiResponse = ""
+    
+    if (isSummaryRequest && (message.toLowerCase().includes("list") || message.toLowerCase().includes("abréviation") || message.toLowerCase().includes("acronyme") || message.toLowerCase().includes("définition") || message.toLowerCase().includes("date"))) {
+      console.log("[POST /api/chat/subject] 🚀 Mode Extraction Exhaustive activé")
+      
+      // 1. Récupérer TOUTES les sections (pas de filtrage par topic pour l'extraction)
+      const allSections: string[] = []
+      documentContents.forEach(doc => {
+        if (doc.sections && doc.sections.length > 0) {
+          doc.sections.forEach(s => allSections.push(s.content))
+        } else {
+          // Fallback si pas de sections (raw text), on découpe grossièrement
+          const chunks = doc.content.match(/[\s\S]{1,15000}/g) || []
+          chunks.forEach(c => allSections.push(c))
+        }
+      })
 
-    if (!openaiResponse.ok) {
-      const errorData = await openaiResponse.json().catch(() => ({}))
-      console.error("[POST /api/chat/subject] ❌ Erreur OpenAI:", errorData)
-      return NextResponse.json({ error: "Erreur lors de l'appel à l'IA" }, { status: 500 })
+      console.log(`[POST /api/chat/subject] 📦 Extraction sur ${allSections.length} chunks`)
+
+      // 2. Traiter chaque chunk (ou groupe de chunks)
+      // On groupe par paquets de 20k caractères pour optimiser les appels
+      const batchedChunks: string[] = []
+      let currentBatch = ""
+      
+      for (const section of allSections) {
+        if (currentBatch.length + section.length > 20000) {
+          batchedChunks.push(currentBatch)
+          currentBatch = ""
+        }
+        currentBatch += section + "\n\n"
+      }
+      if (currentBatch) batchedChunks.push(currentBatch)
+
+      console.log(`[POST /api/chat/subject] 🔄 Traitement de ${batchedChunks.length} batches`)
+
+      const extractionPromises = batchedChunks.map(async (chunk, index) => {
+        try {
+          const response = await fetch("https://api.openai.com/v1/chat/completions", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
+            },
+            body: JSON.stringify({
+              model: "gpt-4o-mini",
+              messages: [
+                {
+                  role: "system",
+                  content: `You are a text processing engine.
+TASK: Extract specfic data lists from the text.
+RULES:
+1. EXHAUSTIVENESS IS MANDATORY. If 50 items exist, extract 50.
+2. NO SUMMARIZATION.
+3. OUTPUT ONLY valid JSON.
+4. EXCLUSION: Do NOT list single letters (a, b, c...) unless they are explicitly defined as acronyms.
+5. STRICT SOURCE ADHERENCE: Only extract items ACTUALLY PRESENT in the source text. Do NOT invent, do NOT guess, do NOT use external knowledge.
+
+OUTPUT FORMAT:
+{
+  "found": boolean,
+  "count": number,
+  "items": string[]
+}`
+                },
+                {
+                  role: "user",
+                  content: `REQUEST: ${message}
+                  
+SOURCE TEXT:
+${chunk}`
+                }
+              ],
+              temperature: 0,
+              response_format: { type: "json_object" }
+            })
+          })
+          
+          if (!response.ok) return ""
+          const data = await response.json()
+          const content = data.choices?.[0]?.message?.content || ""
+          
+          try {
+            const parsed = JSON.parse(content)
+            if (parsed.found && parsed.items && parsed.items.length > 0) {
+                // PROGRAMMATIC FILTERING (Safety Net)
+                // Filter out single letters (a, b, c...) unless they look like definitions or acronyms
+                const cleanedItems = parsed.items.filter((item: string) => {
+                    const cleanItem = item.trim()
+                    
+                    // Always exclude single lowercase letters without context: "a", "b", "c"
+                    if (/^[a-z]\.?$/.test(cleanItem)) return false
+                    
+                    // Exclude sequence markers: "a)", "A)", "1)"
+                    if (/^[a-zA-Z0-9]\)$/.test(cleanItem)) return false
+                    
+                    // Keep everything else (including "N.", "S.", "U.N.", "USA")
+                    return true
+                })
+                
+                return cleanedItems.join("\n")
+            }
+            return ""
+          } catch (e) {
+            return ""
+          }
+        } catch (e) {
+          console.error(`Erreur extraction batch ${index}`, e)
+          return ""
+        }
+      })
+
+      const results = await Promise.all(extractionPromises)
+      
+      // 3. Agréger et nettoyer
+      const rawList = results.filter(r => r.trim().length > 0).join("\n")
+      
+      // 4. Appel final pour formater/dédoublonner
+      const finalResponse = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: "gpt-4o-mini",
+          messages: [
+            {
+              role: "system",
+              content: `Tu es un assistant de mise en forme de données.
+Voici des données brutes extraites d'un document. Ta mission est de les formater proprement.
+
+RÈGLES ABSOLUES :
+1. NE JAMAIS RÉSUMER. NE JAMAIS TRONQUER LA LISTE.
+2. Si l'entrée contient 42 éléments, la sortie DOIT contenir 42 éléments.
+3. Si les éléments sont numérotés, garde la numérotation.
+4. Supprime uniquement les doublons EXACTS (même texte).
+5. Formate en Markdown propre (liste à puces ou numérotée).
+6. Ne pas ajouter de texte de remplissage comme "Voici la liste...". Donne juste la liste.
+
+RAPPEL : L'EXHAUSTIVITÉ EST LA PRIORITÉ NUMÉRO 1.`
+            },
+            {
+              role: "user",
+              content: `Demande originale : ${message}\n\nDonnées brutes extraites :\n${rawList.substring(0, 100000)}` // Safety limit
+            }
+          ]
+        })
+      })
+
+      const finalData = await finalResponse.json()
+      aiResponse = finalData.choices?.[0]?.message?.content || "Erreur lors de la finalisation de la liste."
+
+    } else {
+      // MODE STANDARD (Flashcards, Quiz, Résumé simple, Question)
+      const openaiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: "gpt-4o-mini",
+          messages: [
+            {
+              role: "system",
+              content: systemPrompt
+            },
+            {
+              role: "user",
+              content: message,
+            },
+          ],
+          max_tokens: isFlashcardRequest || isQuizRequest || isSummaryRequest ? 4000 : 2000,
+          temperature: isFlashcardRequest || isQuizRequest ? 0.5 : 0.7,
+        }),
+      })
+
+      if (!openaiResponse.ok) {
+        const errorData = await openaiResponse.json().catch(() => ({}))
+        console.error("[POST /api/chat/subject] ❌ Erreur OpenAI:", errorData)
+        return NextResponse.json({ error: "Erreur lors de l'appel à l'IA" }, { status: 500 })
+      }
+
+      const aiData = await openaiResponse.json()
+      aiResponse = aiData.choices?.[0]?.message?.content || "Désolé, je n'ai pas pu générer de réponse."
     }
-
-    const aiData = await openaiResponse.json()
-    const aiResponse = aiData.choices?.[0]?.message?.content || "Désolé, je n'ai pas pu générer de réponse."
 
     // Si c'est une demande de flashcards ou quiz, essayer d'extraire le JSON et créer une study_collection
     let flashcards: Array<{ question: string; answer: string }> | null = null

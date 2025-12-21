@@ -1,6 +1,10 @@
 {
   "Sidebar": {
     "tagline": "Organise et transforme tes supports en ressources intelligentes",
+    "dashboard": "Vue Globale",
+    "subjects": "Mes Matières",
+    "quiz": "Quiz",
+    "favorites": "Favoris",
     "library": "Bibliothèque",
     "collectionsBadge": "Matières IA",
     "collectionsHint": "Génère flashcards et quiz à partir de tes documents",
@@ -528,7 +532,9 @@
     "generate": "Générer",
     "successMessage": "Planning généré avec succès !",
     "errorMessage": "Impossible de générer le planning",
-    "errorGeneration": "Erreur lors de la génération"
+    "errorGeneration": "Erreur lors de la génération",
+    "viewDay": "Voir le planning détaillé",
+    "clickHint": "Astuce : Cliquez sur un jour pour voir le résumé, recliquez pour voir le planning détaillé."
   },
   "UploadDialog": {
     "title": "Ajouter un document",

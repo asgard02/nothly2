@@ -222,7 +222,7 @@ export default function HomePage() {
           </section>
 
           {/* Features Section - Cards 3D */}
-          <section className="relative py-32 px-6 lg:px-8">
+          <section id="flow" className="relative py-32 px-6 lg:px-8">
             <div
               ref={features.ref}
               className={`max-w-7xl mx-auto transition-all duration-1500 ease-out ${features.isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-20"
@@ -276,7 +276,7 @@ export default function HomePage() {
           </section>
 
           {/* Showcase Section - Grande démonstration visuelle */}
-          <section className="relative py-32 px-6 lg:px-8">
+          <section id="audience" className="relative py-32 px-6 lg:px-8">
             <div
               ref={showcase.ref}
               className={`max-w-7xl mx-auto transition-all duration-1500 ease-out ${showcase.isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-20"
@@ -358,7 +358,7 @@ export default function HomePage() {
 
 
           {/* Benefits Grid - Simple & Clean */}
-          <section className="relative py-32 px-6 lg:px-8 bg-muted/30">
+          <section id="value" className="relative py-32 px-6 lg:px-8 bg-muted/30">
             <div
               ref={benefits.ref}
               className={`max-w-7xl mx-auto transition-all duration-1500 ease-out ${benefits.isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-20"

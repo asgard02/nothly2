@@ -1,0 +1,22 @@
+
+> nothly@1.0.0 worker:documents
+> tsx --env-file=.env.local scripts/process-document-jobs.ts
+
+[process-document-jobs] Worker started
+[Email] SMTP configuration missing. Set SMTP_HOST, SMTP_PORT, SMTP_USER and SMTP_PASS to enable email notifications.
+[Email] Skipping deck ready email because SMTP is not configured. {
+  to: 'mae.prina@gmail.com',
+  documentTitle: '💠 1',
+  documentId: 'bfef57b7-e8e3-47b4-a39a-055ace0090c6',
+  totalSections: 2,
+  totalQuizzes: 0,
+  dashboardUrl: 'https://nothly.vercel.app/documents/bfef57b7-e8e3-47b4-a39a-055ace0090c6'
+}
+[Email] Skipping deck ready email because SMTP is not configured. {
+  to: 'mae.prina@gmail.com',
+  documentTitle: '💠 1',
+  documentId: 'b5f5891a-c886-4265-877f-a1262edff407',
+  totalSections: 2,
+  totalQuizzes: 0,
+  dashboardUrl: 'https://nothly.vercel.app/documents/b5f5891a-c886-4265-877f-a1262edff407'
+}

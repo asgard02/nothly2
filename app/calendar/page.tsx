@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
+import { useState, useEffect } from "react"
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, isToday, setHours, setMinutes, getHours, getMinutes, addDays, subDays } from "date-fns"
 import { fr, enUS } from "date-fns/locale"
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock, Plus, MoreHorizontal, Sparkles, Trash2, X, ArrowLeft, Wand2, Loader2 } from "lucide-react"
@@ -113,8 +113,11 @@ export default function CalendarPage() {
     }
 
     const handleDayClick = (day: Date) => {
-        setSelectedDate(day)
-        setView("day")
+        if (isSameDay(day, selectedDate)) {
+            setView("day")
+        } else {
+            setSelectedDate(day)
+        }
     }
 
     const handleAddEvent = async () => {
@@ -124,9 +127,9 @@ export default function CalendarPage() {
         const eventDate = setMinutes(setHours(selectedDate, hours), minutes)
 
         const colors = {
-            exam: "bg-red-500",
-            study: "bg-blue-500",
-            deadline: "bg-amber-500"
+            exam: "bg-[#F472B6]",
+            study: "bg-[#BAE6FD]",
+            deadline: "bg-[#FBBF24]"
         }
 
         try {
@@ -208,7 +211,7 @@ export default function CalendarPage() {
                     date: date,
                     duration: e.duration,
                     type: e.type,
-                    color: e.type === "exam" ? "bg-red-500" : e.type === "deadline" ? "bg-amber-500" : "bg-blue-500",
+                    color: e.type === "exam" ? "bg-[#F472B6]" : e.type === "deadline" ? "bg-[#FBBF24]" : "bg-[#BAE6FD]",
                     description: e.description
                 }
             })
@@ -271,29 +274,29 @@ export default function CalendarPage() {
 
 
     return (
-        <div className="flex h-screen bg-background">
+        <div className="flex h-screen bg-[#FDF6E3]">
             <Sidebar />
-            <MainContent className="bg-background">
-                <div className="h-full flex flex-col bg-background overflow-hidden">
+            <MainContent className="bg-[#FDF6E3]">
+                <div className="h-full flex flex-col bg-[#FDF6E3] overflow-hidden">
                     {/* Header */}
-                    <header className="flex items-center justify-between px-8 py-6 border-b border-border/40 bg-background/50 backdrop-blur-xl sticky top-0 z-10">
+                    <header className="flex items-center justify-between px-8 py-6 border-b-2 border-black bg-[#FDF6E3]/80 backdrop-blur-xl sticky top-0 z-10">
                         <div className="flex items-center gap-4">
                             {view === "day" && (
                                 <button
                                     onClick={() => setView("month")}
-                                    className="p-2 rounded-lg hover:bg-muted transition-colors mr-2"
+                                    className="p-2 rounded-xl border-2 border-black bg-white hover:bg-[#BAE6FD] hover:-translate-y-0.5 transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] mr-2"
                                 >
-                                    <ArrowLeft className="h-5 w-5" />
+                                    <ArrowLeft className="h-5 w-5 text-black" />
                                 </button>
                             )}
-                            <div className="p-2.5 rounded-xl bg-primary/10 text-primary">
-                                <CalendarIcon className="h-6 w-6" />
+                            <div className="p-2.5 rounded-xl bg-[#BAE6FD] border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] text-black">
+                                <CalendarIcon className="h-6 w-6" strokeWidth={2.5} />
                             </div>
                             <div>
-                                <h1 className="text-2xl font-bold tracking-tight">
+                                <h1 className="text-2xl font-black tracking-tight text-black uppercase">
                                     {view === "month" ? t("title") : format(selectedDate, "EEEE d MMMM", { locale: dateLocale })}
                                 </h1>
-                                <p className="text-sm text-muted-foreground">
+                                <p className="text-sm font-bold text-gray-600 uppercase">
                                     {view === "month" ? t("subtitleMonth") : t("subtitleDay")}
                                 </p>
                             </div>
@@ -301,42 +304,49 @@ export default function CalendarPage() {
 
                         <div className="flex items-center gap-3">
                             <Button
-                                variant="outline"
                                 onClick={() => setIsGenerateOpen(true)}
-                                className="flex items-center gap-2 border-indigo-500/20 text-indigo-600 hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-950/30"
+                                className="flex items-center gap-2 h-10 px-4 rounded-xl border-2 border-black bg-[#F472B6] text-black hover:bg-[#F472B6] hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all font-bold uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
                             >
-                                <Wand2 className="h-4 w-4" />
-                                <span className="text-sm font-medium">{t("generatePlan")}</span>
+                                <Wand2 className="h-4 w-4" strokeWidth={2.5} />
+                                <span className="text-sm">{t("generatePlan")}</span>
                             </Button>
 
-                            <div className="h-6 w-px bg-border/60 mx-1" />
+                            <div className="h-8 w-0.5 bg-black mx-2" />
 
                             <button
                                 onClick={goToToday}
-                                className="px-4 py-2 text-sm font-medium rounded-lg border border-border/60 hover:bg-muted transition-colors"
+                                className="px-4 py-2 text-sm font-bold uppercase rounded-xl border-2 border-black bg-white text-black hover:bg-[#FDE68A] hover:-translate-y-0.5 transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
                             >
                                 {t("today")}
                             </button>
-                            <div className="flex items-center rounded-lg border border-border/60 bg-background p-1">
-                                <button onClick={prevPeriod} className="p-1.5 rounded-md hover:bg-muted transition-colors">
-                                    <ChevronLeft className="h-4 w-4" />
+                            <div className="flex items-center gap-1">
+                                <button
+                                    onClick={prevPeriod}
+                                    className="p-2 rounded-xl border-2 border-black bg-white hover:bg-[#BAE6FD] hover:-translate-y-0.5 transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+                                >
+                                    <ChevronLeft className="h-4 w-4 text-black" strokeWidth={2.5} />
                                 </button>
-                                <span className="px-4 text-sm font-semibold min-w-[140px] text-center capitalize">
-                                    {view === "month"
-                                        ? format(currentDate, "MMMM yyyy", { locale: dateLocale })
-                                        : format(selectedDate, "d MMM yyyy", { locale: dateLocale })
-                                    }
-                                </span>
-                                <button onClick={nextPeriod} className="p-1.5 rounded-md hover:bg-muted transition-colors">
-                                    <ChevronRight className="h-4 w-4" />
+                                <div className="px-4 py-2 border-2 border-black bg-white rounded-xl shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] min-w-[160px] text-center">
+                                    <span className="text-sm font-black uppercase text-black">
+                                        {view === "month"
+                                            ? format(currentDate, "MMMM yyyy", { locale: dateLocale })
+                                            : format(selectedDate, "d MMM yyyy", { locale: dateLocale })
+                                        }
+                                    </span>
+                                </div>
+                                <button
+                                    onClick={nextPeriod}
+                                    className="p-2 rounded-xl border-2 border-black bg-white hover:bg-[#BAE6FD] hover:-translate-y-0.5 transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+                                >
+                                    <ChevronRight className="h-4 w-4 text-black" strokeWidth={2.5} />
                                 </button>
                             </div>
                             <Button
                                 onClick={() => setIsAddEventOpen(true)}
-                                className="flex items-center gap-2"
+                                className="flex items-center gap-2 h-10 px-4 rounded-xl border-2 border-black bg-[#8B5CF6] text-white hover:bg-[#7C3AED] hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all font-bold uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
                             >
-                                <Plus className="h-4 w-4" />
-                                <span className="text-sm font-medium">{t("newEvent")}</span>
+                                <Plus className="h-5 w-5" strokeWidth={3} />
+                                <span className="text-sm">{t("newEvent")}</span>
                             </Button>
                         </div>
                     </header>
@@ -348,7 +358,7 @@ export default function CalendarPage() {
                                 <div className="flex-1 flex flex-col p-6 overflow-y-auto">
                                     <div className="grid grid-cols-7 mb-4">
                                         {weekDays.map((day) => (
-                                            <div key={day} className="text-center text-sm font-medium text-muted-foreground py-2 capitalize">
+                                            <div key={day} className="text-center text-sm font-black text-black uppercase py-2 tracking-wider">
                                                 {day}
                                             </div>
                                         ))}
@@ -369,24 +379,24 @@ export default function CalendarPage() {
                                                     transition={{ delay: dayIdx * 0.01 }}
                                                     onClick={() => handleDayClick(day)}
                                                     className={cn(
-                                                        "relative flex flex-col p-3 rounded-2xl border transition-all cursor-pointer group hover:shadow-md",
+                                                        "relative flex flex-col p-3 rounded-2xl border-2 transition-all cursor-pointer group hover:shadow-[4px_4px_0px_0px_#BAE6FD] hover:-translate-y-1",
                                                         isSelected
-                                                            ? "ring-2 ring-primary border-transparent bg-primary/5"
-                                                            : "border-border/40 bg-card hover:border-border/80",
-                                                        !isCurrentMonth && "opacity-40 bg-muted/30 grayscale"
+                                                            ? "border-black bg-[#FDE68A] shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
+                                                            : "border-black bg-white",
+                                                        !isCurrentMonth && "opacity-60 bg-gray-100 grayscale border-dashed"
                                                     )}
                                                 >
                                                     <div className="flex items-center justify-between mb-2">
                                                         <span className={cn(
-                                                            "text-sm font-semibold w-7 h-7 flex items-center justify-center rounded-full",
+                                                            "text-sm font-bold w-7 h-7 flex items-center justify-center rounded-full",
                                                             isTodayDate
-                                                                ? "bg-primary text-primary-foreground shadow-sm"
-                                                                : "text-foreground"
+                                                                ? "bg-black text-white shadow-sm"
+                                                                : "text-black"
                                                         )}>
                                                             {format(day, "d")}
                                                         </span>
                                                         {dayEvents.length > 0 && (
-                                                            <span className="text-[10px] font-medium text-muted-foreground bg-muted px-1.5 py-0.5 rounded-md">
+                                                            <span className="text-[10px] font-black text-black bg-[#F472B6] px-1.5 py-0.5 rounded-md border border-black">
                                                                 {dayEvents.length}
                                                             </span>
                                                         )}
@@ -396,17 +406,17 @@ export default function CalendarPage() {
                                                         {dayEvents.slice(0, 3).map((event) => (
                                                             <div
                                                                 key={event.id}
-                                                                className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-background/80 border border-border/20 shadow-sm"
+                                                                className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-white border border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
                                                             >
-                                                                <div className={cn("w-1.5 h-1.5 rounded-full flex-shrink-0", event.color)} />
-                                                                <span className="text-[10px] font-medium truncate leading-tight">
+                                                                <div className={cn("w-2 h-2 rounded-full flex-shrink-0 border border-black", event.color)} />
+                                                                <span className="text-[10px] font-bold truncate leading-tight text-black">
                                                                     {event.title}
                                                                 </span>
                                                             </div>
                                                         ))}
                                                         {dayEvents.length > 3 && (
-                                                            <span className="text-[10px] text-muted-foreground pl-1">
-                                                                +{dayEvents.length - 3} autres
+                                                            <span className="text-[10px] font-bold text-gray-500 pl-1 uppercase">
+                                                                +{dayEvents.length - 3} {t("others")}
                                                             </span>
                                                         )}
                                                     </div>
@@ -414,17 +424,44 @@ export default function CalendarPage() {
                                             )
                                         })}
                                     </div>
+                                    <div className="mt-4 text-center">
+                                        <p className="text-xs text-muted-foreground/60 flex items-center justify-center gap-2">
+                                            <span className="inline-block w-1.5 h-1.5 rounded-full bg-primary/40" />
+                                            {t("clickHint")}
+                                        </p>
+                                    </div>
                                 </div>
 
                                 {/* Sidebar Détails (Mois) */}
-                                <div className="w-80 border-l border-border/40 bg-card/30 backdrop-blur-sm p-6 flex flex-col gap-6 overflow-y-auto">
+                                <div className="w-96 border-l border-border/40 bg-background/60 backdrop-blur-2xl p-6 flex flex-col gap-6 overflow-y-auto shadow-2xl z-10">
                                     <div>
-                                        <h2 className="text-lg font-semibold mb-1 capitalize">
-                                            {format(selectedDate, "EEEE d MMMM", { locale: dateLocale })}
-                                        </h2>
-                                        <p className="text-sm text-muted-foreground">
+                                        <div className="flex items-center justify-between mb-4">
+                                            <button
+                                                onClick={() => setSelectedDate(subDays(selectedDate, 1))}
+                                                className="p-1.5 rounded-md hover:bg-muted transition-colors"
+                                            >
+                                                <ChevronLeft className="h-4 w-4" />
+                                            </button>
+                                            <h2 className="text-lg font-semibold capitalize">
+                                                {format(selectedDate, "EEEE d MMMM", { locale: dateLocale })}
+                                            </h2>
+                                            <button
+                                                onClick={() => setSelectedDate(addDays(selectedDate, 1))}
+                                                className="p-1.5 rounded-md hover:bg-muted transition-colors"
+                                            >
+                                                <ChevronRight className="h-4 w-4" />
+                                            </button>
+                                        </div>
+                                        <p className="text-sm text-muted-foreground text-center mb-4">
                                             {t("eventsScheduled", { count: selectedDateEvents.length })}
                                         </p>
+                                        <Button
+                                            variant="outline"
+                                            className="w-full justify-center"
+                                            onClick={() => setView("day")}
+                                        >
+                                            {t("viewDay")}
+                                        </Button>
                                     </div>
 
                                     <div className="space-y-3 flex-1">
@@ -475,8 +512,8 @@ export default function CalendarPage() {
                             </>
                         ) : (
                             // VUE JOUR (TIMELINE)
-                            <div className="flex-1 overflow-y-auto p-6 relative">
-                                <div className="max-w-6xl mx-auto bg-card/50 backdrop-blur-sm rounded-2xl border border-border/40 shadow-sm overflow-hidden relative">
+                            <div className="flex-1 overflow-y-auto p-6 relative bg-background/40">
+                                <div className="max-w-6xl mx-auto bg-card/60 backdrop-blur-xl rounded-3xl border border-white/10 shadow-2xl overflow-hidden relative">
                                     {/* Grille des heures */}
                                     <div className="relative min-h-[1440px]"> {/* 24h * 60px/h */}
                                         {hours.map((hour) => (
@@ -729,7 +766,7 @@ export default function CalendarPage() {
                         </DialogFooter>
                     </DialogContent>
                 </Dialog>
-            </MainContent>
-        </div>
+            </MainContent >
+        </div >
     )
 }

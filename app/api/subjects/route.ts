@@ -29,7 +29,7 @@ export async function GET() {
     // Récupérer les matières
     const { data: collections, error } = await admin
       .from("collections")
-      .select("id, title, color, created_at, updated_at")
+      .select("id, title, color, is_favorite, created_at, updated_at")
       .eq("user_id", user.id)
       .order("updated_at", { ascending: false })
 
@@ -119,6 +119,7 @@ export async function GET() {
           doc_count: docCount || 0,
           artifact_count: artifactCount,
           last_active: lastDoc?.updated_at || collection.updated_at || collection.created_at,
+          is_favorite: collection.is_favorite || false,
         }
       })
     )
@@ -198,6 +199,7 @@ export async function POST(request: NextRequest) {
       doc_count: 0,
       artifact_count: 0,
       last_active: collection.created_at,
+      is_favorite: false,
     }
     
     console.log("[POST /api/subjects] ✅ Matière créée avec succès:", response.id)

@@ -40,28 +40,53 @@ async function fetchNextPendingJob(): Promise<AsyncJob | null> {
 async function runJob(job: AsyncJob) {
   const payload = job.payload as DocumentGenerationJobPayload | null
   if (!payload) {
-    await updateJob(job.id, {
-      status: "failed",
-      error: "Job payload missing",
-      finishedAt: new Date(),
-    })
+    try {
+      await updateJob(job.id, {
+        status: "failed",
+        error: "Job payload missing",
+        finishedAt: new Date(),
+      })
+    } catch (e) {
+      console.error("[process-document-jobs] Failed to update job status (payload missing)", e)
+    }
     return
   }
 
   let currentStatus: JobStatus = "running"
 
-  await updateJob(job.id, {
-    status: currentStatus,
-    startedAt: new Date(),
-    progress: 0,
-  })
+  try {
+    await updateJob(job.id, {
+      status: currentStatus,
+      startedAt: new Date(),
+      progress: 0,
+    })
+  } catch (e) {
+    console.error("[process-document-jobs] Failed to set job running", e)
+    // If we can't update status, we probably shouldn't proceed as we might process it multiple times?
+    // But let's verify document existence first.
+  }
 
   try {
+    // Verify document exists
+    const admin = getSupabaseAdmin()
+    if (admin && payload.documentId) {
+      const { data: doc, error: docError } = await admin
+        .from("documents")
+        .select("id")
+        .eq("id", payload.documentId)
+        .single()
+      
+      if (!doc || docError) {
+        throw new Error(`Document ${payload.documentId} not found in DB (might have been deleted)`)
+      }
+    }
+
     const result = await processDocumentGenerationJob(payload, async (progress) => {
       if (progress >= 1) {
         return
       }
-      await updateJob(job.id, { progress })
+      // Silently fail progress updates
+      await updateJob(job.id, { progress }).catch(() => {})
     })
 
     await updateJob(job.id, {
@@ -73,25 +98,30 @@ async function runJob(job: AsyncJob) {
   } catch (error: any) {
     console.error("[process-document-jobs] job failed", {
       jobId: job.id,
-      error,
+      error: error?.message || error,
     })
 
     const admin = getSupabaseAdmin()
     if (admin && payload.documentId) {
-      await admin
+      // Try to update document status to failed
+        const { error: updateError } = await admin
         .from("documents")
         .update({
           status: "failed",
           updated_at: new Date().toISOString(),
         })
         .eq("id", payload.documentId)
+      
+      if (updateError) {
+        console.error("Failed to update document status to failed", updateError)
+      }
     }
 
     await updateJob(job.id, {
       status: "failed",
       error: error?.message || String(error),
       finishedAt: new Date(),
-    })
+    }).catch(e => console.error("Failed to update job status to failed", e))
   }
 }
 

@@ -1,6 +1,10 @@
 {
   "Sidebar": {
     "tagline": "Organize and transform your study materials into smart resources",
+    "dashboard": "Dashboard",
+    "subjects": "My Subjects",
+    "quiz": "Quiz",
+    "favorites": "Favorites",
     "library": "Library",
     "collectionsBadge": "AI Subjects",
     "collectionsHint": "Generate flashcards and quizzes from your documents",
@@ -519,7 +523,9 @@
     "generate": "Generate",
     "successMessage": "Plan generated successfully!",
     "errorMessage": "Unable to generate plan",
-    "errorGeneration": "Error during generation"
+    "errorGeneration": "Error during generation",
+    "viewDay": "View detailed schedule",
+    "clickHint": "Tip: Click a day to see summary, click again to see detailed schedule."
   },
   "UploadDialog": {
     "title": "Add Document",

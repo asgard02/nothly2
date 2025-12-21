@@ -10,6 +10,7 @@ export interface Subject {
   doc_count: number
   artifact_count: number
   last_active: string
+  is_favorite: boolean
 }
 
 // Hook pour récupérer toutes les collections (sujets)
@@ -134,6 +135,58 @@ export function useDeleteSubject() {
     },
     onError: (error) => {
       console.error("[useDeleteSubject] Erreur dans la mutation:", error)
+      queryClient.invalidateQueries({ queryKey: ["subjects"] })
+    },
+  })
+}
+
+// Hook pour mettre à jour un sujet
+export function useUpdateSubject() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: Partial<Subject> & { id: string }) => {
+      console.log("[useUpdateSubject] Mise à jour du sujet:", id, updates)
+      
+      const response = await fetch(`/api/subjects/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updates),
+      })
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}))
+        throw new Error(error.error || "Erreur lors de la mise à jour")
+      }
+
+      const updatedSubject = await response.json()
+      return updatedSubject
+    },
+    onMutate: async ({ id, ...updates }) => {
+      // Annuler les requêtes en cours
+      await queryClient.cancelQueries({ queryKey: ["subjects"] })
+
+      // Snapshot du cache précédent
+      const previousSubjects = queryClient.getQueryData<Subject[]>(["subjects"])
+
+      // Mise à jour optimiste
+      queryClient.setQueryData<Subject[]>(["subjects"], (old = []) => {
+        return old.map((subject) =>
+          subject.id === id ? { ...subject, ...updates } : subject
+        )
+      })
+
+      return { previousSubjects }
+    },
+    onError: (err, newTodo, context) => {
+      // En cas d'erreur, on remet le cache précédent
+      if (context?.previousSubjects) {
+        queryClient.setQueryData(["subjects"], context.previousSubjects)
+      }
+      console.error("[useUpdateSubject] Erreur:", err)
+    },
+    onSuccess: () => {
+      // Invalider pour être sûr d'avoir les données fraîches
       queryClient.invalidateQueries({ queryKey: ["subjects"] })
     },
   })

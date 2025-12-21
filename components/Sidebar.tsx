@@ -3,33 +3,36 @@
 import { useState } from "react"
 import { useRouter, usePathname } from "next/navigation"
 import Logo from "@/components/Logo"
-import { Settings, LogOut, HardDrive, PanelLeftClose, PanelLeft, BookOpen, Calendar } from "lucide-react"
-import { createClient } from "@/lib/supabase-client"
+import { Settings, LogOut, PanelLeftClose, PanelLeft, Calendar, LayoutDashboard, Grid, Brain, Star } from "lucide-react"
 import { useTranslations } from "next-intl"
 import SettingsModal from "@/components/SettingsModal"
 import { useSidebar } from "@/components/providers/SidebarProvider"
+import { cn } from "@/lib/utils"
 
 export default function Sidebar() {
   const t = useTranslations("Sidebar")
   const router = useRouter()
   const pathname = usePathname()
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
-  const { isOpen, toggle, close } = useSidebar()
+  const { isOpen, toggle } = useSidebar()
 
   const handleLogout = async () => {
     try {
-      await fetch("/auth/signout", { method: "POST", credentials: "include", cache: "no-store" })
+      const { createClient } = await import("@/lib/supabase-client")
+      const supabase = createClient()
+      await supabase.auth.signOut()
+      router.push("/auth")
     } catch (error) {
-      console.error("Erreur lors de la déconnexion:", error)
-    } finally {
-      router.push("/")
-      router.refresh()
+      console.error("Logout failed:", error)
     }
   }
 
   const menuItems = [
-    { icon: HardDrive, label: t("library"), path: "/workspace" },
-    { icon: Calendar, label: t("calendar"), path: "/calendar", badge: "New" }
+    { icon: LayoutDashboard, label: t("dashboard"), path: "/workspace/dashboard", color: "shadow-[4px_4px_0px_0px_#8B5CF6]" },
+    { icon: Grid, label: t("subjects"), path: "/workspace/subjects", color: "shadow-[4px_4px_0px_0px_#F472B6]" },
+    { icon: Brain, label: t("quiz"), path: "/workspace/quiz", color: "shadow-[4px_4px_0px_0px_#FBBF24]" },
+    { icon: Star, label: t("favorites"), path: "/workspace/favorites", color: "shadow-[4px_4px_0px_0px_#BAE6FD]" },
+    { icon: Calendar, label: t("calendar"), path: "/calendar", color: "shadow-[4px_4px_0px_0px_#BBF7D0]" }
   ]
 
   const isActive = (path: string) => pathname === path
@@ -37,61 +40,52 @@ export default function Sidebar() {
   return (
     <>
       <aside
-        className={`fixed left-0 top-0 z-50 h-screen flex flex-col bg-background/80 backdrop-blur-xl border-r border-border/40 transition-all duration-300 ease-in-out ${isOpen ? "w-64" : "w-20"
-          }`}
+        className={cn(
+          "fixed left-4 top-4 bottom-4 z-50 flex flex-col transition-all duration-300 ease-in-out",
+          isOpen ? "w-72" : "w-20"
+        )}
       >
-        <div className={`flex flex-col h-full ${isOpen ? "p-6" : "p-4"}`}>
-          {/* Header avec Logo et Toggle */}
-          <div className={`flex items-center ${isOpen ? "justify-between mb-8" : "flex-col gap-6 mb-6"}`}>
+        <div className="flex flex-col h-full bg-white border-2 border-black rounded-3xl shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] overflow-hidden">
+          {/* Header */}
+          <div className={cn("flex items-center p-6", isOpen ? "justify-between" : "justify-center")}>
             {isOpen ? (
-              <div className="flex items-center gap-2 overflow-hidden whitespace-nowrap">
-                <Logo size={28} showText={true} href="/dashboard" />
-              </div>
+              <span className="text-3xl font-black italic tracking-tighter">nothly.</span>
             ) : (
-              <Logo size={40} showText={false} href="/dashboard" />
+              <span className="text-3xl font-black italic tracking-tighter">n.</span>
             )}
 
             <button
               onClick={toggle}
-              className="p-1.5 rounded-lg hover:bg-accent/50 text-muted-foreground hover:text-foreground transition-colors"
-              title={isOpen ? t("collapseMenu") : t("expandMenu")}
+              className="p-2 hover:bg-black hover:text-white border-2 border-transparent hover:border-black rounded-lg transition-colors"
             >
               {isOpen ? <PanelLeftClose className="h-5 w-5" /> : <PanelLeft className="h-5 w-5" />}
             </button>
           </div>
 
           {/* Menu principal */}
-          <nav className="flex flex-col gap-1">
+          <nav className="flex flex-col flex-1 px-4 gap-3 overflow-y-auto py-4">
             {menuItems.map((item) => {
               const Icon = item.icon
+              const active = isActive(item.path)
+
               return (
                 <button
                   key={item.path}
                   onClick={() => router.push(item.path)}
-                  className={`relative flex items-center ${isOpen ? "gap-3 px-4" : "justify-center px-2"} py-3 rounded-xl transition-all duration-200 group overflow-hidden ${isActive(item.path)
-                    ? "bg-primary/10 text-primary font-medium shadow-sm"
-                    : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
-                    }`}
+                  className={cn(
+                    "group flex items-center w-full px-4 py-3 rounded-xl border-2 border-transparent transition-all duration-200",
+                    isOpen ? "justify-start" : "justify-center px-0",
+                    active
+                      ? cn("bg-black text-white border-black font-bold translate-x-[-2px] translate-y-[-2px]", item.color)
+                      : "hover:bg-gray-100 font-medium text-gray-600 hover:text-black hover:border-black hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[-1px] hover:translate-y-[-1px]"
+                  )}
                   title={!isOpen ? item.label : undefined}
                 >
-                  {isActive(item.path) && (
-                    <span className={`absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-primary rounded-r-full ${!isOpen && "left-0 h-4"}`} />
-                  )}
+                  <Icon className={cn("h-6 w-6 flex-shrink-0", isOpen && "mr-3")} strokeWidth={2.5} />
 
-                  <div className="relative">
-                    <Icon className={`h-5 w-5 flex-shrink-0 ${isActive(item.path) ? "text-primary" : "text-muted-foreground group-hover:text-foreground"}`} />
-                    {item.badge && !isOpen && (
-                      <span className="absolute -top-1 -right-1 w-2 h-2 bg-primary rounded-full ring-2 ring-background animate-pulse" />
-                    )}
-                  </div>
-
-                  <span className={`text-sm whitespace-nowrap transition-all duration-300 ${isOpen ? "opacity-100" : "w-0 opacity-0 hidden"}`}>
-                    {item.label}
-                  </span>
-
-                  {item.badge && isOpen && (
-                    <span className="ml-auto px-2 py-0.5 text-[10px] font-bold bg-gradient-to-r from-primary/20 to-primary/10 text-primary rounded-full border border-primary/20 shadow-sm">
-                      {item.badge}
+                  {isOpen && (
+                    <span className="text-sm uppercase tracking-wide">
+                      {item.label}
                     </span>
                   )}
                 </button>
@@ -99,35 +93,50 @@ export default function Sidebar() {
             })}
           </nav>
 
-          {/* Actions du bas */}
-          <div className={`flex flex-col gap-2 mt-auto pt-4 border-t border-border/40 ${isOpen ? "" : "items-center"}`}>
-            {/* Bouton Paramètres */}
-            <button
-              onClick={() => setIsSettingsOpen(true)}
-              className={`flex items-center ${isOpen ? "gap-3 px-4" : "justify-center px-2"} py-3 rounded-xl text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-all duration-200 group w-full`}
-              title={!isOpen ? t("settings") : undefined}
-            >
-              <Settings className="h-5 w-5 flex-shrink-0 group-hover:rotate-45 transition-transform duration-500" />
-              <span className={`text-sm whitespace-nowrap transition-all duration-300 ${isOpen ? "opacity-100" : "w-0 opacity-0 hidden"}`}>
-                {t("settings")}
-              </span>
-            </button>
+          {/* Promo Widget (Only visible when open) */}
+          {isOpen && (
+            <div className="px-4 mb-4">
+              <div className="bg-[#FCD34D] border-2 border-black rounded-xl p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] relative overflow-hidden group hover:translate-x-[-2px] hover:translate-y-[-2px] transition-transform">
+                {/* Decorations */}
+                <div className="absolute -right-4 -top-4 w-12 h-12 bg-white rounded-full border-2 border-black"></div>
+                <div className="absolute -left-2 -bottom-2 w-8 h-8 bg-[#F472B6] rounded-full border-2 border-black"></div>
 
-            {/* Bouton Déconnexion */}
-            <button
-              onClick={handleLogout}
-              className={`flex items-center ${isOpen ? "gap-3 px-4" : "justify-center px-2"} py-3 rounded-xl text-muted-foreground hover:bg-red-500/10 hover:text-red-500 transition-all duration-200 group w-full`}
-              title={!isOpen ? t("logout") : undefined}
-            >
-              <LogOut className="h-5 w-5 flex-shrink-0" />
-              <span className={`text-sm whitespace-nowrap transition-all duration-300 ${isOpen ? "opacity-100" : "w-0 opacity-0 hidden"}`}>
-                {t("logout")}
-              </span>
-            </button>
+                <div className="relative z-10">
+                  <h4 className="font-black text-lg leading-tight mb-1">PRO MODE</h4>
+                  <p className="text-xs font-bold mb-3">Unlock unlimited AI power.</p>
+                  <button className="bg-black text-white text-xs font-bold px-3 py-2 rounded-lg w-full hover:bg-white hover:text-black border-2 border-transparent hover:border-black transition-colors">
+                    UPGRADE NOW
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
-            {isOpen && (
-              <p className="text-xs text-muted-foreground/60 text-center mt-4 font-medium tracking-wide">{t("footer")}</p>
-            )}
+          {/* Footer - Settings/User */}
+          <div className="border-t-2 border-black p-4 bg-gray-50">
+            <div className="flex flex-col gap-2">
+              <button
+                onClick={() => setIsSettingsOpen(true)}
+                className={cn(
+                  "flex items-center p-2 rounded-lg hover:bg-white hover:border-black border-2 border-transparent transition-all",
+                  isOpen ? "justify-start gap-3" : "justify-center"
+                )}
+              >
+                <Settings className="h-5 w-5" strokeWidth={2.5} />
+                {isOpen && <span className="font-bold text-sm">Settings</span>}
+              </button>
+
+              <button
+                onClick={handleLogout}
+                className={cn(
+                  "flex items-center p-2 rounded-lg hover:bg-red-100 text-red-600 hover:border-red-600 border-2 border-transparent transition-all",
+                  isOpen ? "justify-start gap-3" : "justify-center"
+                )}
+              >
+                <LogOut className="h-5 w-5" strokeWidth={2.5} />
+                {isOpen && <span className="font-bold text-sm">Logout</span>}
+              </button>
+            </div>
           </div>
         </div>
       </aside>
