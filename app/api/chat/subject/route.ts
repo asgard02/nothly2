@@ -719,39 +719,49 @@ RAPPEL : L'EXHAUSTIVITÉ EST LA PRIORITÉ NUMÉRO 1.`
               : `Quiz: ${searchTopic || collection.title}`
             const collectionType = isFlashcardRequest ? 'flashcard' : 'quiz'
             
-            // Vérifier si une collection avec ce titre et type existe déjà
-            const { data: existingCollection } = await admin
-              .from("study_collections")
-              .select("id")
-              .eq("user_id", user.id)
-              .eq("title", collectionTitle)
-              .eq("type", collectionType)
-              .maybeSingle()
+            // Tenter de créer la collection en gérant les doublons via une boucle
+            let finalTitle = collectionTitle
+            let counter = 1
+            let studyCollection = null
             
-            if (existingCollection) {
-              return NextResponse.json({ 
-                error: `Un ${isFlashcardRequest ? 'ensemble de flashcards' : 'quiz'} avec ce titre existe déjà`,
-                response: `Vous avez déjà créé un ${isFlashcardRequest ? 'ensemble de flashcards' : 'quiz'} intitulé "${collectionTitle}". Veuillez choisir un nom différent ou supprimer l'ancien.`
-              }, { status: 409 })
+            while (!studyCollection && counter <= 50) {
+                 const { data, error: createError } = await admin
+                  .from("study_collections")
+                  .insert({
+                    user_id: user.id,
+                    collection_id: targetId, // Lier à la matière principale
+                    title: finalTitle,
+                    type: collectionType,
+                    tags: searchTopic ? [searchTopic] : [],
+                    status: "ready",
+                    total_sources: documentContents.length,
+                    total_flashcards: flashcards?.length || 0,
+                    total_quiz: quizQuestions?.length || 0,
+                  })
+                  .select("id")
+                  .single()
+                  
+                  if (!createError && data) {
+                      studyCollection = data
+                  } else if (createError && createError.code === '23505') {
+                      // Doublon détecté, on incrémente et on réessaie
+                      finalTitle = `${collectionTitle} ${counter}`
+                      counter++
+                  } else {
+                      // Autre erreur réelle
+                      console.error("[POST /api/chat/subject] Erreur création:", createError)
+                      break
+                  }
             }
             
-            const { data: studyCollection, error: createError } = await admin
-              .from("study_collections")
-              .insert({
-                user_id: user.id,
-                collection_id: targetId, // Lier à la matière principale
-                title: collectionTitle,
-                type: collectionType,
-                tags: searchTopic ? [searchTopic] : [],
-                status: "ready",
-                total_sources: documentContents.length,
-                total_flashcards: flashcards?.length || 0,
-                total_quiz: quizQuestions?.length || 0,
-              })
-              .select("id")
-              .single()
+            if (counter > 50) {
+                return NextResponse.json({ 
+                    error: `Trop de collections portent un nom similaire. Veuillez faire le ménage.`,
+                    response: `Trop de collections portent un nom similaire. Veuillez supprimer les anciennes versions.`
+                  }, { status: 409 })
+            }
 
-            if (!createError && studyCollection) {
+            if (studyCollection) {
               studyCollectionId = studyCollection.id
 
               // Insérer les flashcards
@@ -788,15 +798,6 @@ RAPPEL : L'EXHAUSTIVITÉ EST LA PRIORITÉ NUMÉRO 1.`
                   .from("study_collection_quiz_questions")
                   .insert(quizInserts)
               }
-            } else if (createError) {
-              // Gérer les erreurs de contrainte unique (code 23505)
-              if (createError.code === '23505') {
-                return NextResponse.json({ 
-                  error: `Un ${isFlashcardRequest ? 'ensemble de flashcards' : 'quiz'} avec ce titre existe déjà`,
-                  response: `Un ${isFlashcardRequest ? 'ensemble de flashcards' : 'quiz'} avec ce titre existe déjà. Veuillez choisir un nom différent.`
-                }, { status: 409 })
-              }
-              console.error("[POST /api/chat/subject] Erreur lors de la création:", createError)
             }
           }
         }
@@ -807,56 +808,53 @@ RAPPEL : L'EXHAUSTIVITÉ EST LA PRIORITÉ NUMÉRO 1.`
     } else if (isSummaryRequest) {
       // Pour les résumés, on crée aussi une study_collection pour le sauvegarder
       try {
-        const summaryTitle = `Résumé: ${searchTopic || collection.title}`
+        let summaryTitle = `Résumé: ${searchTopic || collection.title}`
+        let counter = 1
+        let studyCollection = null
         
-        // Vérifier si un résumé avec ce titre existe déjà
-        const { data: existingSummary } = await admin
-          .from("study_collections")
-          .select("id")
-          .eq("user_id", user.id)
-          .eq("title", summaryTitle)
-          .eq("type", "summary")
-          .maybeSingle()
-        
-        if (existingSummary) {
-          return NextResponse.json({ 
-            error: "Un résumé avec ce titre existe déjà",
-            response: `Vous avez déjà créé un résumé intitulé "${summaryTitle}". Veuillez choisir un nom différent ou supprimer l'ancien.`
-          }, { status: 409 })
+        while (!studyCollection && counter <= 50) {
+            const { data, error: createError } = await admin
+              .from("study_collections")
+              .insert({
+                user_id: user.id,
+                collection_id: targetId,
+                title: summaryTitle,
+                type: "summary",
+                tags: searchTopic ? [searchTopic] : ["résumé"],
+                status: "ready",
+                total_sources: documentContents.length,
+                total_flashcards: 0,
+                total_quiz: 0,
+                metadata: {
+                  summary: aiResponse, // Sauvegarder le résumé dans les métadonnées
+                  notes: []
+                }
+              })
+              .select("id")
+              .single()
+              
+            if (!createError && data) {
+                studyCollection = data
+            } else if (createError && createError.code === '23505') {
+                 // Doublon, on incrémente
+                 summaryTitle = `Résumé: ${searchTopic || collection.title} ${counter}`
+                 counter++
+            } else {
+                 console.error("[POST /api/chat/subject] Erreur sauvegarde résumé:", createError)
+                 break
+            }
         }
         
-        const { data: studyCollection, error: createError } = await admin
-          .from("study_collections")
-          .insert({
-            user_id: user.id,
-            collection_id: targetId,
-            title: summaryTitle,
-            type: "summary",
-            tags: searchTopic ? [searchTopic] : ["résumé"],
-            status: "ready",
-            total_sources: documentContents.length,
-            total_flashcards: 0,
-            total_quiz: 0,
-            metadata: {
-              summary: aiResponse, // Sauvegarder le résumé dans les métadonnées
-              notes: []
-            }
-          })
-          .select("id")
-          .single()
-          
-        if (!createError && studyCollection) {
+        if (counter > 50) {
+             return NextResponse.json({ 
+                error: "Impossible de créer le résumé (trop de doublons)",
+                response: "Trop de résumés portent un nom similaire. Veuillez faire le ménage."
+              }, { status: 409 })
+        }
+
+        if (studyCollection) {
           studyCollectionId = studyCollection.id
           console.log(`[POST /api/chat/subject] Résumé sauvegardé dans study_collection ${studyCollectionId}`)
-        } else if (createError) {
-          // Gérer les erreurs de contrainte unique (code 23505)
-          if (createError.code === '23505') {
-            return NextResponse.json({ 
-              error: "Un résumé avec ce titre existe déjà",
-              response: "Un résumé avec ce titre existe déjà. Veuillez choisir un nom différent."
-            }, { status: 409 })
-          }
-          console.error("[POST /api/chat/subject] Erreur lors de la sauvegarde du résumé:", createError)
         }
       } catch (error) {
         console.error("[POST /api/chat/subject] Erreur lors de la sauvegarde du résumé:", error)

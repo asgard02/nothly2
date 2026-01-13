@@ -67,29 +67,29 @@ export default function DashboardPage() {
         <div className="h-full p-8 md:p-12 font-sans overflow-y-auto pb-32">
 
             {/* Pop Greeting Banner */}
-            <header className="mb-12 bg-white border-2 border-black rounded-3xl p-8 md:p-12 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] relative overflow-hidden group">
+            <header className="mb-12 bg-card border-2 border-border rounded-3xl p-8 md:p-12 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)] relative overflow-hidden group">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-[#DDD6FE] rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2 opacity-50"></div>
                 <div className="absolute bottom-0 left-0 w-48 h-48 bg-[#FDE68A] rounded-full blur-[60px] translate-y-1/2 -translate-x-1/2 opacity-50"></div>
 
                 <div className="relative z-10 flex flex-col md:flex-row items-start md:items-end justify-between gap-6">
                     <div>
                         <div className="flex items-center gap-2 mb-4">
-                            <span suppressHydrationWarning className="bg-black text-white px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow-[2px_2px_0px_0px_rgba(167,139,250,1)]">
+                            <span suppressHydrationWarning className="bg-foreground text-background px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow-[2px_2px_0px_0px_rgba(167,139,250,1)]">
                                 {today}
                             </span>
                         </div>
-                        <h1 className="text-4xl md:text-6xl font-black tracking-tight text-black flex flex-wrap gap-2 items-center">
+                        <h1 className="text-4xl md:text-6xl font-black tracking-tight text-foreground flex flex-wrap gap-2 items-center">
                             {t(greetingKey)},
                             {loadingUser ? (
-                                <span className="h-12 w-40 bg-gray-200 animate-pulse rounded-xl border-2 border-transparent -rotate-2 inline-block" />
+                                <span className="h-12 w-40 bg-muted animate-pulse rounded-xl border-2 border-transparent -rotate-2 inline-block" />
                             ) : (
-                                <span className="bg-[#fdba74] px-4 rounded-xl border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] -rotate-2 inline-block text-white">
+                                <span className="bg-[#fdba74] px-4 rounded-xl border-2 border-border shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] -rotate-2 inline-block text-foreground">
                                     {userName}
                                 </span>
                             )}
                             !
                         </h1>
-                        <p className="mt-4 text-black font-semibold text-lg max-w-lg">
+                        <p className="mt-4 text-foreground font-semibold text-lg max-w-lg">
                             {t("subtitle")}
                         </p>
                     </div>
@@ -99,15 +99,15 @@ export default function DashboardPage() {
             {/* Stats Row */}
             <section className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
                 {stats.map((stat, i) => (
-                    <div key={i} className={cn("p-6 rounded-2xl border-2 border-black flex flex-col justify-between h-40 transition-transform hover:-translate-y-2 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]", stat.color, "shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]")}>
+                    <div key={i} className={cn("p-6 rounded-2xl border-2 border-border flex flex-col justify-between h-40 transition-transform hover:-translate-y-2 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[6px_6px_0px_0px_rgba(255,255,255,1)]", stat.color, "shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)]")}>
                         <div className="flex justify-between items-start">
-                            <div className="p-3 bg-white rounded-xl border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
-                                <stat.icon className="h-6 w-6 text-black" strokeWidth={2.5} />
+                            <div className="p-3 bg-card rounded-xl border-2 border-border shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)]">
+                                <stat.icon className="h-6 w-6 text-foreground" strokeWidth={2.5} />
                             </div>
                         </div>
                         <div>
-                            <p className="text-4xl font-black text-black">{stat.value}</p>
-                            <p className="font-bold text-sm uppercase tracking-wide text-black/70">{stat.label}</p>
+                            <p className="text-4xl font-black text-foreground">{stat.value}</p>
+                            <p className="font-bold text-sm uppercase tracking-wide text-muted-foreground">{stat.label}</p>
                         </div>
                     </div>
                 ))}
@@ -119,13 +119,13 @@ export default function DashboardPage() {
                 <div className="lg:col-span-2 space-y-12">
 
                     {/* Subjects Carousel */}
-                    <div className="bg-[#FFFFFF] border-2 border-black rounded-3xl p-8 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
+                    <div className="bg-card border-2 border-border rounded-3xl p-8 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:shadow-[6px_6px_0px_0px_rgba(255,255,255,1)]">
                         <div className="flex items-center justify-between mb-8">
-                            <h2 className="text-2xl font-black uppercase tracking-tight flex items-center gap-3">
-                                <BookOpen className="h-6 w-6 fill-black" strokeWidth={2.5} />
+                            <h2 className="text-2xl font-black uppercase tracking-tight flex items-center gap-3 text-foreground">
+                                <BookOpen className="h-6 w-6 fill-foreground" strokeWidth={2.5} />
                                 {t("jumpBackIn")}
                             </h2>
-                            <Link href="/workspace/subjects" className="text-sm font-bold underline hover:text-purple-600">{t("viewAll")}</Link>
+                            <Link href="/workspace/subjects" className="text-sm font-bold underline hover:text-primary text-muted-foreground">{t("viewAll")}</Link>
                         </div>
 
                         {activeSubjectsCount > 0 ? (
@@ -140,26 +140,26 @@ export default function DashboardPage() {
                                         return (
                                             <Link href={`/workspace/subjects/${subject.id}`} key={subject.id} className="min-w-[260px] md:min-w-[280px]">
                                                 <div className={cn(
-                                                    "relative overflow-hidden border-2 border-black rounded-2xl p-6 transition-all duration-300 hover:-translate-y-2 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] h-[180px] flex flex-col justify-between group",
+                                                    "relative overflow-hidden border-2 border-border rounded-2xl p-6 transition-all duration-300 hover:-translate-y-2 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)] h-[180px] flex flex-col justify-between group",
                                                     color
                                                 )}>
                                                     <div className="flex justify-between items-center">
-                                                        <div className="h-10 w-10 bg-white rounded-lg border-2 border-black flex items-center justify-center shadow-sm group-hover:rotate-12 transition-transform">
-                                                            <BookOpen className="h-5 w-5 text-black" strokeWidth={2.5} />
+                                                        <div className="h-10 w-10 bg-card rounded-lg border-2 border-border flex items-center justify-center shadow-sm group-hover:rotate-12 transition-transform">
+                                                            <BookOpen className="h-5 w-5 text-foreground" strokeWidth={2.5} />
                                                         </div>
-                                                        <div className="bg-black/10 px-2 py-1 rounded-md border text-[10px] font-black uppercase text-black/70 border-black/10">
+                                                        <div className="bg-muted px-2 py-1 rounded-md border text-[10px] font-black uppercase text-muted-foreground border-border/10">
                                                             {t("subject")}
                                                         </div>
                                                     </div>
 
                                                     <div>
-                                                        <h3 className="text-xl font-black leading-tight mb-1 line-clamp-1 text-black">{subject.title}</h3>
+                                                        <h3 className="text-xl font-black leading-tight mb-1 line-clamp-1 text-foreground">{subject.title}</h3>
                                                         <div className="flex items-center justify-between mt-2">
-                                                            <p className="text-xs font-bold text-black/60 uppercase group-hover:text-black transition-colors">
+                                                            <p className="text-xs font-bold text-muted-foreground uppercase group-hover:text-foreground transition-colors">
                                                                 {subject.doc_count || 0} {t("documents")}
                                                             </p>
-                                                            <div className="h-8 w-8 rounded-full bg-black flex items-center justify-center opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
-                                                                <ArrowRight className="h-4 w-4 text-white" strokeWidth={3} />
+                                                            <div className="h-8 w-8 rounded-full bg-foreground flex items-center justify-center opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
+                                                                <ArrowRight className="h-4 w-4 text-background" strokeWidth={3} />
                                                             </div>
                                                         </div>
                                                     </div>
@@ -169,11 +169,11 @@ export default function DashboardPage() {
                                     })}
                             </div>
                         ) : (
-                            <div className="text-center py-12 bg-[#FDF6E3] border-2 border-dashed border-black rounded-2xl">
-                                <h3 className="text-xl font-black mb-2">{t("nothingHere")}</h3>
-                                <p className="font-medium text-gray-500 mb-6">{t("createSubjectDesc")}</p>
+                            <div className="text-center py-12 bg-muted/50 border-2 border-dashed border-border rounded-2xl">
+                                <h3 className="text-xl font-black mb-2 text-foreground">{t("nothingHere")}</h3>
+                                <p className="font-medium text-muted-foreground mb-6">{t("createSubjectDesc")}</p>
                                 <Link href="/workspace/subjects">
-                                    <Button className="h-12 border-2 border-black rounded-xl bg-[#8B5CF6] text-white hover:bg-[#7C3AED] shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                                    <Button className="h-12 border-2 border-border rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)]">
                                         <Plus className="mr-2 h-5 w-5" strokeWidth={3} /> {t("newSubject")}
                                     </Button>
                                 </Link>
@@ -187,43 +187,43 @@ export default function DashboardPage() {
                 {/* Sidebar Widget Area */}
                 <div className="space-y-8">
                     {/* Recent Quizzes Widget */}
-                    <div className="bg-[#FEF08A] border-2 border-black rounded-3xl p-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
-                        <h3 className="font-black text-xl mb-6 flex items-center gap-2">
+                    <div className="bg-[#FEF08A] border-2 border-border rounded-3xl p-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:shadow-[6px_6px_0px_0px_rgba(255,255,255,1)]">
+                        <h3 className="font-black text-xl mb-6 flex items-center gap-2 text-foreground">
                             <Brain className="h-6 w-6" />
                             {t("recentStudySets")}
                         </h3>
 
                         <div className="space-y-4">
                             {studyCollections.slice(0, 3).map((item: any) => (
-                                <div key={item.id} className="bg-white border-2 border-black rounded-xl p-4 shadow-sm hover:translate-x-1 transition-transform cursor-pointer">
+                                <div key={item.id} className="bg-card border-2 border-border rounded-xl p-4 shadow-sm hover:translate-x-1 transition-transform cursor-pointer">
                                     <div className="flex justify-between items-start mb-2">
-                                        <span className="text-[10px] font-black uppercase bg-black text-white px-2 py-0.5 rounded">
+                                        <span className="text-[10px] font-black uppercase bg-foreground text-background px-2 py-0.5 rounded">
                                             {item.metadata?.type || "STUDY"}
                                         </span>
-                                        <ArrowRight className="h-4 w-4" />
+                                        <ArrowRight className="h-4 w-4 text-foreground" />
                                     </div>
-                                    <h4 className="font-bold leading-tight">{item.title}</h4>
+                                    <h4 className="font-bold leading-tight text-foreground">{item.title}</h4>
                                 </div>
                             ))}
                             {studyCollections.length === 0 && (
-                                <div className="text-center text-sm font-bold text-gray-500 py-4">
+                                <div className="text-center text-sm font-bold text-muted-foreground py-4">
                                     {t("noStudySets")}
                                 </div>
                             )}
                         </div>
-                        <div className="mt-6 pt-4 border-t-2 border-black/10 text-center">
+                        <div className="mt-6 pt-4 border-t-2 border-border/10 text-center">
                             <Link href="/workspace/quiz">
-                                <button className="text-xs font-black uppercase hover:underline">{t("goToQuizHub")}</button>
+                                <button className="text-xs font-black uppercase hover:underline text-foreground">{t("goToQuizHub")}</button>
                             </Link>
                         </div>
                     </div>
 
                     {/* To Do (Mock for now, can be turned into a "What's New" or feature highlight) */}
-                    <div className="bg-[#FBCFE8] border-2 border-black rounded-3xl p-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] relative rotate-1 hover:rotate-0 transition-transform duration-300">
-                        <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-white border-2 border-black px-4 py-1 rounded-full text-xs font-black uppercase shadow-sm z-10">{t("proTip")}</div>
-                        <h3 className="font-black text-xl mb-4 text-center mt-2">{t("keyboardShortcuts")}</h3>
-                        <div className="text-sm font-bold text-center">
-                            {t("press")} <span className="bg-white border border-black rounded px-1">Cmd</span> + <span className="bg-white border border-black rounded px-1">K</span> {t("toSearch")}
+                    <div className="bg-[#FBCFE8] border-2 border-border rounded-3xl p-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:shadow-[6px_6px_0px_0px_rgba(255,255,255,1)] relative rotate-1 hover:rotate-0 transition-transform duration-300">
+                        <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-card border-2 border-border px-4 py-1 rounded-full text-xs font-black uppercase shadow-sm z-10 text-foreground">{t("proTip")}</div>
+                        <h3 className="font-black text-xl mb-4 text-center mt-2 text-foreground">{t("keyboardShortcuts")}</h3>
+                        <div className="text-sm font-bold text-center text-foreground">
+                            {t("press")} <span className="bg-card border border-border rounded px-1">Cmd</span> + <span className="bg-card border border-border rounded px-1">K</span> {t("toSearch")}
                         </div>
                     </div>
                 </div>

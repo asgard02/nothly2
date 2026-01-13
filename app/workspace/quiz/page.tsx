@@ -109,17 +109,17 @@ export default function QuizHub() {
         <div className="h-full flex flex-col p-8 md:p-12 font-sans overflow-y-auto overflow-x-hidden">
 
             {/* Header */}
-            <div className="mb-12 border-b-2 border-black pb-8 flex flex-col md:flex-row justify-between items-end">
+            <div className="mb-12 border-b-2 border-border pb-8 flex flex-col md:flex-row justify-between items-end">
                 <div>
                     <div className="flex items-center gap-4 mb-2">
-                        <div className="p-3 bg-black rounded-xl">
-                            <Brain className="h-8 w-8 text-[#FBBF24]" />
+                        <div className="p-3 bg-foreground rounded-xl">
+                            <Brain className="h-8 w-8 text-accent" />
                         </div>
-                        <h1 className="text-5xl md:text-8xl font-black tracking-tighter text-black">
+                        <h1 className="text-5xl md:text-8xl font-black tracking-tighter text-foreground">
                             {t('title')}
                         </h1>
                     </div>
-                    <p className="font-bold text-gray-500 mt-4 text-lg ml-20 uppercase tracking-widest">
+                    <p className="font-bold text-muted-foreground mt-4 text-lg ml-20 uppercase tracking-widest">
                         {t('subtitle')}
                     </p>
                 </div>
@@ -130,25 +130,25 @@ export default function QuizHub() {
                     {/* Quizzes Grid or Empty State */}
                     {isLoading ? (
                         <div className="flex items-center justify-center h-64">
-                            <Loader2 className="h-12 w-12 animate-spin text-black" />
+                            <Loader2 className="h-12 w-12 animate-spin text-foreground" />
                         </div>
                     ) : quizzes.length > 0 ? (
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                             {quizzes.map((quiz: any, i: number) => (
-                                <div key={quiz.id} className="bg-white border-2 border-black rounded-3xl p-8 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-all flex flex-col justify-between h-64 relative group overflow-hidden">
+                                <div key={quiz.id} className="bg-card border-2 border-border rounded-3xl p-8 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:shadow-[6px_6px_0px_0px_rgba(255,255,255,1)] hover:-translate-y-1 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)] transition-all flex flex-col justify-between h-64 relative group overflow-hidden">
                                     <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                                        <Brain className="h-32 w-32" />
+                                        <Brain className="h-32 w-32 text-foreground" />
                                     </div>
                                     <div>
-                                        <span className="bg-[#BBF7D0] text-black border-2 border-black px-3 py-1 rounded-full text-xs font-black uppercase mb-4 inline-block">
+                                        <span className="bg-[#BBF7D0] text-foreground border-2 border-border px-3 py-1 rounded-full text-xs font-black uppercase mb-4 inline-block">
                                             {quiz.total_quiz || "?"} {t('questions')}
                                         </span>
-                                        <h3 className="text-2xl font-black uppercase tracking-tight leading-none mb-2">{quiz.title}</h3>
-                                        <p className="text-sm font-bold text-gray-400 uppercase">{t('adding')} {new Date(quiz.created_at).toLocaleDateString()}</p>
+                                        <h3 className="text-2xl font-black uppercase tracking-tight leading-none mb-2 text-foreground">{quiz.title}</h3>
+                                        <p className="text-sm font-bold text-muted-foreground uppercase">{t('adding')} {new Date(quiz.created_at).toLocaleDateString()}</p>
                                     </div>
                                     <button
                                         onClick={() => startQuiz(quiz)}
-                                        className="mt-6 w-full py-3 bg-black text-white font-bold rounded-xl border-2 border-transparent hover:bg-[#FBBF24] hover:text-black hover:border-black transition-colors flex items-center justify-center gap-2"
+                                        className="mt-6 w-full py-3 bg-foreground text-background font-bold rounded-xl border-2 border-transparent hover:bg-accent hover:text-foreground hover:border-border transition-colors flex items-center justify-center gap-2"
                                     >
                                         {t('startQuiz')} <ArrowRight className="h-4 w-4" />
                                     </button>
@@ -156,28 +156,28 @@ export default function QuizHub() {
                             ))}
                         </div>
                     ) : (
-                        <div className="flex flex-col items-center justify-center p-16 bg-white border-2 border-dashed border-black rounded-3xl text-center min-h-[400px] relative overflow-hidden group">
+                        <div className="flex flex-col items-center justify-center p-16 bg-card border-2 border-dashed border-border rounded-3xl text-center min-h-[400px] relative overflow-hidden group">
 
                             {/* Decorative background elements */}
-                            <div className="absolute top-10 right-10 w-12 h-12 bg-[#FDE68A] rounded-full border-2 border-black"></div>
-                            <div className="absolute bottom-10 left-10 w-16 h-16 bg-[#BAE6FD] border-2 border-black rotate-12"></div>
+                            <div className="absolute top-10 right-10 w-12 h-12 bg-[#FDE68A] rounded-full border-2 border-border"></div>
+                            <div className="absolute bottom-10 left-10 w-16 h-16 bg-[#BAE6FD] border-2 border-border rotate-12"></div>
 
-                            <div className="z-10 bg-[#F3F4F6] p-6 rounded-full border-2 border-black mb-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-                                <Trophy className="h-12 w-12 text-black" strokeWidth={2} />
+                            <div className="z-10 bg-muted p-6 rounded-full border-2 border-border mb-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)]">
+                                <Trophy className="h-12 w-12 text-foreground" strokeWidth={2} />
                             </div>
 
-                            <h3 className="text-3xl font-black mb-2">{t('emptyTitle')}</h3>
-                            <p className="font-bold text-gray-500 max-w-sm mx-auto mb-8">
+                            <h3 className="text-3xl font-black mb-2 text-foreground">{t('emptyTitle')}</h3>
+                            <p className="font-bold text-muted-foreground max-w-sm mx-auto mb-8">
                                 {t('emptyDesc')}
                             </p>
 
                             {/* DEMO BUTTON */}
                             <button
                                 onClick={() => startQuiz(demoQuiz)}
-                                className="px-8 py-4 bg-[#8B5CF6] text-white font-black uppercase text-lg rounded-xl border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-y-[2px] hover:translate-x-[2px] transition-all active:shadow-none hover:shadow-none hover:bg-[#7C3AED] relative z-20"
+                                className="px-8 py-4 bg-primary text-primary-foreground font-black uppercase text-lg rounded-xl border-2 border-border shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] hover:translate-y-[2px] hover:translate-x-[2px] transition-all active:shadow-none hover:shadow-none hover:bg-primary/90 relative z-20"
                             >
                                 <span className="flex items-center gap-3">
-                                    <Sparkles className="h-5 w-5 fill-white" />
+                                    <Sparkles className="h-5 w-5 fill-primary-foreground" />
                                     {t('launchDemo')}
                                 </span>
                             </button>
@@ -187,12 +187,12 @@ export default function QuizHub() {
 
                 {/* Recent Scores Sidebar */}
                 <div className="hidden md:block">
-                    <div className="bg-[#FFF1F2] border-2 border-black rounded-2xl p-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
-                        <h3 className="font-black text-xl mb-6 flex items-center gap-2">
+                    <div className="bg-[#FFF1F2] dark:bg-red-950/20 border-2 border-border rounded-2xl p-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:shadow-[6px_6px_0px_0px_rgba(255,255,255,1)]">
+                        <h3 className="font-black text-xl mb-6 flex items-center gap-2 text-foreground">
                             <BarChart className="h-6 w-6" />
                             {t('leaderboard')}
                         </h3>
-                        <div className="font-bold text-sm text-gray-400 py-8 text-center border-2 border-dashed border-black/20 rounded-xl bg-white/50">
+                        <div className="font-bold text-sm text-muted-foreground py-8 text-center border-2 border-dashed border-border/20 rounded-xl bg-card/50">
                             {t('noData')}
                         </div>
                     </div>
@@ -208,15 +208,15 @@ export default function QuizHub() {
                         exit={{ opacity: 0, y: 50 }}
                         className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-8 bg-black/60 backdrop-blur-sm"
                     >
-                        <div className="w-full max-w-5xl h-full md:h-auto md:max-h-[90vh] bg-[#FDF6E3] border-2 border-black rounded-3xl overflow-hidden flex flex-col shadow-[8px_8px_0px_0px_rgba(255,255,255,0.5)]">
+                        <div className="w-full max-w-5xl h-full md:h-auto md:max-h-[90vh] bg-background border-2 border-border rounded-3xl overflow-hidden flex flex-col shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)]">
 
                             {/* Modal Header */}
-                            <div className="p-6 md:p-8 border-b-2 border-black flex items-center justify-between bg-white">
+                            <div className="p-6 md:p-8 border-b-2 border-border flex items-center justify-between bg-card">
                                 <div className="flex items-center gap-4">
-                                    <span className="bg-black text-white px-3 py-1 rounded-lg font-bold text-xs uppercase">{t('question')} {currentQuestionIndex + 1} / {activeQuiz.questions.length}</span>
-                                    <div className="h-3 w-32 md:w-64 bg-gray-200 rounded-full border-2 border-black overflow-hidden relative">
+                                    <span className="bg-foreground text-background px-3 py-1 rounded-lg font-bold text-xs uppercase">{t('question')} {currentQuestionIndex + 1} / {activeQuiz.questions.length}</span>
+                                    <div className="h-3 w-32 md:w-64 bg-muted rounded-full border-2 border-border overflow-hidden relative">
                                         <motion.div
-                                            className="absolute left-0 top-0 bottom-0 bg-[#8B5CF6] h-full"
+                                            className="absolute left-0 top-0 bottom-0 bg-primary h-full"
                                             initial={{ width: 0 }}
                                             animate={{ width: `${((currentQuestionIndex + 1) / activeQuiz.questions.length) * 100}%` }}
                                         />
@@ -224,7 +224,7 @@ export default function QuizHub() {
                                 </div>
                                 <button
                                     onClick={() => setActiveQuiz(null)}
-                                    className="h-10 w-10 border-2 border-black rounded-lg flex items-center justify-center hover:bg-red-500 hover:text-white transition-colors"
+                                    className="h-10 w-10 border-2 border-border rounded-lg flex items-center justify-center hover:bg-destructive hover:text-destructive-foreground transition-colors text-foreground"
                                 >
                                     <X className="h-6 w-6" strokeWidth={3} />
                                 </button>
@@ -232,7 +232,7 @@ export default function QuizHub() {
 
                             {/* Content */}
                             <div className="flex-1 p-8 md:p-16 overflow-y-auto flex flex-col items-center justify-center">
-                                <h2 className="text-3xl md:text-5xl font-black text-center mb-12 text-black leading-tight">
+                                <h2 className="text-3xl md:text-5xl font-black text-center mb-12 text-foreground leading-tight">
                                     {activeQuiz.questions[currentQuestionIndex].prompt || activeQuiz.questions[currentQuestionIndex].question}
                                 </h2>
 
@@ -242,19 +242,19 @@ export default function QuizHub() {
                                         const isSelected = selectedOption === i;
                                         const isCorrect = option === activeQuiz.questions[currentQuestionIndex].answer;
 
-                                        let borderColor = "border-black";
-                                        let bgColor = "bg-white";
+                                        let borderColor = "border-border";
+                                        let bgColor = "bg-card";
 
                                         if (isAnswerRevealed) {
                                             if (isCorrect) {
                                                 borderColor = "border-green-600";
-                                                bgColor = "bg-green-100";
+                                                bgColor = "bg-green-100 dark:bg-green-950/30";
                                             } else if (isSelected) {
                                                 borderColor = "border-red-600";
-                                                bgColor = "bg-red-100";
+                                                bgColor = "bg-red-100 dark:bg-red-950/30";
                                             }
                                         } else if (isSelected) {
-                                            bgColor = "bg-[#FDE68A]";
+                                            bgColor = "bg-accent";
                                         }
 
                                         return (
@@ -264,23 +264,23 @@ export default function QuizHub() {
                                                 className="group relative disabled:cursor-not-allowed"
                                                 disabled={isAnswerRevealed}
                                             >
-                                                <div className={cn("absolute inset-0 bg-black rounded-xl translate-x-1 translate-y-1 transition-transform", isSelected && !isAnswerRevealed && "translate-x-2 translate-y-2")}></div>
+                                                <div className={cn("absolute inset-0 bg-foreground rounded-xl translate-x-1 translate-y-1 transition-transform", isSelected && !isAnswerRevealed && "translate-x-2 translate-y-2")}></div>
                                                 <div className={cn(
                                                     "relative border-2 rounded-xl p-6 h-full flex items-center gap-4 transition-all overflow-hidden",
                                                     borderColor,
                                                     bgColor,
-                                                    !isAnswerRevealed && "hover:-translate-y-1 hover:-translate-x-1 hover:bg-[#FDE68A]"
+                                                    !isAnswerRevealed && "hover:-translate-y-1 hover:-translate-x-1 hover:bg-accent"
                                                 )}>
                                                     <div className={cn(
-                                                        "h-10 w-10 rounded-lg border-2 border-black flex flex-shrink-0 items-center justify-center font-black bg-white transition-colors",
-                                                        isSelected && "bg-black text-white"
+                                                        "h-10 w-10 rounded-lg border-2 border-border flex flex-shrink-0 items-center justify-center font-black bg-card transition-colors text-foreground",
+                                                        isSelected && "bg-foreground text-background"
                                                     )}>
                                                         {String.fromCharCode(65 + i)}
                                                     </div>
-                                                    <span className="text-xl font-bold text-left leading-tight">{option}</span>
+                                                    <span className="text-xl font-bold text-left leading-tight text-foreground">{option}</span>
 
-                                                    {isAnswerRevealed && isCorrect && <Check className="ml-auto text-green-600 h-6 w-6" strokeWidth={3} />}
-                                                    {isAnswerRevealed && isSelected && !isCorrect && <X className="ml-auto text-red-600 h-6 w-6" strokeWidth={3} />}
+                                                    {isAnswerRevealed && isCorrect && <Check className="ml-auto text-green-600 dark:text-green-400 h-6 w-6" strokeWidth={3} />}
+                                                    {isAnswerRevealed && isSelected && !isCorrect && <X className="ml-auto text-red-600 dark:text-red-400 h-6 w-6" strokeWidth={3} />}
                                                 </div>
                                             </button>
                                         )
@@ -289,16 +289,16 @@ export default function QuizHub() {
                             </div>
 
                             {/* Footer */}
-                            <div className="p-6 md:p-8 bg-white border-t-2 border-black flex justify-between items-center">
-                                <div className="font-black text-xl">
+                            <div className="p-6 md:p-8 bg-card border-t-2 border-border flex justify-between items-center">
+                                <div className="font-black text-xl text-foreground">
                                     {t('score')}: {score}
                                 </div>
                                 {isAnswerRevealed ? (
-                                    <Button onClick={nextQuestion} className="h-14 px-10 rounded-xl border-2 border-black bg-black text-white hover:bg-[#8B5CF6] text-xl font-bold shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-y-[2px] active:translate-y-[4px] active:shadow-none transition-all">
+                                    <Button onClick={nextQuestion} className="h-14 px-10 rounded-xl border-2 border-border bg-foreground text-background hover:bg-primary text-xl font-bold shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] hover:translate-y-[2px] active:translate-y-[4px] active:shadow-none transition-all">
                                         {currentQuestionIndex < activeQuiz.questions.length - 1 ? t('nextQuestion') : t('finishQuiz')} <ArrowRight className="ml-3 h-6 w-6" strokeWidth={3} />
                                     </Button>
                                 ) : (
-                                    <Button onClick={checkAnswer} disabled={selectedOption === null} className="h-14 px-10 rounded-xl border-2 border-black bg-[#FBBF24] text-black hover:bg-[#F59E0B] text-xl font-bold shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-y-[2px] active:translate-y-[4px] active:shadow-none transition-all disabled:opacity-50 disabled:shadow-none disabled:translate-y-[4px]">
+                                    <Button onClick={checkAnswer} disabled={selectedOption === null} className="h-14 px-10 rounded-xl border-2 border-border bg-accent text-foreground hover:bg-accent/90 text-xl font-bold shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] hover:translate-y-[2px] active:translate-y-[4px] active:shadow-none transition-all disabled:opacity-50 disabled:shadow-none disabled:translate-y-[4px]">
                                         {t('checkAnswer')}
                                     </Button>
                                 )}

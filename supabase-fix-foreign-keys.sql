@@ -6,13 +6,50 @@
 -- 1. SUPPRIMER LES ANCIENNES FOREIGN KEYS
 -- ========================================
 
--- Supprimer la foreign key de async_jobs vers public.users
-ALTER TABLE IF EXISTS public.async_jobs 
-  DROP CONSTRAINT IF EXISTS async_jobs_user_id_fkey;
+-- Supprimer les anciennes foreign keys (peuvent avoir des noms différents)
+-- On supprime toutes les contraintes possibles pour être sûr
 
--- Supprimer la foreign key de study_collections vers public.users
-ALTER TABLE IF EXISTS public.study_collections 
-  DROP CONSTRAINT IF EXISTS study_collections_user_id_fkey;
+-- async_jobs : supprimer toutes les contraintes user_id possibles
+DO $$
+DECLARE
+  constraint_name text;
+BEGIN
+  -- Trouver et supprimer toutes les contraintes de foreign key sur user_id
+  FOR constraint_name IN
+    SELECT tc.constraint_name
+    FROM information_schema.table_constraints AS tc
+    JOIN information_schema.key_column_usage AS kcu
+      ON tc.constraint_name = kcu.constraint_name
+    WHERE tc.table_schema = 'public'
+      AND tc.table_name = 'async_jobs'
+      AND kcu.column_name = 'user_id'
+      AND tc.constraint_type = 'FOREIGN KEY'
+  LOOP
+    EXECUTE format('ALTER TABLE public.async_jobs DROP CONSTRAINT IF EXISTS %I', constraint_name);
+    RAISE NOTICE 'Supprimé contrainte: %', constraint_name;
+  END LOOP;
+END $$;
+
+-- study_collections : supprimer toutes les contraintes user_id possibles
+DO $$
+DECLARE
+  constraint_name text;
+BEGIN
+  -- Trouver et supprimer toutes les contraintes de foreign key sur user_id
+  FOR constraint_name IN
+    SELECT tc.constraint_name
+    FROM information_schema.table_constraints AS tc
+    JOIN information_schema.key_column_usage AS kcu
+      ON tc.constraint_name = kcu.constraint_name
+    WHERE tc.table_schema = 'public'
+      AND tc.table_name = 'study_collections'
+      AND kcu.column_name = 'user_id'
+      AND tc.constraint_type = 'FOREIGN KEY'
+  LOOP
+    EXECUTE format('ALTER TABLE public.study_collections DROP CONSTRAINT IF EXISTS %I', constraint_name);
+    RAISE NOTICE 'Supprimé contrainte: %', constraint_name;
+  END LOOP;
+END $$;
 
 -- ========================================
 -- 2. CRÉER LES NOUVELLES FOREIGN KEYS VERS auth.users

@@ -29,6 +29,10 @@ export default function FlashcardViewer({ cards, onClose, studySubjectId }: Flas
   const [mode, setMode] = useState<"all" | "smart">("all")
   const [activeCards, setActiveCards] = useState<FlashcardItem[]>(cards)
 
+  // Nouveaux états pour le résumé de fin de session
+  const [showSummary, setShowSummary] = useState(false)
+  const [sessionResults, setSessionResults] = useState<Record<string, "difficile" | "moyen" | "acquis">>({})
+
   // Charger les stats
   useEffect(() => {
     if (studySubjectId) {
@@ -72,6 +76,8 @@ export default function FlashcardViewer({ cards, onClose, studySubjectId }: Flas
     }
     setCurrentIndex(0)
     setIsFlipped(false)
+    setShowSummary(false)
+    // setSessionResults({}) // Ne pas reset ici auto, car ça wipe si stats change
   }, [mode, cards, stats])
 
   // Fonction pour tronquer le texte si trop long - Memoized pour éviter les recalculs
@@ -81,6 +87,8 @@ export default function FlashcardViewer({ cards, onClose, studySubjectId }: Flas
   }, [])
 
   const handleFlip = useCallback(() => {
+    if (showSummary) return
+
     const newFlippedState = !isFlipped
     setIsFlipped(newFlippedState)
 
@@ -91,10 +99,11 @@ export default function FlashcardViewer({ cards, onClose, studySubjectId }: Flas
     } else {
       setShowButtons(false)
     }
-  }, [isFlipped])
+  }, [isFlipped, showSummary])
 
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
+      if (showSummary) return
       if (e.code === "Space" || e.key === " ") {
         e.preventDefault()
         handleFlip()
@@ -103,7 +112,7 @@ export default function FlashcardViewer({ cards, onClose, studySubjectId }: Flas
 
     window.addEventListener("keydown", handleKeyPress)
     return () => window.removeEventListener("keydown", handleKeyPress)
-  }, [isFlipped, handleFlip])
+  }, [isFlipped, handleFlip, showSummary])
 
   if (!activeCards.length) {
     return null
@@ -114,7 +123,13 @@ export default function FlashcardViewer({ cards, onClose, studySubjectId }: Flas
   const progress = ((currentIndex + 1) / activeCards.length) * 100
 
   const handleStatus = async (status: "difficile" | "moyen" | "acquis") => {
-    // Sauvegarder le progrès
+    // Enregistrer le résultat localement pour le résumé de fin
+    setSessionResults(prev => ({
+      ...prev,
+      [current.id]: status
+    }))
+
+    // Sauvegarder le progrès en DB
     if (studySubjectId) {
       const quality = status === "acquis" ? "easy" : status === "moyen" ? "medium" : "hard"
       try {
@@ -129,6 +144,11 @@ export default function FlashcardViewer({ cards, onClose, studySubjectId }: Flas
         })
         const data = await res.json()
         if (data.success) {
+          // On ne met PAS à jour les stats locales ici pour éviter de déclencher
+          // le useEffect qui recalcule activeCards et reset la session.
+          // La notification visuelle (Badge niveau) restera sur l'ancien niveau
+          // le temps que la carte disparaisse, ce qui est acceptable.
+          /*
           setStats(prev => ({
             ...prev,
             [current.id]: {
@@ -137,20 +157,23 @@ export default function FlashcardViewer({ cards, onClose, studySubjectId }: Flas
               next_review_at: data.nextReview
             }
           }))
+          */
         }
       } catch (err) {
         console.error("Erreur sauvegarde flashcard:", err)
       }
     }
 
-    // Marquer le statut et passer à la carte suivante
+    // Gérer la navigation
     setShowButtons(false)
     if (currentIndex < activeCards.length - 1) {
+      // Passer à la suivante
       setIsFlipped(false)
       setTimeout(() => setCurrentIndex(currentIndex + 1), 150)
     } else {
+      // Fin de la liste -> Afficher le résumé
       setIsFlipped(false)
-      setTimeout(() => setCurrentIndex(0), 150)
+      setTimeout(() => setShowSummary(true), 150)
     }
   }
 
@@ -158,64 +181,151 @@ export default function FlashcardViewer({ cards, onClose, studySubjectId }: Flas
     setIsFlipped(false)
     setShowButtons(false)
     setCurrentIndex(0)
+    setShowSummary(false)
   }
+
+  // --- RENDU DU RÉSUMÉ DE SESSION ---
+  if (showSummary) {
+    const difficultCount = Object.values(sessionResults).filter(r => r === "difficile").length
+    const mediumCount = Object.values(sessionResults).filter(r => r === "moyen").length
+    const easyCount = Object.values(sessionResults).filter(r => r === "acquis").length
+
+    const handleRetryMissed = () => {
+      // Filtrer pour ne garder que les difficiles et moyennes
+      const cardsToRetry = activeCards.filter(c => {
+        const res = sessionResults[c.id]
+        return res === "difficile" || res === "moyen"
+      })
+
+      setActiveCards(cardsToRetry)
+      setCurrentIndex(0)
+      setIsFlipped(false)
+      setShowSummary(false)
+      setSessionResults({}) // Reset resultats pour la nouvelle session
+    }
+
+    return (
+      <div className="h-full w-full flex flex-col items-center justify-center p-6 bg-transparent max-w-3xl mx-auto">
+        <div className="w-full bg-card border-4 border-border shadow-[16px_16px_0px_0px_rgba(0,0,0,1)] dark:shadow-[16px_16px_0px_0px_rgba(255,255,255,1)] rounded-3xl p-8 md:p-12 relative overflow-hidden">
+          {/* Confetti ou déco */}
+          <div className="absolute top-0 left-0 w-full h-4 bg-foreground" />
+
+          <h2 className="text-4xl md:text-5xl font-black text-foreground mb-2 text-center uppercase tracking-tighter">
+            Session Terminée !
+          </h2>
+          <p className="text-muted-foreground font-bold text-center mb-10 text-lg">
+            Voici comment tu t'en es sorti
+          </p>
+
+          <div className="grid grid-cols-3 gap-4 mb-10">
+            <div className="flex flex-col items-center p-4 bg-red-50 dark:bg-red-950/30 border-2 border-border rounded-2xl">
+              <span className="text-4xl font-black text-[#CD3244] dark:text-red-400 mb-1">{difficultCount}</span>
+              <span className="text-xs font-black uppercase text-muted-foreground tracking-wider">À Revoir</span>
+            </div>
+            <div className="flex flex-col items-center p-4 bg-amber-50 dark:bg-amber-950/30 border-2 border-border rounded-2xl">
+              <span className="text-4xl font-black text-[#F59E0B] dark:text-amber-400 mb-1">{mediumCount}</span>
+              <span className="text-xs font-black uppercase text-muted-foreground tracking-wider">Pas mal</span>
+            </div>
+            <div className="flex flex-col items-center p-4 bg-emerald-50 dark:bg-emerald-950/30 border-2 border-border rounded-2xl">
+              <span className="text-4xl font-black text-[#10B981] dark:text-emerald-400 mb-1">{easyCount}</span>
+              <span className="text-xs font-black uppercase text-muted-foreground tracking-wider">Maîtrisé</span>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-4">
+            {(difficultCount > 0 || mediumCount > 0) && (
+              <button
+                onClick={handleRetryMissed}
+                className="w-full py-4 bg-foreground text-background text-lg font-black uppercase tracking-wider rounded-xl hover:bg-foreground/90 transition-colors shadow-[4px_4px_0px_0px_rgba(100,100,100,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] border-2 border-border active:translate-y-[2px] active:shadow-none flex items-center justify-center gap-3"
+              >
+                <RotateCcw className="h-5 w-5" />
+                Réviser les erreurs ({difficultCount + mediumCount})
+              </button>
+            )}
+
+            <button
+              onClick={onClose}
+              className="w-full py-4 bg-card text-foreground text-lg font-black uppercase tracking-wider rounded-xl hover:bg-muted transition-colors shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] border-2 border-border active:translate-y-[2px] active:shadow-none"
+            >
+              Terminer pour aujourd'hui
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (currentIndex >= activeCards.length) return null
 
   return (
     <div className="h-full w-full flex flex-col items-center justify-start py-6 px-4 md:px-8 bg-transparent max-w-5xl mx-auto">
       <div className="w-full flex flex-col h-full">
-        {/* Header avec mode et progression */}
-        <div className="flex justify-between items-center mb-8 px-2">
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 px-4 py-2 bg-white border-2 border-black rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-              <span className="text-black font-black text-lg">{currentIndex + 1}</span>
-              <span className="text-gray-400 font-bold">/</span>
-              <span className="text-gray-500 font-bold">{activeCards.length}</span>
+        {/* Header avec mode et progression - Unified Toolbar */}
+        <div className="w-full flex justify-center mb-8 px-4">
+          <div className="flex flex-wrap items-center justify-between gap-4 p-2 bg-card border-2 border-border rounded-2xl shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)] w-full max-w-4xl">
+
+            {/* Gauche: Compteur + Mode */}
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-muted rounded-xl border-2 border-transparent">
+                <span className="text-foreground font-black">{currentIndex + 1}</span>
+                <span className="text-muted-foreground font-bold">/</span>
+                <span className="text-muted-foreground font-bold">{activeCards.length}</span>
+              </div>
+
+              <div className="h-8 w-0.5 bg-border/20 mx-1 hidden md:block" />
+
+              <div className="flex bg-muted p-1 rounded-xl">
+                <button
+                  onClick={() => {
+                    setMode("all")
+                    setSessionResults({})
+                  }}
+                  className={cn(
+                    "px-3 py-1.5 text-xs font-black uppercase rounded-lg transition-all",
+                    mode === "all" ? "bg-foreground text-background shadow-sm" : "text-muted-foreground hover:text-foreground hover:bg-card/50"
+                  )}
+                >
+                  Tout
+                </button>
+                <button
+                  onClick={() => {
+                    setMode("smart")
+                    setSessionResults({})
+                  }}
+                  className={cn(
+                    "px-3 py-1.5 text-xs font-black uppercase rounded-lg transition-all flex items-center gap-1.5",
+                    mode === "smart" ? "bg-[#FBCFE8] text-foreground shadow-sm ring-1 ring-border/10" : "text-muted-foreground hover:text-foreground hover:bg-card/50"
+                  )}
+                >
+                  <Zap className="h-3.5 w-3.5" strokeWidth={2.5} />
+                  Smart
+                </button>
+              </div>
             </div>
 
-            <div className="flex bg-white p-1 rounded-xl border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-              <button
-                onClick={() => setMode("all")}
-                className={cn(
-                  "px-4 py-1.5 text-xs font-black uppercase rounded-lg transition-all border-2",
-                  mode === "all" ? "bg-black text-white border-black" : "bg-transparent text-gray-500 border-transparent hover:bg-gray-100"
-                )}
-              >
-                Tout
-              </button>
-              <button
-                onClick={() => setMode("smart")}
-                className={cn(
-                  "px-4 py-1.5 text-xs font-black uppercase rounded-lg transition-all flex items-center gap-1.5 border-2",
-                  mode === "smart" ? "bg-[#FBCFE8] text-black border-black" : "bg-transparent text-gray-500 border-transparent hover:bg-gray-100"
-                )}
-              >
-                <Zap className="h-3.5 w-3.5" strokeWidth={2.5} />
-                Smart Review
-              </button>
-            </div>
-          </div>
+            {/* Droite: Niveau + Fermer */}
+            <div className="flex items-center gap-3">
+              {/* Info sur la carte actuelle (Box Leitner) */}
+              <div className={cn(
+                "hidden md:inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-black tracking-wide uppercase transition-colors border-2",
+                currentStat?.box
+                  ? "bg-[#BBF7D0] text-foreground border-border"
+                  : "bg-muted text-muted-foreground border-transparent"
+              )}>
+                <Brain className="h-4 w-4" strokeWidth={2.5} />
+                {currentStat ? `Niveau ${currentStat.box}/5` : "Nouveau"}
+              </div>
 
-          <div className="flex items-center gap-4">
-            {/* Info sur la carte actuelle (Box Leitner) */}
-            <div className={cn(
-              "hidden md:inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black tracking-wide uppercase transition-colors border-2",
-              currentStat?.box
-                ? "bg-[#BBF7D0] text-black border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
-                : "bg-white text-gray-500 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
-            )}>
-              <Brain className="h-4 w-4" strokeWidth={2.5} />
-              {currentStat ? `Niveau ${currentStat.box}/5` : "Nouvelle carte"}
+              {onClose && (
+                <button
+                  onClick={onClose}
+                  className="p-2 rounded-xl hover:bg-destructive/10 hover:text-destructive transition-colors text-foreground"
+                  aria-label="Fermer"
+                >
+                  <X className="h-5 w-5" strokeWidth={3} />
+                </button>
+              )}
             </div>
-
-            {onClose && (
-              <button
-                onClick={onClose}
-                className="p-2.5 rounded-xl bg-white hover:bg-black hover:text-white transition-all text-black border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-y-[2px] active:shadow-none"
-                aria-label="Fermer"
-              >
-                <X className="h-5 w-5" strokeWidth={3} />
-              </button>
-            )}
           </div>
         </div>
 
@@ -240,18 +350,28 @@ export default function FlashcardViewer({ cards, onClose, studySubjectId }: Flas
               }}>
               {/* Face avant (Question) */}
               <div
-                className="absolute inset-0 w-full h-full bg-[#FDF6E3] rounded-3xl border-4 border-black shadow-[16px_16px_0px_0px_rgba(0,0,0,1)] flex flex-col overflow-hidden hover:-translate-y-2 hover:shadow-[20px_20px_0px_0px_rgba(0,0,0,1)] transition-all duration-300"
+                className="absolute inset-0 w-full h-full bg-background rounded-3xl border-4 border-border shadow-[16px_16px_0px_0px_rgba(0,0,0,1)] dark:shadow-[16px_16px_0px_0px_rgba(255,255,255,1)] flex flex-col overflow-hidden hover:-translate-y-2 hover:shadow-[20px_20px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[20px_20px_0px_0px_rgba(255,255,255,1)] transition-all duration-300"
                 style={{
                   backfaceVisibility: 'hidden',
                   WebkitBackfaceVisibility: 'hidden',
                 }}
               >
                 {/* Barre décorative en haut */}
-                <div className="absolute top-0 left-0 w-full h-3 bg-black" />
+                <div className="absolute top-0 left-0 w-full h-3 bg-foreground" />
+
+                {/* Barre de progression intégrée dans la carte */}
+                <div className="absolute top-0 left-0 w-full h-1 bg-muted z-10">
+                  <motion.div
+                    className="h-full bg-primary"
+                    initial={{ width: 0 }}
+                    animate={{ width: `${progress}%` }}
+                    transition={{ duration: 0.3 }}
+                  />
+                </div>
 
                 {/* Badge Question */}
                 <div className="absolute top-8 left-8">
-                  <span className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white text-black border-3 border-black text-xs font-black tracking-wider uppercase shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
+                  <span className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-card text-foreground border-3 border-border text-xs font-black tracking-wider uppercase shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] dark:shadow-[3px_3px_0px_0px_rgba(255,255,255,1)]">
                     <span className="text-lg">❓</span>
                     Question
                   </span>
@@ -259,20 +379,20 @@ export default function FlashcardViewer({ cards, onClose, studySubjectId }: Flas
 
                 {/* Contenu de la question */}
                 <div className="flex-1 flex flex-col items-center justify-center px-16 py-20 text-center">
-                  <div className="text-3xl md:text-5xl font-black text-black leading-tight max-w-2xl">
+                  <div className="text-3xl md:text-5xl font-black text-foreground leading-tight max-w-2xl">
                     <MarkdownRenderer content={truncateText(current.question, 200)} />
                   </div>
                 </div>
 
                 {/* Indicateur subtil en bas */}
-                <div className="absolute bottom-8 left-1/2 -translate-x-1/2">
-                  <div className="w-12 h-1 bg-black/20 rounded-full" />
+                <div className="absolute bottom-6 left-1/2 -translate-x-1/2 text-xs font-bold text-muted-foreground uppercase tracking-widest animate-pulse">
+                  Espace pour retourner
                 </div>
               </div>
 
               {/* Face arrière (Réponse) - Pré-rotée de 180deg */}
               <div
-                className="absolute inset-0 w-full h-full bg-[#DDD6FE] rounded-3xl border-4 border-black shadow-[16px_16px_0px_0px_rgba(0,0,0,1)] flex flex-col overflow-hidden"
+                className="absolute inset-0 w-full h-full bg-[#DDD6FE] rounded-3xl border-4 border-border shadow-[16px_16px_0px_0px_rgba(0,0,0,1)] dark:shadow-[16px_16px_0px_0px_rgba(255,255,255,1)] flex flex-col overflow-hidden"
                 style={{
                   backfaceVisibility: 'hidden',
                   WebkitBackfaceVisibility: 'hidden',
@@ -280,11 +400,11 @@ export default function FlashcardViewer({ cards, onClose, studySubjectId }: Flas
                 }}
               >
                 {/* Barre décorative en haut */}
-                <div className="absolute top-0 left-0 w-full h-3 bg-black" />
+                <div className="absolute top-0 left-0 w-full h-3 bg-foreground" />
 
                 {/* Badge Réponse */}
                 <div className="absolute top-8 left-8">
-                  <span className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white text-black border-3 border-black text-xs font-black tracking-wider uppercase shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
+                  <span className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-card text-foreground border-3 border-border text-xs font-black tracking-wider uppercase shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] dark:shadow-[3px_3px_0px_0px_rgba(255,255,255,1)]">
                     <span className="text-lg">💡</span>
                     Réponse
                   </span>
@@ -292,14 +412,9 @@ export default function FlashcardViewer({ cards, onClose, studySubjectId }: Flas
 
                 {/* Contenu de la réponse */}
                 <div className="flex-1 flex flex-col items-center justify-center px-16 py-20 text-center">
-                  <div className="text-2xl md:text-4xl font-bold text-black leading-relaxed max-w-2xl">
+                  <div className="text-2xl md:text-4xl font-bold text-foreground leading-relaxed max-w-2xl">
                     <MarkdownRenderer content={truncateText(current.answer, 250)} />
                   </div>
-                </div>
-
-                {/* Indicateur subtil en bas */}
-                <div className="absolute bottom-8 left-1/2 -translate-x-1/2">
-                  <div className="w-12 h-1 bg-black/20 rounded-full" />
                 </div>
               </div>
             </div>
@@ -308,7 +423,7 @@ export default function FlashcardViewer({ cards, onClose, studySubjectId }: Flas
           {/* Boutons d'action */}
           <div className="h-[120px] mt-12 flex justify-center items-center w-full max-w-2xl">
             <AnimatePresence mode="wait">
-              {showButtons ? (
+              {showButtons && (
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -322,10 +437,10 @@ export default function FlashcardViewer({ cards, onClose, studySubjectId }: Flas
                     }}
                     className="flex flex-col items-center gap-3 group translate-y-2 hover:translate-y-0 transition-transform"
                   >
-                    <div className="w-full h-16 rounded-xl bg-[#CD3244] border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center group-hover:bg-red-600 transition-colors">
+                    <div className="w-full h-16 rounded-xl bg-[#CD3244] border-2 border-border shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] flex items-center justify-center group-hover:bg-red-600 transition-colors">
                       <X className="h-8 w-8 text-white" strokeWidth={3} />
                     </div>
-                    <span className="text-xs font-black uppercase text-gray-500 group-hover:text-black">Difficile</span>
+                    <span className="text-xs font-black uppercase text-muted-foreground group-hover:text-foreground">Difficile</span>
                   </button>
 
                   <button
@@ -335,10 +450,10 @@ export default function FlashcardViewer({ cards, onClose, studySubjectId }: Flas
                     }}
                     className="flex flex-col items-center gap-3 group translate-y-2 hover:translate-y-0 transition-transform"
                   >
-                    <div className="w-full h-16 rounded-xl bg-[#F59E0B] border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center group-hover:bg-amber-500 transition-colors">
+                    <div className="w-full h-16 rounded-xl bg-[#F59E0B] border-2 border-border shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] flex items-center justify-center group-hover:bg-amber-500 transition-colors">
                       <div className="text-2xl font-black text-white">~</div>
                     </div>
-                    <span className="text-xs font-black uppercase text-gray-500 group-hover:text-black">Moyen</span>
+                    <span className="text-xs font-black uppercase text-muted-foreground group-hover:text-foreground">Moyen</span>
                   </button>
 
                   <button
@@ -348,31 +463,15 @@ export default function FlashcardViewer({ cards, onClose, studySubjectId }: Flas
                     }}
                     className="flex flex-col items-center gap-3 group translate-y-2 hover:translate-y-0 transition-transform"
                   >
-                    <div className="w-full h-16 rounded-xl bg-[#10B981] border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center group-hover:bg-emerald-500 transition-colors">
+                    <div className="w-full h-16 rounded-xl bg-[#10B981] border-2 border-border shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] flex items-center justify-center group-hover:bg-emerald-500 transition-colors">
                       <div className="text-2xl font-black text-white">✓</div>
                     </div>
-                    <span className="text-xs font-black uppercase text-gray-500 group-hover:text-black">Facile</span>
+                    <span className="text-xs font-black uppercase text-muted-foreground group-hover:text-foreground">Facile</span>
                   </button>
                 </motion.div>
-              ) : (
-                <div className="flex flex-col items-center gap-2 animate-pulse">
-                  <div className="px-6 py-3 bg-white border-2 border-black rounded-full shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] text-xs font-black uppercase tracking-wider">
-                    Espace pour retourner
-                  </div>
-                </div>
               )}
             </AnimatePresence>
           </div>
-        </div>
-
-        {/* Barre de progression globale */}
-        <div className="w-full max-w-2xl mx-auto h-2 bg-gray-200 rounded-full overflow-hidden border-2 border-black mt-8">
-          <motion.div
-            className="h-full bg-black"
-            initial={{ width: 0 }}
-            animate={{ width: `${progress}%` }}
-            transition={{ duration: 0.3 }}
-          />
         </div>
       </div>
     </div>

@@ -1,4 +1,6 @@
 import OpenAI from "openai"
+import { openaiWithRetry } from "@/lib/utils-retry"
+import { structureOpenAIError, logStructuredError, type StructuredError } from "@/lib/errors"
 
 export type TextMode = "improve" | "correct" | "translate" | "summarize"
 export type StructuredMode = "fiche" | "quiz" | "collection" | "subject"
@@ -847,16 +849,49 @@ ${text}`
     }
   }
 
-  const completion = await client.chat.completions.create({
-    model: "gpt-4o-mini",
-    messages: [
-      { role: "system", content: systemPrompt },
-      { role: "user", content: userContent },
-    ],
-    temperature: temperature,
-    max_tokens: 4000,
-    response_format: responseFormat,
-  })
+  // Utiliser retry avec backoff exponentiel pour les appels OpenAI
+  // Phase 2: Gestion d'erreurs améliorée avec contexte
+  const metadataContext = metadata as any
+  let completion
+  try {
+    completion = await openaiWithRetry(
+      () =>
+        client.chat.completions.create({
+          model: "gpt-4o-mini",
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userContent },
+          ],
+          temperature: temperature,
+          max_tokens: 4000,
+          response_format: responseFormat,
+        }),
+      {
+        maxAttempts: 3,
+        initialDelayMs: 2000,
+        context: {
+          documentId: metadataContext?.documentId,
+          documentTitle: metadataContext?.documentTitle,
+          sectionHeading: metadataContext?.sectionHeading,
+          mode: mode,
+        },
+      }
+    )
+  } catch (error: any) {
+    // Structurer l'erreur pour un meilleur logging et messages user-friendly
+    const structuredError = structureOpenAIError(error, {
+      documentId: metadataContext?.documentId,
+      documentTitle: metadataContext?.documentTitle,
+      sectionHeading: metadataContext?.sectionHeading,
+      mode: mode,
+    })
+    logStructuredError(structuredError)
+    // Re-throw avec le message user-friendly
+    const userFriendlyError = new Error(structuredError.userMessage)
+    // @ts-ignore - Ajouter les propriétés pour le fallback
+    userFriendlyError.structuredError = structuredError
+    throw userFriendlyError
+  }
 
   let result = completion.choices[0]?.message?.content?.trim() ?? ""
   if (!result) {
@@ -923,16 +958,51 @@ async function runStructuredMode<T>(mode: StructuredMode, text: string, metadata
     }
   }
 
-  const completion = await client.chat.completions.create({
-    model: model,
-    messages: [
-      { role: "system", content: systemPrompt },
-      { role: "user", content: userMessage },
-    ],
-    temperature: 0.3, // Réduire la température pour plus de cohérence
-    max_tokens: maxTokens,
-    response_format: { type: "json_object" },
-  } as any)
+  // Utiliser retry avec backoff exponentiel pour les appels OpenAI
+  // Phase 2: Gestion d'erreurs améliorée avec contexte
+  const metadataContext = metadata as any
+  let completion
+  try {
+    completion = await openaiWithRetry(
+      () =>
+        client.chat.completions.create({
+          model: model,
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userMessage },
+          ],
+          temperature: 0.3, // Réduire la température pour plus de cohérence
+          max_tokens: maxTokens,
+          response_format: { type: "json_object" },
+        } as any),
+      {
+        maxAttempts: 3,
+        initialDelayMs: 2000, // 2 secondes pour OpenAI
+        context: {
+          documentId: metadataContext?.documentId,
+          documentTitle: metadataContext?.documentTitle,
+          collectionId: metadataContext?.collectionId,
+          collectionTitle: metadataContext?.collectionTitle,
+          mode: mode,
+        },
+      }
+    )
+  } catch (error: any) {
+    // Structurer l'erreur pour un meilleur logging et messages user-friendly
+    const structuredError = structureOpenAIError(error, {
+      documentId: metadataContext?.documentId,
+      documentTitle: metadataContext?.documentTitle,
+      collectionId: metadataContext?.collectionId,
+      collectionTitle: metadataContext?.collectionTitle,
+      mode: mode,
+    })
+    logStructuredError(structuredError)
+    // Re-throw avec le message user-friendly
+    const userFriendlyError = new Error(structuredError.userMessage)
+    // @ts-ignore - Ajouter les propriétés pour le fallback
+    userFriendlyError.structuredError = structuredError
+    throw userFriendlyError
+  }
 
   const result = completion.choices[0]?.message?.content?.trim() ?? ""
   if (!result) {
@@ -1040,16 +1110,51 @@ async function generateCollectionStudySetWithChunking(
       `[generateCollectionStudySetWithChunking] Chunk ${chunkIndex + 1}/${totalChunks}: ${flashcardsTarget} FC + ${quizTarget} Q, max_tokens: ${maxTokens}`
     )
 
-    const completion = await client.chat.completions.create({
-      model: "gpt-4o-mini", // Utiliser gpt-4o-mini pour tous les chunks comme demandé
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userMessage },
-      ],
-      temperature: 0.3,
-      max_tokens: maxTokens,
-      response_format: { type: "json_object" },
-    } as any)
+    // Utiliser retry avec backoff exponentiel pour les appels OpenAI
+    // Phase 2: Gestion d'erreurs améliorée avec contexte
+    const metadataContext = metadata as any
+    let completion
+    try {
+      completion = await openaiWithRetry(
+        () =>
+          client.chat.completions.create({
+            model: "gpt-4o-mini", // Utiliser gpt-4o-mini pour tous les chunks comme demandé
+            messages: [
+              { role: "system", content: systemPrompt },
+              { role: "user", content: userMessage },
+            ],
+            temperature: 0.3,
+            max_tokens: maxTokens,
+            response_format: { type: "json_object" },
+          } as any),
+        {
+          maxAttempts: 3,
+          initialDelayMs: 2000,
+          context: {
+            collectionId: metadataContext?.collectionId,
+            collectionTitle: metadataContext?.collectionTitle,
+            chunkIndex: chunkIndex + 1,
+            totalChunks,
+            mode: "collection-chunking",
+          },
+        }
+      )
+    } catch (error: any) {
+      // Structurer l'erreur pour un meilleur logging et messages user-friendly
+      const structuredError = structureOpenAIError(error, {
+        collectionId: metadataContext?.collectionId,
+        collectionTitle: metadataContext?.collectionTitle,
+        chunkIndex: chunkIndex + 1,
+        totalChunks,
+        mode: "collection-chunking",
+      })
+      logStructuredError(structuredError)
+      // Re-throw avec le message user-friendly
+      const userFriendlyError = new Error(`Chunk ${chunkIndex + 1}/${totalChunks}: ${structuredError.userMessage}`)
+      // @ts-ignore - Ajouter les propriétés pour le fallback
+      userFriendlyError.structuredError = structuredError
+      throw userFriendlyError
+    }
 
     const result = completion.choices[0]?.message?.content?.trim() ?? ""
     if (!result) {
@@ -1090,12 +1195,25 @@ async function generateCollectionStudySetWithChunking(
     totalCompletionTokens += result.completionTokens ?? 0
   }
 
+  // Phase 2: Détection et suppression des doublons avant fusion
+  const deduplicatedFlashcards = deduplicateFlashcards(mergedFlashcards)
+  const deduplicatedQuiz = deduplicateQuizQuestions(mergedQuiz)
+
+  console.log(`[generateCollectionStudySetWithChunking] Détection doublons:`, {
+    flashcardsAvant: mergedFlashcards.length,
+    flashcardsApres: deduplicatedFlashcards.length,
+    flashcardsSupprimees: mergedFlashcards.length - deduplicatedFlashcards.length,
+    quizAvant: mergedQuiz.length,
+    quizApres: deduplicatedQuiz.length,
+    quizSupprimees: mergedQuiz.length - deduplicatedQuiz.length,
+  })
+
   // Limiter aux cibles totales si on dépasse (peut arriver avec les overlaps)
   const totalFlashcardsTarget = targetsPerChunk.reduce((sum, t) => sum + t.flashcardsTarget, 0)
   const totalQuizTarget = targetsPerChunk.reduce((sum, t) => sum + t.quizTarget, 0)
 
-  const finalFlashcards = mergedFlashcards.slice(0, totalFlashcardsTarget)
-  const finalQuiz = mergedQuiz.slice(0, totalQuizTarget)
+  const finalFlashcards = deduplicatedFlashcards.slice(0, totalFlashcardsTarget)
+  const finalQuiz = deduplicatedQuiz.slice(0, totalQuizTarget)
 
   console.log(`[generateCollectionStudySetWithChunking] Résultats fusionnés:`, {
     flashcardsGenerees: mergedFlashcards.length,
@@ -1128,6 +1246,65 @@ async function generateCollectionStudySetWithChunking(
     completionTokens: totalCompletionTokens,
     model: "gpt-4o-mini",
   }
+}
+
+/**
+ * Phase 2: Détecte et supprime les flashcards en double basé sur la similarité sémantique
+ * Utilise une comparaison simple basée sur la normalisation du texte
+ */
+function deduplicateFlashcards(flashcards: StudySetFlashcard[]): StudySetFlashcard[] {
+  const seen = new Set<string>()
+  const deduplicated: StudySetFlashcard[] = []
+
+  for (const card of flashcards) {
+    // Normaliser la question pour la comparaison (minuscules, supprimer espaces/ponctuation)
+    const normalizedQuestion = card.question
+      .toLowerCase()
+      .replace(/[^\w\s]/g, "")
+      .replace(/\s+/g, " ")
+      .trim()
+
+    // Créer une clé unique basée sur la question normalisée
+    const key = normalizedQuestion
+
+    if (!seen.has(key)) {
+      seen.add(key)
+      deduplicated.push(card)
+    } else {
+      console.log(`[deduplicateFlashcards] Doublon détecté et supprimé: "${card.question.substring(0, 50)}..."`)
+    }
+  }
+
+  return deduplicated
+}
+
+/**
+ * Phase 2: Détecte et supprime les questions de quiz en double basé sur la similarité sémantique
+ */
+function deduplicateQuizQuestions(questions: QuizQuestionPayload[]): QuizQuestionPayload[] {
+  const seen = new Set<string>()
+  const deduplicated: QuizQuestionPayload[] = []
+
+  for (const question of questions) {
+    // Normaliser le prompt pour la comparaison
+    const normalizedPrompt = question.prompt
+      .toLowerCase()
+      .replace(/[^\w\s]/g, "")
+      .replace(/\s+/g, " ")
+      .trim()
+
+    // Créer une clé unique basée sur le prompt normalisé
+    const key = normalizedPrompt
+
+    if (!seen.has(key)) {
+      seen.add(key)
+      deduplicated.push(question)
+    } else {
+      console.log(`[deduplicateQuizQuestions] Doublon détecté et supprimé: "${question.prompt.substring(0, 50)}..."`)
+    }
+  }
+
+  return deduplicated
 }
 
 /**

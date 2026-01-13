@@ -634,6 +634,7 @@
     "hallOfFameTitle": "Your Personal<br />Hall of Fame.",
     "hallOfFameDesc": "Pin your most important subjects and documents here for lightning-fast access.",
     "starSubjectsTitle": "Star Subjects.",
+    "exampleSubject": "Calculus I",
     "starSubjectsDesc": "Keep your current focus top of mind.",
     "keyDocumentsTitle": "Key Documents.",
     "keyDocumentsDesc": "Never lose track of that one cheat sheet.",
@@ -698,5 +699,39 @@
       "successRedirect": "✅ Logged in! Redirecting...",
       "genericError": "An error occurred"
     }
+  },
+  "Errors": {
+    "ai": {
+      "authentication": "AI authentication error. Please contact support.",
+      "rateLimit": "Too many simultaneous requests. Please wait a few moments before trying again.",
+      "quotaExceeded": "Usage quota exceeded. Please try again later or contact support.",
+      "contextTooLong": "The document is too long to be processed at once. Please divide it into smaller sections.",
+      "serverError": "Temporary AI server error. Please try again in a few moments.",
+      "timeout": "The request took too long. Please try again with a shorter document or divide your request.",
+      "networkError": "Network connection error. Check your internet connection and try again.",
+      "unknown": "An unexpected error occurred. Please try again or contact support if the problem persists."
+    },
+    "fallback": {
+      "regenerate": "Regenerate",
+      "manualMode": "Manual mode",
+      "suggestRegenerate": "You can try to regenerate the content.",
+      "suggestManual": "You can also create the content manually."
+    }
+  },
+  "Search": {
+    "placeholder": "SEARCH EVERYTHING...",
+    "all": "All",
+    "documents": "Documents",
+    "flashcards": "Flashcards",
+    "quiz": "Quiz",
+    "subjects": "Subjects",
+    "searching": "Searching...",
+    "noResults": "No results",
+    "tryDifferentQuery": "Try different keywords",
+    "startTyping": "Start typing",
+    "minChars": "Minimum 2 characters",
+    "navigate": "Navigate",
+    "select": "Select",
+    "close": "Close"
   }
 }

@@ -161,13 +161,48 @@ export default function SubjectView({ subject, onBack, onSelectDocument, onUpdat
     },
     staleTime: 30_000, // 30 secondes
     gcTime: 5 * 60 * 1000, // 5 minutes
-    refetchInterval: (query) => {
-      const data = query.state.data as any[]
-      if (!data) return false
-      const hasProcessingDocs = data.some((doc: any) => doc.status === "processing")
-      return hasProcessingDocs ? 5000 : false
-    },
+    refetchOnMount: false, // Éviter les refetches inutiles
   })
+
+  // Polling manuel optimisé pour éviter les réexécutions excessives
+  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null)
+  const lastProcessingIdsRef = useRef<string>("")
+
+  useEffect(() => {
+    // Nettoyer l'intervalle existant
+    if (pollingIntervalRef.current) {
+      clearInterval(pollingIntervalRef.current)
+      pollingIntervalRef.current = null
+    }
+
+    // Créer une clé stable basée uniquement sur les IDs et statuts des documents en traitement
+    const processingIdsKey = documents
+      .filter((doc: any) => doc.status === "processing")
+      .map((doc: any) => `${doc.id}:${doc.status}`)
+      .sort()
+      .join(",")
+
+    // Ne créer un nouvel intervalle que si :
+    // 1. Il y a des documents en traitement
+    // 2. La clé a changé (nouveaux documents ou changement de statut)
+    if (processingIdsKey && processingIdsKey !== lastProcessingIdsRef.current) {
+      lastProcessingIdsRef.current = processingIdsKey
+      pollingIntervalRef.current = setInterval(() => {
+        queryClient.refetchQueries({ queryKey: ["subject-documents", subject.id] })
+      }, 5000) // Poll toutes les 5 secondes
+    } else if (!processingIdsKey) {
+      // Plus de documents en traitement, arrêter le polling
+      lastProcessingIdsRef.current = ""
+    }
+
+    // Cleanup
+    return () => {
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current)
+        pollingIntervalRef.current = null
+      }
+    }
+  }, [documents, queryClient, subject.id])
 
   // Précharger les flashcards/quiz en arrière-plan pour éviter les lags au switch
   const { data: studyData, isLoading: isLoadingStudy, error: studyError } = useQuery({
@@ -646,7 +681,7 @@ export default function SubjectView({ subject, onBack, onSelectDocument, onUpdat
       {/* Header avec design premium - Caché quand on affiche flashcards/quiz */}
       {!isViewingStudy && (
         <div className="flex-shrink-0 z-20 px-6 pt-6 mb-4">
-          <div className="bg-white border-2 border-black rounded-3xl p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] relative overflow-hidden">
+          <div className="bg-card border-2 border-border rounded-3xl p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)] relative overflow-hidden">
             {/* Ambient background glow inside header */}
             <div className="absolute top-0 right-0 w-64 h-64 bg-[#DDD6FE] rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2 opacity-50 pointer-events-none" />
 
@@ -657,12 +692,12 @@ export default function SubjectView({ subject, onBack, onSelectDocument, onUpdat
                     variant="ghost"
                     onClick={onBack}
                     size="icon"
-                    className="h-12 w-12 rounded-xl border-2 border-black hover:bg-black hover:text-white transition-colors"
+                    className="h-12 w-12 rounded-xl border-2 border-border hover:bg-foreground hover:text-background transition-colors text-foreground"
                   >
                     <ArrowLeft className="h-6 w-6" strokeWidth={3} />
                   </Button>
                   <div>
-                    <h1 className="text-4xl font-black tracking-tight text-black flex items-center gap-3 uppercase">
+                    <h1 className="text-4xl font-black tracking-tight text-foreground flex items-center gap-3 uppercase">
                       {subject.title}
                       <button
                         onClick={() => {
@@ -670,20 +705,20 @@ export default function SubjectView({ subject, onBack, onSelectDocument, onUpdat
                           setEditColor(subject.color || "from-blue-500/20 via-blue-400/10 to-purple-500/20")
                           setIsEditDialogOpen(true)
                         }}
-                        className="p-2 rounded-lg hover:bg-gray-100 hover:text-black transition-colors"
+                        className="p-2 rounded-lg hover:bg-muted hover:text-foreground transition-colors text-foreground"
                       >
                         <Pencil className="h-5 w-5" />
                       </button>
                       <button
                         onClick={handleToggleFavorite}
                         className={cn(
-                          "p-2 rounded-lg hover:bg-gray-100 transition-colors",
-                          subject.is_favorite ? "text-yellow-500 hover:text-yellow-600" : "text-gray-400 hover:text-yellow-500"
+                          "p-2 rounded-lg hover:bg-muted transition-colors",
+                          subject.is_favorite ? "text-accent hover:text-accent/80" : "text-muted-foreground hover:text-accent"
                         )}
                       >
                         <Star className={cn("h-6 w-6", subject.is_favorite && "fill-yellow-500 text-yellow-500")} strokeWidth={2.5} />
                       </button>
-                      <span className="text-sm font-bold text-black bg-[#FBCFE8] px-3 py-1 rounded-full border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                      <span className="text-sm font-bold text-foreground bg-secondary px-3 py-1 rounded-full border-2 border-border shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)]">
                         {(subject.doc_count || 0)} DOC{(subject.doc_count || 0) > 1 ? "S" : ""}
                       </span>
                     </h1>
@@ -692,13 +727,13 @@ export default function SubjectView({ subject, onBack, onSelectDocument, onUpdat
 
                 <div className="flex items-center gap-3">
                   <div className="relative group">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-black pointer-events-none z-10" strokeWidth={2.5} />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-foreground pointer-events-none z-10" strokeWidth={2.5} />
                     <input
                       type="text"
                       placeholder={t("searchPlaceholder")}
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-64 pl-10 pr-4 py-3 text-sm font-bold rounded-xl border-2 border-black bg-white focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] focus:outline-none transition-all placeholder:text-gray-400 text-black uppercase"
+                      className="w-64 pl-10 pr-4 py-3 text-sm font-bold rounded-xl border-2 border-border bg-card focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:focus:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] focus:outline-none transition-all placeholder:text-muted-foreground text-foreground uppercase"
                     />
                   </div>
                   <Button
@@ -725,18 +760,18 @@ export default function SubjectView({ subject, onBack, onSelectDocument, onUpdat
                     className={cn(
                       "relative py-3 px-5 rounded-xl flex items-center gap-2 text-sm font-black uppercase transition-all duration-200 border-2 border-transparent",
                       activeTab === tab.id
-                        ? cn("border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] -translate-y-1", tab.color, "text-black")
-                        : "text-gray-500 hover:text-black hover:bg-gray-100 hover:border-black"
+                        ? cn("border-border shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] -translate-y-1", tab.color, "text-foreground")
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted hover:border-border"
                     )}
                   >
-                    <tab.icon className={cn("h-5 w-5", activeTab === tab.id ? "text-black" : "text-gray-400 group-hover:text-black")} strokeWidth={2.5} />
+                    <tab.icon className={cn("h-5 w-5", activeTab === tab.id ? "text-foreground" : "text-muted-foreground group-hover:text-foreground")} strokeWidth={2.5} />
                     <span>{tab.label}</span>
                     {tab.count > 0 && (
                       <span className={cn(
-                        "px-2 py-0.5 rounded-lg text-[10px] font-black ml-1 border-2 border-black",
+                        "px-2 py-0.5 rounded-lg text-[10px] font-black ml-1 border-2 border-border",
                         activeTab === tab.id
-                          ? "bg-white text-black"
-                          : "bg-gray-200 text-gray-500 border-transparent"
+                          ? "bg-card text-foreground"
+                          : "bg-muted text-muted-foreground border-transparent"
                       )}>
                         {tab.count}
                       </span>
@@ -767,20 +802,20 @@ export default function SubjectView({ subject, onBack, onSelectDocument, onUpdat
                 {isLoading ? (
                   <div className="flex items-center justify-center py-12">
                     <div className="flex flex-col items-center gap-4">
-                      <Loader2 className="h-8 w-8 animate-spin text-black" />
-                      <p className="text-sm text-gray-500 font-bold uppercase">{t("loadingDocuments")}</p>
+                      <Loader2 className="h-8 w-8 animate-spin text-foreground" />
+                      <p className="text-sm text-muted-foreground font-bold uppercase">{t("loadingDocuments")}</p>
                     </div>
                   </div>
                 ) : filteredDocs.length === 0 ? (
                   <div className="flex flex-col items-center justify-center text-center">
-                    <div className="rounded-3xl bg-white border-2 border-black p-16 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] max-w-lg w-full relative overflow-hidden group">
-                      <div className="absolute top-0 left-0 w-full h-2 bg-[#FDE68A] border-b-2 border-black"></div>
+                    <div className="rounded-3xl bg-card border-2 border-border p-16 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)] max-w-lg w-full relative overflow-hidden group">
+                      <div className="absolute top-0 left-0 w-full h-2 bg-accent border-b-2 border-border"></div>
 
-                      <div className="w-24 h-24 rounded-full bg-[#BAE6FD] border-2 border-black flex items-center justify-center mb-6 mx-auto shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] group-hover:scale-110 transition-transform">
-                        <FileText className="h-10 w-10 text-black" strokeWidth={2.5} />
+                      <div className="w-24 h-24 rounded-full bg-[#BAE6FD] border-2 border-border flex items-center justify-center mb-6 mx-auto shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] group-hover:scale-110 transition-transform">
+                        <FileText className="h-10 w-10 text-foreground" strokeWidth={2.5} />
                       </div>
-                      <h3 className="text-2xl font-black uppercase mb-2">{t("noDocuments")}</h3>
-                      <p className="text-gray-500 font-medium max-w-md mb-8 leading-relaxed mx-auto">
+                      <h3 className="text-2xl font-black uppercase mb-2 text-foreground">{t("noDocuments")}</h3>
+                      <p className="text-muted-foreground font-medium max-w-md mb-8 leading-relaxed mx-auto">
                         {t("noDocumentsDesc")}
                       </p>
                       <Button
@@ -799,24 +834,24 @@ export default function SubjectView({ subject, onBack, onSelectDocument, onUpdat
                       <div
                         key={doc.id}
                         onClick={() => handleViewPdf(doc.id)}
-                        className="group relative bg-white border-2 border-black rounded-2xl p-5 transition-all duration-200 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 cursor-pointer flex items-center gap-5"
+                        className="group relative bg-card border-2 border-border rounded-2xl p-5 transition-all duration-200 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[6px_6px_0px_0px_rgba(255,255,255,1)] hover:-translate-y-1 cursor-pointer flex items-center gap-5"
                       >
-                        <div className="flex-shrink-0 w-16 h-16 rounded-xl bg-[#F3F4F6] border-2 border-black flex items-center justify-center text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] group-hover:bg-[#BAE6FD] transition-colors">
+                        <div className="flex-shrink-0 w-16 h-16 rounded-xl bg-muted border-2 border-border flex items-center justify-center text-foreground shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)] group-hover:bg-[#BAE6FD] transition-colors">
                           <FileText className="h-8 w-8" strokeWidth={2} />
                         </div>
 
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between gap-4">
                             <div>
-                              <h3 className="font-black text-lg text-black mb-1 group-hover:underline decoration-2 underline-offset-2">
+                              <h3 className="font-black text-lg text-foreground mb-1 group-hover:underline decoration-2 underline-offset-2">
                                 {doc.title}
                               </h3>
-                              <div className="flex items-center gap-3 text-xs font-bold text-gray-500 uppercase">
+                              <div className="flex items-center gap-3 text-xs font-bold text-muted-foreground uppercase">
                                 <span className="flex items-center gap-1.5">
                                   <Calendar className="h-4 w-4" />
                                   {new Date(doc.created_at).toLocaleDateString()}
                                 </span>
-                                <span className="w-1.5 h-1.5 rounded-full bg-black" />
+                                <span className="w-1.5 h-1.5 rounded-full bg-foreground" />
                                 <span className="flex items-center gap-1.5">
                                   <BookOpen className="h-4 w-4" />
                                   {doc.note_count || 0} {t("notes")}
@@ -832,7 +867,7 @@ export default function SubjectView({ subject, onBack, onSelectDocument, onUpdat
                                     e.stopPropagation()
                                     handleOpenGenerationDialog("flashcards")
                                   }}
-                                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-black uppercase bg-[#FBCFE8] text-black border-2 border-black hover:bg-[#F9A8D4] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-[1px] transition-all"
+                                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-black uppercase bg-[#FBCFE8] dark:bg-pink-950/30 text-foreground border-2 border-border hover:bg-[#F9A8D4] dark:hover:bg-pink-950/50 hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)] hover:-translate-y-[1px] transition-all"
                                 >
                                   <Brain className="h-4 w-4" strokeWidth={2.5} />
                                   Flashcards
@@ -842,7 +877,7 @@ export default function SubjectView({ subject, onBack, onSelectDocument, onUpdat
                                     e.stopPropagation()
                                     handleOpenGenerationDialog("quiz")
                                   }}
-                                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-black uppercase bg-[#BBF7D0] text-black border-2 border-black hover:bg-[#86EFAC] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-[1px] transition-all"
+                                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-black uppercase bg-[#BBF7D0] dark:bg-emerald-950/30 text-foreground border-2 border-border hover:bg-[#86EFAC] dark:hover:bg-emerald-950/50 hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)] hover:-translate-y-[1px] transition-all"
                                 >
                                   <ListChecks className="h-4 w-4" strokeWidth={2.5} />
                                   Quiz
@@ -863,7 +898,7 @@ export default function SubjectView({ subject, onBack, onSelectDocument, onUpdat
 
                               <button
                                 onClick={(e) => handleDeleteDocument(doc.id, e, doc.title)}
-                                className="p-2 rounded-full hover:bg-red-100 text-gray-400 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
+                                className="p-2 rounded-full hover:bg-red-100 dark:hover:bg-red-950/30 text-muted-foreground hover:text-red-500 dark:hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100"
                               >
                                 <Trash2 className="h-4 w-4" />
                               </button>
@@ -885,10 +920,10 @@ export default function SubjectView({ subject, onBack, onSelectDocument, onUpdat
                                         router.push(`/documents/${doc.id}/sections/${summary.sectionId}`)
                                       }
                                     }}
-                                    className="flex-shrink-0 w-64 p-3 rounded-xl bg-gray-50 hover:bg-gray-100 border-2 border-black transition-colors text-xs cursor-pointer shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+                                    className="flex-shrink-0 w-64 p-3 rounded-xl bg-muted hover:bg-muted/80 border-2 border-border transition-colors text-xs cursor-pointer shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)]"
                                   >
-                                    <h4 className="font-bold mb-1 line-clamp-1 uppercase text-black">{summary.heading}</h4>
-                                    <p className="text-gray-500 line-clamp-2">
+                                    <h4 className="font-bold mb-1 line-clamp-1 uppercase text-foreground">{summary.heading}</h4>
+                                    <p className="text-muted-foreground line-clamp-2">
                                       {summary.summary.replace(/#{1,6}\s?/g, '').replace(/\*\*/g, '').replace(/\*/g, '').replace(/\[([^\]]+)\]\([^\)]+\)/g, '$1').replace(/`{3}[\s\S]*?`{3}/g, '').replace(/`([^`]+)`/g, '$1')}
                                     </p>
                                   </div>
@@ -910,22 +945,22 @@ export default function SubjectView({ subject, onBack, onSelectDocument, onUpdat
                 {isLoadingStudy ? (
                   <div className="flex items-center justify-center py-12">
                     <div className="flex flex-col items-center gap-4">
-                      <Loader2 className="h-8 w-8 animate-spin text-black" />
-                      <p className="text-sm text-gray-500 font-bold uppercase">{tCommon("loading")}</p>
+                      <Loader2 className="h-8 w-8 animate-spin text-foreground" />
+                      <p className="text-sm text-muted-foreground font-bold uppercase">{tCommon("loading")}</p>
                     </div>
                   </div>
                 ) : flashcardsCollections.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-16 text-center bg-white border-2 border-dashed border-black rounded-3xl">
-                    <div className="w-24 h-24 rounded-full bg-[#FBCFE8] border-2 border-black flex items-center justify-center mb-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-                      <Brain className="h-10 w-10 text-black" strokeWidth={2.5} />
+                      <div className="flex flex-col items-center justify-center py-16 text-center bg-card border-2 border-dashed border-border rounded-3xl">
+                    <div className="w-24 h-24 rounded-full bg-[#FBCFE8] border-2 border-border flex items-center justify-center mb-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)]">
+                      <Brain className="h-10 w-10 text-foreground" strokeWidth={2.5} />
                     </div>
-                    <h3 className="text-2xl font-black uppercase mb-2">{t("noFlashcards")}</h3>
-                    <p className="text-gray-500 font-medium max-w-md mb-8">
+                    <h3 className="text-2xl font-black uppercase mb-2 text-foreground">{t("noFlashcards")}</h3>
+                    <p className="text-muted-foreground font-medium max-w-md mb-8">
                       {t("noFlashcardsDesc")}
                     </p>
                     <Button
                       onClick={() => handleOpenGenerationDialog("flashcards")}
-                      className="h-12 rounded-xl px-8 bg-black text-white hover:bg-[#8B5CF6] hover:text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-y-[2px] active:translate-y-[4px] active:shadow-none transition-all border-2 border-black font-black uppercase"
+                      className="h-12 rounded-xl px-8 bg-foreground text-background hover:bg-primary hover:text-primary-foreground shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] hover:translate-y-[2px] active:translate-y-[4px] active:shadow-none transition-all border-2 border-border font-black uppercase"
                     >
                       <Sparkles className="h-5 w-5 mr-2" />
                       {t("createFlashcardsNow")}
@@ -939,26 +974,26 @@ export default function SubjectView({ subject, onBack, onSelectDocument, onUpdat
                         onClick={() => {
                           setSelectedFlashcardCollectionId(collection.id)
                         }}
-                        className="group bg-white border-2 border-black rounded-3xl p-6 hover:shadow-[8px_8px_0px_0px_#FBCFE8] hover:-translate-y-1 transition-all cursor-pointer relative overflow-hidden"
+                        className="group bg-card border-2 border-border rounded-3xl p-6 hover:shadow-[8px_8px_0px_0px_#FBCFE8] dark:hover:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)] hover:-translate-y-1 transition-all cursor-pointer relative overflow-hidden shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:shadow-[6px_6px_0px_0px_rgba(255,255,255,1)]"
                       >
                         <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                          <Brain className="h-24 w-24" />
+                          <Brain className="h-24 w-24 text-foreground" />
                         </div>
                         <div className="flex justify-between items-start mb-4 relative z-10">
-                          <div className="w-12 h-12 bg-[#FBCFE8] rounded-xl border-2 border-black flex items-center justify-center shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
-                            <Brain className="h-6 w-6 text-black" strokeWidth={2.5} />
+                          <div className="w-12 h-12 bg-[#FBCFE8] dark:bg-pink-950/30 rounded-xl border-2 border-border flex items-center justify-center shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)]">
+                            <Brain className="h-6 w-6 text-foreground" strokeWidth={2.5} />
                           </div>
-                          <span className="bg-black text-white px-2 py-1 rounded-lg text-xs font-black uppercase">
+                          <span className="bg-foreground text-background px-2 py-1 rounded-lg text-xs font-black uppercase">
                             {collection.flashcards?.length || 0} Cards
                           </span>
                         </div>
-                        <h3 className="font-black text-xl mb-1 relative z-10 line-clamp-2 uppercase">{collection.title}</h3>
-                        <p className="text-gray-500 text-xs font-bold uppercase relative z-10">
+                        <h3 className="font-black text-xl mb-1 relative z-10 line-clamp-2 uppercase text-foreground">{collection.title}</h3>
+                        <p className="text-muted-foreground text-xs font-bold uppercase relative z-10">
                           {new Date(collection.created_at).toLocaleDateString()}
                         </p>
                         <button
                           onClick={(e) => handleDeleteStudyCollection(collection.id, e, collection.title, "flashcards")}
-                          className="absolute bottom-4 right-4 p-2 rounded-lg hover:bg-red-100 text-gray-400 hover:text-red-600 transition-colors z-20"
+                          className="absolute bottom-4 right-4 p-2 rounded-lg hover:bg-red-100 dark:hover:bg-red-950/30 text-muted-foreground hover:text-red-600 dark:hover:text-red-400 transition-colors z-20"
                         >
                           <Trash2 className="h-5 w-5" />
                         </button>
@@ -975,22 +1010,22 @@ export default function SubjectView({ subject, onBack, onSelectDocument, onUpdat
                 {isLoadingStudy ? (
                   <div className="flex items-center justify-center py-12">
                     <div className="flex flex-col items-center gap-4">
-                      <Loader2 className="h-8 w-8 animate-spin text-black" />
-                      <p className="text-sm text-gray-500 font-bold uppercase">{tCommon("loading")}</p>
+                      <Loader2 className="h-8 w-8 animate-spin text-foreground" />
+                      <p className="text-sm text-muted-foreground font-bold uppercase">{tCommon("loading")}</p>
                     </div>
                   </div>
                 ) : quizCollections.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-16 text-center bg-white border-2 border-dashed border-black rounded-3xl">
-                    <div className="w-24 h-24 rounded-full bg-[#BBF7D0] border-2 border-black flex items-center justify-center mb-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-                      <ListChecks className="h-10 w-10 text-black" strokeWidth={2.5} />
+                      <div className="flex flex-col items-center justify-center py-16 text-center bg-card border-2 border-dashed border-border rounded-3xl">
+                    <div className="w-24 h-24 rounded-full bg-[#BBF7D0] border-2 border-border flex items-center justify-center mb-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)]">
+                      <ListChecks className="h-10 w-10 text-foreground" strokeWidth={2.5} />
                     </div>
-                    <h3 className="text-2xl font-black uppercase mb-2">{t("noQuiz")}</h3>
-                    <p className="text-gray-500 font-medium max-w-md mb-8">
+                    <h3 className="text-2xl font-black uppercase mb-2 text-foreground">{t("noQuiz")}</h3>
+                    <p className="text-muted-foreground font-medium max-w-md mb-8">
                       {t("noQuizDesc")}
                     </p>
                     <Button
                       onClick={() => handleOpenGenerationDialog("quiz")}
-                      className="h-12 rounded-xl px-8 bg-black text-white hover:bg-[#8B5CF6] hover:text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-y-[2px] active:translate-y-[4px] active:shadow-none transition-all border-2 border-black font-black uppercase"
+                      className="h-12 rounded-xl px-8 bg-foreground text-background hover:bg-primary hover:text-primary-foreground shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] hover:translate-y-[2px] active:translate-y-[4px] active:shadow-none transition-all border-2 border-border font-black uppercase"
                     >
                       <Sparkles className="h-5 w-5 mr-2" />
                       {t("createQuizNow")}
@@ -1004,26 +1039,26 @@ export default function SubjectView({ subject, onBack, onSelectDocument, onUpdat
                         onClick={() => {
                           setSelectedQuizCollection(collection)
                         }}
-                        className="group bg-white border-2 border-black rounded-3xl p-6 hover:shadow-[8px_8px_0px_0px_#BBF7D0] hover:-translate-y-1 transition-all cursor-pointer relative overflow-hidden"
+                        className="group bg-card border-2 border-border rounded-3xl p-6 hover:shadow-[8px_8px_0px_0px_#BBF7D0] dark:hover:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)] hover:-translate-y-1 transition-all cursor-pointer relative overflow-hidden shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:shadow-[6px_6px_0px_0px_rgba(255,255,255,1)]"
                       >
                         <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                          <ListChecks className="h-24 w-24" />
+                          <ListChecks className="h-24 w-24 text-foreground" />
                         </div>
                         <div className="flex justify-between items-start mb-4 relative z-10">
-                          <div className="w-12 h-12 bg-[#BBF7D0] rounded-xl border-2 border-black flex items-center justify-center shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
-                            <ListChecks className="h-6 w-6 text-black" strokeWidth={2.5} />
+                          <div className="w-12 h-12 bg-[#BBF7D0] dark:bg-emerald-950/30 rounded-xl border-2 border-border flex items-center justify-center shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)]">
+                            <ListChecks className="h-6 w-6 text-foreground" strokeWidth={2.5} />
                           </div>
-                          <span className="bg-black text-white px-2 py-1 rounded-lg text-xs font-black uppercase">
+                          <span className="bg-foreground text-background px-2 py-1 rounded-lg text-xs font-black uppercase">
                             {collection.quizQuestions?.length || 0} Questions
                           </span>
                         </div>
-                        <h3 className="font-black text-xl mb-1 relative z-10 line-clamp-2 uppercase">{collection.title}</h3>
-                        <p className="text-gray-500 text-xs font-bold uppercase relative z-10">
+                        <h3 className="font-black text-xl mb-1 relative z-10 line-clamp-2 uppercase text-foreground">{collection.title}</h3>
+                        <p className="text-muted-foreground text-xs font-bold uppercase relative z-10">
                           {new Date(collection.created_at).toLocaleDateString()}
                         </p>
                         <button
                           onClick={(e) => handleDeleteStudyCollection(collection.id, e, collection.title, "quiz")}
-                          className="absolute bottom-4 right-4 p-2 rounded-lg hover:bg-red-100 text-gray-400 hover:text-red-600 transition-colors z-20"
+                          className="absolute bottom-4 right-4 p-2 rounded-lg hover:bg-red-100 dark:hover:bg-red-950/30 text-muted-foreground hover:text-red-600 dark:hover:text-red-400 transition-colors z-20"
                         >
                           <Trash2 className="h-5 w-5" />
                         </button>
@@ -1041,23 +1076,23 @@ export default function SubjectView({ subject, onBack, onSelectDocument, onUpdat
                   <div className="flex items-center justify-center py-12">
                     <div className="flex flex-col items-center gap-4">
                       <Loader2 className="h-8 w-8 animate-spin text-black" />
-                      <p className="text-sm text-gray-500 font-bold uppercase">{t("loadingSummaries")}</p>
+                      <p className="text-sm text-muted-foreground font-bold uppercase">{t("loadingSummaries")}</p>
                     </div>
                   </div>
                 ) : totalSummaries === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-16 text-center bg-white border-2 border-dashed border-black rounded-3xl">
-                    <div className="w-24 h-24 rounded-full bg-[#FDE68A] border-2 border-black flex items-center justify-center mb-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-                      <BookOpen className="h-10 w-10 text-black" strokeWidth={2.5} />
+                      <div className="flex flex-col items-center justify-center py-16 text-center bg-card border-2 border-dashed border-border rounded-3xl">
+                    <div className="w-24 h-24 rounded-full bg-[#FDE68A] border-2 border-border flex items-center justify-center mb-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)]">
+                      <BookOpen className="h-10 w-10 text-foreground" strokeWidth={2.5} />
                     </div>
-                    <h3 className="text-2xl font-black uppercase mb-2">{t("noSummaries")}</h3>
-                    <p className="text-gray-500 font-medium max-w-md mb-8">
+                    <h3 className="text-2xl font-black uppercase mb-2 text-foreground">{t("noSummaries")}</h3>
+                    <p className="text-muted-foreground font-medium max-w-md mb-8">
                       {t("noSummariesDesc")}
                     </p>
                     <Button
                       onClick={() => {
                         handleOpenGenerationDialog("summary")
                       }}
-                      className="h-12 rounded-xl px-8 bg-black text-white hover:bg-[#8B5CF6] hover:text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-y-[2px] active:translate-y-[4px] active:shadow-none transition-all border-2 border-black font-black uppercase"
+                      className="h-12 rounded-xl px-8 bg-foreground text-background hover:bg-primary hover:text-primary-foreground shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] hover:translate-y-[2px] active:translate-y-[4px] active:shadow-none transition-all border-2 border-border font-black uppercase"
                     >
                       <BookOpen className="h-5 w-5 mr-2" />
                       {t("generateSummaryNow")}
@@ -1068,36 +1103,36 @@ export default function SubjectView({ subject, onBack, onSelectDocument, onUpdat
                     {/* Résumés de collection */}
                     {collectionSummaries.length > 0 && (
                       <div className="space-y-4">
-                        <div className="flex items-center gap-2 pb-2 border-b-2 border-black">
-                          <Sparkles className="h-5 w-5 text-black fill-[#FDE68A]" />
-                          <h3 className="text-sm font-black uppercase tracking-wider text-black">{t("collectionSummaries")}</h3>
+                        <div className="flex items-center gap-2 pb-2 border-b-2 border-border">
+                          <Sparkles className="h-5 w-5 text-foreground fill-[#FDE68A]" />
+                          <h3 className="text-sm font-black uppercase tracking-wider text-foreground">{t("collectionSummaries")}</h3>
                         </div>
 
                         <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
                           {collectionSummaries.map((summary: any) => (
                             <div
                               key={summary.id}
-                              className="group relative flex flex-col bg-white border-2 border-black rounded-3xl p-6 hover:shadow-[8px_8px_0px_0px_#FDE68A] hover:-translate-y-1 transition-all cursor-pointer overflow-hidden"
+                              className="group relative flex flex-col bg-card border-2 border-border rounded-3xl p-6 hover:shadow-[8px_8px_0px_0px_#FDE68A] dark:hover:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)] hover:-translate-y-1 transition-all cursor-pointer overflow-hidden"
                             >
                               <div className="relative z-10 flex flex-col h-full">
                                 <div className="flex items-start justify-between mb-4">
-                                  <div className="w-12 h-12 rounded-xl bg-[#FDE68A] border-2 border-black flex items-center justify-center shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
-                                    <BookOpen className="h-6 w-6 text-black" strokeWidth={2.5} />
+                                  <div className="w-12 h-12 rounded-xl bg-[#FDE68A] border-2 border-border flex items-center justify-center shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)]">
+                                    <BookOpen className="h-6 w-6 text-foreground" strokeWidth={2.5} />
                                   </div>
                                   <button
                                     onClick={(e) => handleDeleteStudyCollection(summary.id, e, summary.title, "summary")}
-                                    className="p-2 rounded-lg hover:bg-red-100 text-gray-400 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
+                                    className="p-2 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors opacity-0 group-hover:opacity-100"
                                   >
                                     <Trash2 className="h-5 w-5" />
                                   </button>
                                 </div>
 
-                                <h3 className="text-xl font-black text-black mb-3 line-clamp-2 uppercase">
+                                <h3 className="text-xl font-black text-foreground mb-3 line-clamp-2 uppercase">
                                   {summary.title}
                                 </h3>
 
                                 <div className="flex-1 mb-6">
-                                  <p className="text-sm text-gray-600 font-medium leading-relaxed line-clamp-4">
+                                  <p className="text-sm text-muted-foreground font-medium leading-relaxed line-clamp-4">
                                     {summary.summary.replace(/#{1,6}\s?/g, '').replace(/\*\*/g, '').replace(/\*/g, '').replace(/\[([^\]]+)\]\([^\)]+\)/g, '$1').replace(/`{3}[\s\S]*?`{3}/g, '').replace(/`([^`]+)`/g, '$1')}
                                   </p>
                                 </div>
@@ -1107,7 +1142,7 @@ export default function SubjectView({ subject, onBack, onSelectDocument, onUpdat
                                     ...summary,
                                     isDocumentSummary: false
                                   })}
-                                  className="w-full h-10 rounded-xl bg-white text-black border-2 border-black hover:bg-[#FDE68A] hover:text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-y-[2px] active:translate-y-[4px] active:shadow-none transition-all font-bold uppercase"
+                                  className="w-full h-10 rounded-xl bg-card text-foreground border-2 border-border hover:bg-accent hover:text-foreground shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] hover:translate-y-[2px] active:translate-y-[4px] active:shadow-none transition-all font-bold uppercase"
                                 >
                                   {t("readSummary")}
                                   <ArrowRight className="h-4 w-4 ml-2" strokeWidth={3} />
@@ -1222,27 +1257,27 @@ export default function SubjectView({ subject, onBack, onSelectDocument, onUpdat
         ) : selectedSummary ? (
           <div className="h-full flex flex-col bg-transparent animate-in fade-in slide-in-from-bottom-4 duration-300">
             {/* Header du résumé */}
-            <div className="flex-shrink-0 border-b-2 border-black bg-white/95 backdrop-blur-xl sticky top-0 z-10">
+            <div className="flex-shrink-0 border-b-2 border-border bg-card/95 backdrop-blur-xl sticky top-0 z-10">
               <div className="flex items-center justify-between px-6 py-4 max-w-5xl mx-auto w-full">
                 <div className="flex items-center gap-4">
                   <Button
                     variant="ghost"
                     onClick={() => setSelectedSummary(null)}
                     size="sm"
-                    className="hover:bg-black hover:text-white text-black rounded-lg w-10 h-10 p-0 border-2 border-transparent hover:border-black transition-all"
+                    className="hover:bg-foreground hover:text-background text-foreground rounded-lg w-10 h-10 p-0 border-2 border-transparent hover:border-border transition-all"
                   >
                     <ArrowLeft className="h-5 w-5" strokeWidth={2.5} />
                   </Button>
                   <div>
-                    <h2 className="text-xl font-black text-black flex items-center gap-3 uppercase">
+                    <h2 className="text-xl font-black text-foreground flex items-center gap-3 uppercase">
                       {selectedSummary.title}
                       {selectedSummary.isDocumentSummary && (
-                        <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-[#BAE6FD] text-black border-2 border-black">
+                        <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-[#BAE6FD] text-foreground border-2 border-border">
                           {selectedSummary.documentTitle}
                         </span>
                       )}
                     </h2>
-                    <p className="text-xs font-bold text-gray-500 uppercase">
+                    <p className="text-xs font-bold text-muted-foreground uppercase">
                       {selectedSummary.createdAt ? new Date(selectedSummary.createdAt).toLocaleDateString() : t("aiGeneratedSummary")}
                     </p>
                   </div>
@@ -1251,20 +1286,20 @@ export default function SubjectView({ subject, onBack, onSelectDocument, onUpdat
             </div>
 
             {/* Contenu du résumé */}
-            <div className="flex-1 overflow-y-auto custom-scrollbar bg-white">
+            <div className="flex-1 overflow-y-auto custom-scrollbar bg-background">
               <div className="max-w-3xl mx-auto px-6 py-12">
-                <div className="bg-white border-2 border-black rounded-3xl p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] relative">
+                <div className="bg-card border-2 border-border rounded-3xl p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)] relative">
                   {/* Decorative elements */}
                   <div className="absolute top-0 right-0 p-6 opacity-5 pointer-events-none">
-                    <BookOpen className="h-32 w-32" />
+                    <BookOpen className="h-32 w-32 text-foreground" />
                   </div>
 
-                  <div className="prose max-w-none prose-headings:font-black prose-headings:uppercase prose-headings:text-black prose-p:text-gray-700 prose-p:leading-relaxed prose-p:font-medium prose-li:text-gray-700 prose-strong:text-black prose-strong:font-black prose-code:text-[#8B5CF6] prose-code:bg-purple-50 prose-code:border prose-code:border-purple-200 prose-code:rounded-md prose-code:px-1 prose-code:before:content-none prose-code:after:content-none">
-                    <div className="flex items-center gap-2 mb-8 pb-4 border-b-2 border-black">
-                      <div className="w-10 h-10 rounded-lg bg-[#FDE68A] border-2 border-black flex items-center justify-center">
-                        <Sparkles className="h-5 w-5 text-black" />
+                  <div className="prose max-w-none prose-headings:font-black prose-headings:uppercase prose-headings:text-foreground prose-p:text-muted-foreground prose-p:leading-relaxed prose-p:font-medium prose-li:text-muted-foreground prose-strong:text-foreground prose-strong:font-black prose-code:text-primary prose-code:bg-primary/10 prose-code:border prose-code:border-primary/20 prose-code:rounded-md prose-code:px-1 prose-code:before:content-none prose-code:after:content-none dark:prose-invert">
+                    <div className="flex items-center gap-2 mb-8 pb-4 border-b-2 border-border">
+                      <div className="w-10 h-10 rounded-lg bg-accent border-2 border-border flex items-center justify-center">
+                        <Sparkles className="h-5 w-5 text-foreground" />
                       </div>
-                      <span className="text-sm font-black uppercase tracking-widest text-gray-500">Résumé généré par IA</span>
+                      <span className="text-sm font-black uppercase tracking-widest text-muted-foreground">Résumé généré par IA</span>
                     </div>
                     <MarkdownRenderer content={selectedSummary.summary} />
                   </div>
@@ -1289,21 +1324,21 @@ export default function SubjectView({ subject, onBack, onSelectDocument, onUpdat
             <div className="flex items-center gap-3">
               <button
                 onClick={() => handleOpenGenerationDialog("flashcards")}
-                className="px-6 py-4 text-sm font-black uppercase rounded-2xl bg-white border-2 border-black hover:bg-[#FBCFE8] hover:text-black transition-all flex items-center gap-3 text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 active:translate-y-0 active:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+                        className="px-6 py-4 text-sm font-black uppercase rounded-2xl bg-card border-2 border-border hover:bg-secondary hover:text-secondary-foreground transition-all flex items-center gap-3 text-foreground shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[6px_6px_0px_0px_rgba(255,255,255,1)] hover:-translate-y-1 active:translate-y-0 active:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:active:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)]"
               >
                 <Brain className="h-5 w-5" strokeWidth={2.5} />
                 {t("generateFlashcards")}
               </button>
               <button
                 onClick={() => handleOpenGenerationDialog("quiz")}
-                className="px-6 py-4 text-sm font-black uppercase rounded-2xl bg-white border-2 border-black hover:bg-[#BBF7D0] hover:text-black transition-all flex items-center gap-3 text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 active:translate-y-0 active:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+                        className="px-6 py-4 text-sm font-black uppercase rounded-2xl bg-card border-2 border-border hover:bg-[#BBF7D0] hover:text-foreground transition-all flex items-center gap-3 text-foreground shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[6px_6px_0px_0px_rgba(255,255,255,1)] hover:-translate-y-1 active:translate-y-0 active:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:active:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)]"
               >
                 <ListChecks className="h-5 w-5" strokeWidth={2.5} />
                 {t("generateQuiz")}
               </button>
               <button
                 onClick={() => handleOpenGenerationDialog("summary")}
-                className="px-6 py-4 text-sm font-black uppercase rounded-2xl bg-white border-2 border-black hover:bg-[#FDE68A] hover:text-black transition-all flex items-center gap-3 text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 active:translate-y-0 active:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+                        className="px-6 py-4 text-sm font-black uppercase rounded-2xl bg-card border-2 border-border hover:bg-accent hover:text-foreground transition-all flex items-center gap-3 text-foreground shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[6px_6px_0px_0px_rgba(255,255,255,1)] hover:-translate-y-1 active:translate-y-0 active:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:active:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)]"
               >
                 <FileText className="h-5 w-5" strokeWidth={2.5} />
                 {t("summarize")}
@@ -1313,11 +1348,11 @@ export default function SubjectView({ subject, onBack, onSelectDocument, onUpdat
 
               <button
                 onClick={() => setShowChatInput(!showChatInput)}
-                className={cn(
-                  "p-4 rounded-2xl border-2 border-black transition-all shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 active:translate-y-0 active:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]",
+                  className={cn(
+                  "p-4 rounded-2xl border-2 border-border transition-all shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[6px_6px_0px_0px_rgba(255,255,255,1)] hover:-translate-y-1 active:translate-y-0 active:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:active:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)]",
                   showChatInput
-                    ? "bg-black text-white hover:bg-gray-800"
-                    : "bg-white text-gray-500 hover:bg-black hover:text-white"
+                    ? "bg-foreground text-background hover:bg-foreground/90"
+                    : "bg-card text-muted-foreground hover:bg-foreground hover:text-background"
                 )}
                 title={t("conversationalAssistant")}
               >
@@ -1338,62 +1373,62 @@ export default function SubjectView({ subject, onBack, onSelectDocument, onUpdat
             transition={{ duration: 0.3, ease: "easeOut" }}
             className="fixed bottom-6 right-6 z-50"
           >
-            <div className="w-[420px] bg-white border-2 border-black rounded-2xl shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] overflow-hidden flex flex-col max-h-[600px]">
+            <div className="w-[420px] bg-card border-2 border-border rounded-2xl shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:shadow-[6px_6px_0px_0px_rgba(255,255,255,1)] overflow-hidden flex flex-col max-h-[600px]">
               {/* Header simplifié */}
-              <div className="flex justify-between items-center px-5 py-3 border-b-2 border-black bg-white">
+              <div className="flex justify-between items-center px-5 py-3 border-b-2 border-border bg-card">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-purple-500 border-2 border-black flex items-center justify-center">
-                    <Sparkles className="h-4 w-4 text-white" strokeWidth={2.5} />
+                  <div className="w-8 h-8 rounded-lg bg-primary border-2 border-border flex items-center justify-center">
+                    <Sparkles className="h-4 w-4 text-primary-foreground" strokeWidth={2.5} />
                   </div>
-                  <span className="text-sm font-black uppercase text-black">Assistant IA</span>
+                  <span className="text-sm font-black uppercase text-foreground">Assistant IA</span>
                 </div>
                 <button
                   onClick={() => setShowChatInput(false)}
-                  className="w-8 h-8 rounded-lg hover:bg-gray-100 flex items-center justify-center transition-colors"
+                  className="w-8 h-8 rounded-lg hover:bg-muted flex items-center justify-center transition-colors"
                 >
-                  <X className="h-4 w-4 text-gray-600" strokeWidth={2.5} />
+                  <X className="h-4 w-4 text-foreground" strokeWidth={2.5} />
                 </button>
               </div>
 
               {/* Zone de messages - Améliorée */}
               <div
                 ref={scrollRef}
-                className="flex-1 overflow-y-auto p-6 space-y-4 min-h-[300px] bg-gradient-to-b from-white to-gray-50/30"
+                className="flex-1 overflow-y-auto p-6 space-y-4 min-h-[300px] bg-gradient-to-b from-card to-muted/30"
               >
                 {messages.length === 0 ? (
                   <div className="h-full flex flex-col items-center justify-center text-center py-10">
-                    <div className="w-16 h-16 rounded-xl bg-purple-100 border-2 border-black flex items-center justify-center mb-3">
-                      <Sparkles className="h-8 w-8 text-purple-600" strokeWidth={2} />
+                    <div className="w-16 h-16 rounded-xl bg-primary/20 border-2 border-border flex items-center justify-center mb-3">
+                      <Sparkles className="h-8 w-8 text-primary" strokeWidth={2} />
                     </div>
-                    <h4 className="text-sm font-bold text-black mb-1">Posez votre question</h4>
-                    <p className="text-xs text-gray-500 max-w-xs">Discutez avec l'assistant pour mieux comprendre vos documents</p>
+                    <h4 className="text-sm font-bold text-foreground mb-1">Posez votre question</h4>
+                    <p className="text-xs text-muted-foreground max-w-xs">Discutez avec l'assistant pour mieux comprendre vos documents</p>
                   </div>
                 ) : (
                   messages.map((msg, i) => (
                     <div key={i} className={cn("flex w-full gap-3", msg.role === 'user' ? "justify-end" : "justify-start")}>
                       {msg.role === 'assistant' && (
-                        <div className="w-8 h-8 rounded-lg bg-purple-500 border-2 border-black flex items-center justify-center flex-shrink-0 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
-                          <Sparkles className="h-4 w-4 text-white" strokeWidth={2.5} />
+                        <div className="w-8 h-8 rounded-lg bg-primary border-2 border-border flex items-center justify-center flex-shrink-0 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)]">
+                          <Sparkles className="h-4 w-4 text-primary-foreground" strokeWidth={2.5} />
                         </div>
                       )}
                       <div className={cn(
-                        "max-w-[75%] rounded-2xl px-4 py-3 shadow-[3px_3px_0px_0px_rgba(0,0,0,0.1)]",
+                        "max-w-[75%] rounded-2xl px-4 py-3 shadow-[3px_3px_0px_0px_rgba(0,0,0,0.1)] dark:shadow-[3px_3px_0px_0px_rgba(255,255,255,0.1)]",
                         msg.role === 'user'
-                          ? "bg-black text-white rounded-br-md border-2 border-black"
-                          : "bg-white border-2 border-black text-black rounded-bl-md"
+                          ? "bg-foreground text-background rounded-br-md border-2 border-border"
+                          : "bg-card border-2 border-border text-foreground rounded-bl-md"
                       )}>
                         <div className={cn(
                           "prose prose-sm max-w-none",
                           msg.role === 'user'
-                            ? "prose-invert prose-p:text-white prose-headings:text-white prose-strong:text-white"
-                            : "prose-p:text-gray-800 prose-headings:text-black prose-strong:text-black"
+                            ? "prose-invert prose-p:text-background prose-headings:text-background prose-strong:text-background"
+                            : "prose-p:text-foreground prose-headings:text-foreground prose-strong:text-foreground"
                         )}>
                           <MarkdownRenderer content={msg.content} />
                         </div>
                       </div>
                       {msg.role === 'user' && (
-                        <div className="w-8 h-8 rounded-lg bg-black border-2 border-black flex items-center justify-center flex-shrink-0 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
-                          <span className="text-white text-xs font-black">U</span>
+                        <div className="w-8 h-8 rounded-lg bg-foreground border-2 border-border flex items-center justify-center flex-shrink-0 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)]">
+                          <span className="text-background text-xs font-black">U</span>
                         </div>
                       )}
                     </div>
@@ -1401,16 +1436,16 @@ export default function SubjectView({ subject, onBack, onSelectDocument, onUpdat
                 )}
                 {isSending && messages.length > 0 && messages[messages.length - 1].role === 'user' && (
                   <div className="flex justify-start">
-                    <div className="bg-white border-2 border-black rounded-xl px-4 py-2.5 flex items-center gap-2">
-                      <Loader2 className="h-3.5 w-3.5 animate-spin text-purple-600" strokeWidth={2.5} />
-                      <span className="text-xs font-medium text-gray-600">Réflexion...</span>
+                    <div className="bg-card border-2 border-border rounded-xl px-4 py-2.5 flex items-center gap-2">
+                      <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" strokeWidth={2.5} />
+                      <span className="text-xs font-medium text-muted-foreground">Réflexion...</span>
                     </div>
                   </div>
                 )}
               </div>
 
               {/* Input simplifié */}
-              <div className="p-3 border-t-2 border-black bg-white">
+              <div className="p-3 border-t-2 border-border bg-card">
                 <MentionInput
                   value={chatInput}
                   onChange={setChatInput}

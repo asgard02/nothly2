@@ -114,14 +114,14 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             {/* Modal Container */}
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
                 <div
-                    className="w-full max-w-6xl h-[85vh] bg-white rounded-3xl border-2 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex overflow-hidden pointer-events-auto animate-in zoom-in-95 duration-150"
+                    className="w-full max-w-6xl h-[85vh] bg-card rounded-3xl border-2 border-border shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)] flex overflow-hidden pointer-events-auto animate-in zoom-in-95 duration-150"
                     onClick={(e) => e.stopPropagation()}
                 >
                     {/* Settings Sidebar */}
-                    <aside className="w-80 bg-white border-r-2 border-black flex flex-col">
+                    <aside className="w-80 bg-card border-r-2 border-border flex flex-col">
                         {/* Header */}
-                        <div className="p-8 border-b-2 border-black flex items-center justify-between bg-[#FBCFE8]">
-                            <h2 className="text-2xl font-black text-black uppercase tracking-tight">{t("title")}</h2>
+                        <div className="p-8 border-b-2 border-border flex items-center justify-between bg-secondary">
+                            <h2 className="text-2xl font-black text-secondary-foreground uppercase tracking-tight">{t("title")}</h2>
                         </div>
 
                         {/* Navigation */}
@@ -137,16 +137,16 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                                             className={cn(
                                                 "w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 border-2 font-bold uppercase tracking-wide",
                                                 isActive
-                                                    ? "bg-black text-white border-black shadow-[4px_4px_0px_0px_#8B5CF6] translate-x-1"
-                                                    : "bg-white text-gray-500 border-transparent hover:border-black hover:bg-[#FDE68A] hover:text-black hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1"
+                                                    ? "bg-foreground text-background border-border shadow-[4px_4px_0px_0px_#8B5CF6] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] translate-x-1"
+                                                    : "bg-card text-muted-foreground border-transparent hover:border-border hover:bg-accent hover:text-foreground hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] hover:-translate-y-1"
                                             )}
                                         >
-                                            <Icon className={cn("h-5 w-5 flex-shrink-0", isActive ? "text-[#FDE68A]" : "text-current")} strokeWidth={2.5} />
+                                            <Icon className={cn("h-5 w-5 flex-shrink-0", isActive ? "text-accent" : "text-current")} strokeWidth={2.5} />
                                             <span className="flex-1 text-left">
                                                 {item.label}
                                             </span>
                                             {isActive && (
-                                                <ChevronRight className="h-5 w-5 text-white" strokeWidth={3} />
+                                                <ChevronRight className="h-5 w-5 text-background" strokeWidth={3} />
                                             )}
                                         </button>
                                     )
@@ -155,25 +155,25 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                         </nav>
 
                         {/* Footer */}
-                        <div className="p-6 border-t-2 border-black bg-gray-50">
-                            <p className="text-xs font-bold text-gray-400 text-center uppercase">
+                        <div className="p-6 border-t-2 border-border bg-muted">
+                            <p className="text-xs font-bold text-muted-foreground text-center uppercase">
                                 Nothly © 2025
                             </p>
                         </div>
                     </aside>
 
                     {/* Main Content */}
-                    <div className="flex-1 flex flex-col bg-[#FAFAFA]">
+                    <div className="flex-1 flex flex-col bg-muted/30">
                         {/* Header with close button */}
-                        <div className="p-8 border-b-2 border-black flex items-center justify-between bg-white">
-                            <h1 className="text-4xl font-black text-black uppercase italic tracking-tight">
+                        <div className="p-8 border-b-2 border-border flex items-center justify-between bg-card">
+                            <h1 className="text-4xl font-black text-foreground uppercase italic tracking-tight">
                                 {menuItems.find(item => item.id === activeSection)?.label}
                             </h1>
                             <button
                                 onClick={onClose}
-                                className="p-2 rounded-xl border-2 border-transparent hover:bg-black hover:text-white hover:border-black transition-all group"
+                                className="p-2 rounded-xl border-2 border-transparent hover:bg-foreground hover:text-background hover:border-border transition-all group"
                             >
-                                <X className="h-8 w-8 text-black group-hover:text-white" strokeWidth={3} />
+                                <X className="h-8 w-8 text-foreground group-hover:text-background" strokeWidth={3} />
                             </button>
                         </div>
 
@@ -182,15 +182,15 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                             {loading ? (
                                 <div className="flex items-center justify-center h-full">
                                     <div className="flex flex-col items-center gap-4">
-                                        <div className="w-12 h-12 border-4 border-black border-t-[#FBBF24] rounded-full animate-spin"></div>
-                                        <p className="font-black text-black uppercase animate-pulse">Loading...</p>
+                                        <div className="w-12 h-12 border-4 border-border border-t-accent rounded-full animate-spin"></div>
+                                        <p className="font-black text-foreground uppercase animate-pulse">Loading...</p>
                                     </div>
                                 </div>
                             ) : ActiveComponent ? (
                                 <ActiveComponent />
                             ) : (
                                 <div className="flex items-center justify-center h-full">
-                                    <p className="text-gray-400 font-bold uppercase">Select a section</p>
+                                    <p className="text-muted-foreground font-bold uppercase">Select a section</p>
                                 </div>
                             )}
                         </div>

@@ -23,10 +23,10 @@ export default function FavoritesPage() {
     return (
         <div className="h-full p-8 md:p-12 font-sans overflow-y-auto overflow-x-hidden">
             {/* Header */}
-            <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6 pb-8 border-b-2 border-black/10">
+            <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6 pb-8 border-b-2 border-border/10">
                 <div>
-                    <h1 className="text-6xl md:text-8xl font-black tracking-tighter text-black flex items-center gap-4">
-                        {t('title')} <span className="text-sm md:text-xl bg-[#FBBF24] text-black border-2 border-black px-4 py-1 rounded-full -rotate-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">{favoriteSubjects.length}</span>
+                    <h1 className="text-6xl md:text-8xl font-black tracking-tighter text-foreground flex items-center gap-4">
+                        {t('title')} <span className="text-sm md:text-xl bg-accent text-foreground border-2 border-border px-4 py-1 rounded-full -rotate-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)]">{favoriteSubjects.length}</span>
                     </h1>
                 </div>
             </div>
@@ -42,29 +42,29 @@ export default function FavoritesPage() {
 
                         return (
                             <Link href={`/workspace/subjects/${subject.id}`} key={subject.id}>
-                                <div className={cn("bg-white border-2 border-black rounded-3xl p-6 h-64 flex flex-col justify-between shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-2 hover:shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] transition-all duration-200 ease-out group relative overflow-hidden")}>
+                                <div className={cn("bg-card border-2 border-border rounded-3xl p-6 h-64 flex flex-col justify-between shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:shadow-[6px_6px_0px_0px_rgba(255,255,255,1)] hover:-translate-y-2 hover:shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[10px_10px_0px_0px_rgba(255,255,255,1)] transition-all duration-200 ease-out group relative overflow-hidden")}>
                                     {/* Decorative Blob */}
-                                    <div className={cn("absolute -right-8 -top-8 w-32 h-32 rounded-full border-2 border-black opacity-100 transition-transform duration-300 group-hover:scale-110", color)}></div>
+                                    <div className={cn("absolute -right-8 -top-8 w-32 h-32 rounded-full border-2 border-border opacity-100 transition-transform duration-300 group-hover:scale-110", color)}></div>
 
                                     <div className="relative z-10">
                                         <div className="flex justify-between items-start mb-4">
                                             <div className="flex items-center gap-2">
-                                                <div className="bg-black text-white px-3 py-1 rounded-lg text-xs font-black uppercase">
+                                                <div className="bg-foreground text-background px-3 py-1 rounded-lg text-xs font-black uppercase">
                                                     {subject.created_at ? format.dateTime(new Date(subject.created_at), { dateStyle: 'medium' }) : t('noDate')}
                                                 </div>
-                                                <div className="bg-[#FBBF24] text-black border-2 border-black p-1 rounded-lg shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
-                                                    <Star className="h-3 w-3" fill="black" strokeWidth={2.5} />
+                                                <div className="bg-accent text-foreground border-2 border-border p-1 rounded-lg shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)]">
+                                                    <Star className="h-3 w-3" fill="currentColor" strokeWidth={2.5} />
                                                 </div>
                                             </div>
                                         </div>
-                                        <h3 className="text-3xl font-black leading-none tracking-tight uppercase line-clamp-3 mb-2 break-words">
+                                        <h3 className="text-3xl font-black leading-none tracking-tight uppercase line-clamp-3 mb-2 break-words text-foreground">
                                             {subject.title}
                                         </h3>
                                     </div>
 
-                                    <div className="relative z-10 flex items-center justify-between mt-auto pt-4 border-t-2 border-black/5">
-                                        <span className="font-bold text-sm text-gray-500 uppercase">{subject.doc_count || 0} {t('docs')}</span>
-                                        <div className="h-10 w-10 bg-black rounded-full flex items-center justify-center text-white group-hover:bg-[#FBBF24] group-hover:text-black transition-colors border-2 border-transparent group-hover:border-black">
+                                    <div className="relative z-10 flex items-center justify-between mt-auto pt-4 border-t-2 border-border/5">
+                                        <span className="font-bold text-sm text-muted-foreground uppercase">{subject.doc_count || 0} {t('docs')}</span>
+                                        <div className="h-10 w-10 bg-foreground rounded-full flex items-center justify-center text-background group-hover:bg-accent group-hover:text-foreground transition-colors border-2 border-transparent group-hover:border-border">
                                             <ArrowRight className="h-5 w-5" strokeWidth={3} />
                                         </div>
                                     </div>
@@ -75,59 +75,59 @@ export default function FavoritesPage() {
                 </div>
             ) : (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-                    <div className="bg-[#BAE6FD] border-2 border-black rounded-3xl p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] relative overflow-hidden group">
+                    <div className="bg-[#BAE6FD] border-2 border-border rounded-3xl p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)] relative overflow-hidden group">
                         <div className="absolute top-4 right-4 animate-spin-slow">
-                            <Star className="h-32 w-32 text-black opacity-10" />
+                            <Star className="h-32 w-32 text-foreground opacity-10" />
                         </div>
 
-                        <h2 className="text-4xl font-black uppercase mb-4 leading-tight">
+                        <h2 className="text-4xl font-black uppercase mb-4 leading-tight text-foreground">
                             {t.rich('hallOfFameTitle', {
                                 br: () => <br />
                             })}
                         </h2>
-                        <p className="font-bold text-lg mb-8 max-w-md">
+                        <p className="font-bold text-lg mb-8 max-w-md text-foreground">
                             {t('hallOfFameDesc')}
                         </p>
 
-                        <div className="bg-white border-2 border-black rounded-2xl p-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                        <div className="bg-card border-2 border-border rounded-2xl p-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)]">
                             <div className="flex items-center gap-4 mb-4 opacity-50">
-                                <div className="h-12 w-12 bg-gray-200 rounded-lg border-2 border-black"></div>
-                                <div className="h-4 bg-gray-200 w-32 rounded-full"></div>
-                                <div className="ml-auto h-8 w-8 border-2 border-black rounded-full flex items-center justify-center">
-                                    <Star className="h-4 w-4" fill="black" />
+                                <div className="h-12 w-12 bg-muted rounded-lg border-2 border-border"></div>
+                                <div className="h-4 bg-muted w-32 rounded-full"></div>
+                                <div className="ml-auto h-8 w-8 border-2 border-border rounded-full flex items-center justify-center">
+                                    <Star className="h-4 w-4" fill="currentColor" />
                                 </div>
                             </div>
                             <div className="flex items-center gap-4">
-                                <div className="h-12 w-12 bg-[#FBCFE8] rounded-lg border-2 border-black flex items-center justify-center">
-                                    <BookOpen className="h-6 w-6" />
+                                <div className="h-12 w-12 bg-[#FBCFE8] rounded-lg border-2 border-border flex items-center justify-center">
+                                    <BookOpen className="h-6 w-6 text-foreground" />
                                 </div>
-                                <div className="font-black text-xl">Calculus I</div>
-                                <div className="ml-auto h-8 w-8 bg-[#FBBF24] border-2 border-black rounded-full flex items-center justify-center shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
-                                    <Star className="h-4 w-4" fill="black" />
+                                <div className="font-black text-xl text-foreground">{t('exampleSubject')}</div>
+                                <div className="ml-auto h-8 w-8 bg-accent border-2 border-border rounded-full flex items-center justify-center shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)]">
+                                    <Star className="h-4 w-4" fill="currentColor" />
                                 </div>
                             </div>
                         </div>
                     </div>
 
                     <div className="flex flex-col justify-center space-y-6">
-                        <div className="p-6 border-2 border-black rounded-2xl bg-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex items-center gap-4">
-                            <div className="h-12 w-12 bg-black text-white rounded-xl flex items-center justify-center text-xl font-black">A.</div>
+                        <div className="p-6 border-2 border-border rounded-2xl bg-card shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] flex items-center gap-4">
+                            <div className="h-12 w-12 bg-foreground text-background rounded-xl flex items-center justify-center text-xl font-black">A.</div>
                             <div>
-                                <h3 className="font-black text-xl">{t('starSubjectsTitle')}</h3>
-                                <p className="font-bold text-gray-400 text-sm">{t('starSubjectsDesc')}</p>
+                                <h3 className="font-black text-xl text-foreground">{t('starSubjectsTitle')}</h3>
+                                <p className="font-bold text-muted-foreground text-sm">{t('starSubjectsDesc')}</p>
                             </div>
                         </div>
 
-                        <div className="p-6 border-2 border-black rounded-2xl bg-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex items-center gap-4">
-                            <div className="h-12 w-12 bg-black text-white rounded-xl flex items-center justify-center text-xl font-black">B.</div>
+                        <div className="p-6 border-2 border-border rounded-2xl bg-card shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] flex items-center gap-4">
+                            <div className="h-12 w-12 bg-foreground text-background rounded-xl flex items-center justify-center text-xl font-black">B.</div>
                             <div>
-                                <h3 className="font-black text-xl">{t('keyDocumentsTitle')}</h3>
-                                <p className="font-bold text-gray-400 text-sm">{t('keyDocumentsDesc')}</p>
+                                <h3 className="font-black text-xl text-foreground">{t('keyDocumentsTitle')}</h3>
+                                <p className="font-bold text-muted-foreground text-sm">{t('keyDocumentsDesc')}</p>
                             </div>
                         </div>
 
                         <Link href="/workspace/subjects">
-                            <Button className="w-full h-16 rounded-2xl border-2 border-black bg-[#BBF7D0] text-black text-xl font-black uppercase hover:bg-[#86EFAC] shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:translate-y-[2px] transition-all active:shadow-none">
+                            <Button className="w-full h-16 rounded-2xl border-2 border-border bg-[#BBF7D0] text-foreground text-xl font-black uppercase hover:bg-[#86EFAC] shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:shadow-[6px_6px_0px_0px_rgba(255,255,255,1)] hover:translate-y-[2px] transition-all active:shadow-none">
                                 {t('browseSubjects')} <ArrowRight className="ml-2 h-6 w-6" strokeWidth={3} />
                             </Button>
                         </Link>

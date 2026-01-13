@@ -149,21 +149,21 @@ export function UploadDialog({
       />
       <div
         onClick={(e) => e.stopPropagation()}
-        className="relative z-50 w-full max-w-lg rounded-3xl border-2 border-black bg-white p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] animate-in fade-in-0 zoom-in-95 duration-200"
+        className="relative z-50 w-full max-w-lg rounded-3xl border-2 border-border bg-card p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)] animate-in fade-in-0 zoom-in-95 duration-200"
       >
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h2 className="text-3xl font-black text-black uppercase tracking-tight">{t("title")}</h2>
+            <h2 className="text-3xl font-black text-foreground uppercase tracking-tight">{t("title")}</h2>
             {subjectTitle && (
-              <p className="text-sm text-gray-500 mt-1 font-bold uppercase">
-                {t("inCollection")} <span className="text-black bg-[#FBCFE8] px-2 py-0.5 rounded border border-black">{subjectTitle}</span>
+              <p className="text-sm text-muted-foreground mt-1 font-bold uppercase">
+                {t("inCollection")} <span className="text-foreground bg-secondary px-2 py-0.5 rounded border border-border">{subjectTitle}</span>
               </p>
             )}
           </div>
           <button
             onClick={() => handleOpenChange(false)}
-            className="p-2 rounded-xl border-2 border-transparent hover:bg-black hover:text-white hover:border-black transition-all"
+            className="p-2 rounded-xl border-2 border-transparent hover:bg-foreground hover:text-background hover:border-border transition-all text-foreground"
           >
             <X className="h-6 w-6" strokeWidth={3} />
           </button>
@@ -178,10 +178,10 @@ export function UploadDialog({
                 relative flex h-56 cursor-pointer flex-col items-center justify-center gap-4
                 rounded-2xl border-2 border-dashed transition-all group overflow-hidden
                 ${isDragging
-              ? "border-black bg-[#BBF7D0] scale-105 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
+              ? "border-border bg-[#BBF7D0] scale-105 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)]"
               : file
-                ? "border-black bg-[#F3F4F6]"
-                : "border-black/30 bg-gray-50 hover:border-black hover:bg-white hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1"
+                ? "border-border bg-muted"
+                : "border-border/30 bg-muted/50 hover:border-border hover:bg-card hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] hover:-translate-y-1"
             }
               `}
           onClick={() => fileInputRef.current?.click()}
@@ -192,20 +192,20 @@ export function UploadDialog({
 
           <div className="relative z-10 flex flex-col items-center">
             {file ? (
-              <div className="h-16 w-16 bg-white border-2 border-black rounded-xl flex items-center justify-center shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] mb-2">
-                <FileText className="h-8 w-8 text-black" strokeWidth={2} />
+              <div className="h-16 w-16 bg-card border-2 border-border rounded-xl flex items-center justify-center shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] mb-2">
+                <FileText className="h-8 w-8 text-foreground" strokeWidth={2} />
               </div>
             ) : (
-              <div className={`h-16 w-16 rounded-full border-2 border-black flex items-center justify-center mb-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-colors ${isDragging ? "bg-black text-white" : "bg-white text-black group-hover:bg-[#BBF7D0]"}`}>
+              <div className={`h-16 w-16 rounded-full border-2 border-border flex items-center justify-center mb-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] transition-colors ${isDragging ? "bg-foreground text-background" : "bg-card text-foreground group-hover:bg-[#BBF7D0]"}`}>
                 <UploadCloud className="h-8 w-8" strokeWidth={2.5} />
               </div>
             )}
 
             <div className="space-y-1 text-center">
-              <p className="font-black text-lg text-black uppercase tracking-tight">
+              <p className="font-black text-lg text-foreground uppercase tracking-tight">
                 {file ? file.name : isDragging ? t("dropHere") : t("dragHere")}
               </p>
-              <p className="text-xs font-bold text-gray-500 uppercase">
+              <p className="text-xs font-bold text-muted-foreground uppercase">
                 {file ? t("clickToChange") : t("clickToBrowse")}
               </p>
             </div>
@@ -222,7 +222,7 @@ export function UploadDialog({
 
         {/* Titre du document */}
         <div className="mt-8 space-y-2">
-          <label htmlFor="doc-title" className="text-sm font-bold text-black uppercase tracking-wide">
+          <label htmlFor="doc-title" className="text-sm font-bold text-foreground uppercase tracking-wide">
             {t("labelTitle")}
           </label>
           <input
@@ -231,26 +231,26 @@ export function UploadDialog({
             value={title}
             onChange={(event) => setTitle(event.target.value)}
             placeholder={t("placeholderTitle")}
-            className="w-full rounded-xl border-2 border-black bg-white px-4 py-3 text-lg font-bold text-black placeholder:text-gray-400 focus:outline-none focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] focus:-translate-y-1 focus:-translate-x-1 transition-all"
+            className="w-full rounded-xl border-2 border-border bg-card px-4 py-3 text-lg font-bold text-foreground placeholder:text-muted-foreground focus:outline-none focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:focus:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] focus:-translate-y-1 focus:-translate-x-1 transition-all"
           />
         </div>
 
         {/* Erreur */}
         {uploadError && (
-          <div className="mt-4 flex items-center gap-3 rounded-xl border-2 border-black bg-red-100 px-4 py-3 text-sm font-bold text-red-600 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] animate-in fade-in-0 slide-in-from-top-2 duration-200">
+          <div className="mt-4 flex items-center gap-3 rounded-xl border-2 border-border bg-destructive/10 px-4 py-3 text-sm font-bold text-destructive shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] animate-in fade-in-0 slide-in-from-top-2 duration-200">
             <AlertCircle className="h-5 w-5 flex-shrink-0" strokeWidth={2.5} />
             <span className="uppercase">{uploadError}</span>
           </div>
         )}
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-4 mt-8 pt-6 border-t-2 border-black/5">
+        <div className="flex items-center justify-end gap-4 mt-8 pt-6 border-t-2 border-border/5">
           <Button
             type="button"
             variant="ghost"
             onClick={() => handleOpenChange(false)}
             disabled={uploadMutation.isPending}
-            className="text-gray-500 font-bold hover:text-black hover:bg-gray-100 rounded-xl"
+            className="text-muted-foreground font-bold hover:text-foreground hover:bg-muted rounded-xl"
           >
             {t("cancel")}
           </Button>
@@ -258,7 +258,7 @@ export function UploadDialog({
             type="button"
             onClick={() => uploadMutation.mutate()}
             disabled={!file || uploadMutation.isPending || !title.trim()}
-            className="h-12 px-8 rounded-xl bg-[#8B5CF6] hover:bg-[#7C3AED] text-white border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-y-[2px] active:translate-y-[4px] active:shadow-none transition-all font-black uppercase tracking-wide disabled:opacity-50 disabled:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] disabled:cursor-not-allowed"
+            className="h-12 px-8 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground border-2 border-border shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] hover:translate-y-[2px] active:translate-y-[4px] active:shadow-none transition-all font-black uppercase tracking-wide disabled:opacity-50 disabled:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:disabled:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)] disabled:cursor-not-allowed"
           >
             {uploadMutation.isPending && <Loader2 className="mr-2 h-5 w-5 animate-spin" strokeWidth={3} />}
             {uploadMutation.isPending ? t("importing") : t("import")}

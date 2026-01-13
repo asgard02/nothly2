@@ -1,5 +1,6 @@
 // Fichier serveur uniquement - utilisé dans les API routes
 import OpenAI from "openai"
+import { openaiWithRetry } from "@/lib/utils-retry"
 
 // Initialisation OpenAI (côté serveur uniquement)
 let openai: OpenAI | null = null
@@ -26,12 +27,20 @@ export async function improveNote(content: string) {
       ${content}
     `
 
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini", // rapide et peu coûteux
-      messages: [{ role: "user", content: prompt }],
-      max_tokens: 2000, // Augmenté pour permettre des réponses plus longues
-      temperature: 0.7,
-    })
+    // Utiliser retry avec backoff exponentiel pour les appels OpenAI
+    const completion = await openaiWithRetry(
+      () =>
+        openai.chat.completions.create({
+          model: "gpt-4o-mini", // rapide et peu coûteux
+          messages: [{ role: "user", content: prompt }],
+          max_tokens: 2000, // Augmenté pour permettre des réponses plus longues
+          temperature: 0.7,
+        }),
+      {
+        maxAttempts: 3,
+        initialDelayMs: 2000,
+      }
+    )
 
     return completion.choices[0].message.content || null
   } catch (error) {

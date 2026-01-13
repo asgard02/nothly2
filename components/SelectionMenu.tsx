@@ -26,9 +26,9 @@ export default function SelectionMenu({ position, onAction, isLoading }: Selecti
         transform: "translateX(-50%)",
       }}
     >
-      <div className="bg-white rounded-xl shadow-2xl border border-gray-200 p-2 flex gap-1 backdrop-blur-sm">
+      <div className="bg-card border-2 border-border rounded-xl shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:shadow-[6px_6px_0px_0px_rgba(255,255,255,1)] p-2 flex gap-1 backdrop-blur-sm">
         {isLoading ? (
-          <div className="flex items-center gap-2 px-4 py-2 text-sm text-gray-500">
+          <div className="flex items-center gap-2 px-4 py-2 text-sm text-muted-foreground">
             <Loader2 className="h-4 w-4 animate-spin" />
             <span>Traitement...</span>
           </div>
@@ -39,7 +39,7 @@ export default function SelectionMenu({ position, onAction, isLoading }: Selecti
               <button
                 key={action.id}
                 onClick={() => onAction(action.id)}
-                className={`flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-all ${action.color} group`}
+                className={`flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-all hover:bg-muted text-foreground group`}
                 title={action.label}
               >
                 <Icon className="h-4 w-4" />
@@ -54,7 +54,7 @@ export default function SelectionMenu({ position, onAction, isLoading }: Selecti
       
       {/* Petite flèche pointant vers le texte */}
       <div className="absolute left-1/2 bottom-0 transform -translate-x-1/2 translate-y-full">
-        <div className="w-0 h-0 border-l-8 border-r-8 border-t-8 border-transparent border-t-white" />
+        <div className="w-0 h-0 border-l-8 border-r-8 border-t-8 border-transparent border-t-card" />
       </div>
     </div>
   )

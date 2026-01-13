@@ -81,21 +81,21 @@ export default function AIContextMenu({ isOpen, onClose, position, onTextAction 
 
       {/* Menu contextuel */}
       <div
-        className="fixed z-50 w-80 bg-white rounded-xl shadow-2xl border border-gray-200 overflow-hidden animate-in fade-in slide-in-from-bottom-3 duration-200"
+        className="fixed z-50 w-80 bg-card border-2 border-border rounded-xl shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:shadow-[6px_6px_0px_0px_rgba(255,255,255,1)] overflow-hidden animate-in fade-in slide-in-from-bottom-3 duration-200"
         style={{
           bottom: `${position.bottom}px`,
           right: `${position.right}px`,
         }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b bg-gradient-to-r from-purple-50 to-indigo-50">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-gradient-to-r from-primary/10 to-primary/5">
           <div className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-purple-600" />
-            <h3 className="font-semibold text-gray-900">Outils IA</h3>
+            <Sparkles className="h-5 w-5 text-primary" />
+            <h3 className="font-semibold text-foreground">Outils IA</h3>
           </div>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 p-1 rounded-lg transition-colors"
+            className="text-muted-foreground hover:text-foreground hover:bg-muted p-1 rounded-lg transition-colors"
             aria-label="Fermer"
           >
             <X className="h-4 w-4" />
@@ -103,8 +103,8 @@ export default function AIContextMenu({ isOpen, onClose, position, onTextAction 
         </div>
 
         {/* Actions de texte */}
-        <div className="p-3 border-b">
-          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2 px-1">
+        <div className="p-3 border-b border-border">
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2 px-1">
             Actions sur le texte
           </p>
           <div className="space-y-1">
@@ -117,7 +117,7 @@ export default function AIContextMenu({ isOpen, onClose, position, onTextAction 
                     onTextAction(action.id)
                     onClose()
                   }}
-                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all text-left ${action.color}`}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all text-left hover:bg-muted text-foreground"
                 >
                   <Icon className="h-4 w-4 flex-shrink-0" />
                   <span className="text-sm font-medium">{action.label}</span>
@@ -129,7 +129,7 @@ export default function AIContextMenu({ isOpen, onClose, position, onTextAction 
 
         {/* Zone drag & drop */}
         <div className="p-3">
-          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2 px-1">
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2 px-1">
             Analyser un fichier
           </p>
           <div
@@ -138,22 +138,22 @@ export default function AIContextMenu({ isOpen, onClose, position, onTextAction 
             onDrop={handleDrop}
             className={`border-2 border-dashed rounded-lg p-6 transition-all text-center ${
               isDragging
-                ? "border-purple-500 bg-purple-50"
-                : "border-gray-200 hover:border-purple-300 hover:bg-gray-50"
+                ? "border-primary bg-primary/10"
+                : "border-border hover:border-primary/50 hover:bg-muted"
             } ${isProcessing ? "opacity-50 cursor-wait" : "cursor-pointer"}`}
           >
             {isProcessing ? (
               <div className="space-y-2">
-                <div className="animate-spin mx-auto h-8 w-8 border-3 border-purple-600 border-t-transparent rounded-full" />
-                <p className="text-sm text-gray-600">Analyse en cours...</p>
+                <div className="animate-spin mx-auto h-8 w-8 border-3 border-primary border-t-transparent rounded-full" />
+                <p className="text-sm text-muted-foreground">Analyse en cours...</p>
               </div>
             ) : (
               <>
-                <Upload className={`h-8 w-8 mx-auto mb-2 ${isDragging ? "text-purple-600" : "text-gray-400"}`} />
-                <p className={`text-sm font-medium mb-1 ${isDragging ? "text-purple-600" : "text-gray-700"}`}>
+                <Upload className={`h-8 w-8 mx-auto mb-2 ${isDragging ? "text-primary" : "text-muted-foreground"}`} />
+                <p className={`text-sm font-medium mb-1 ${isDragging ? "text-primary" : "text-foreground"}`}>
                   {isDragging ? "Déposez pour analyser" : "Glissez un fichier ici"}
                 </p>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-muted-foreground">
                   PDF, JPG, PNG acceptés
                 </p>
               </>

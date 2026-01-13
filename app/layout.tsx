@@ -11,6 +11,7 @@ import { Toaster } from "sonner"
 import { AntigravityBackground } from "@/components/ui/antigravity-background"
 import { TutorialOverlay } from "@/components/onboarding/TutorialOverlay"
 import { TutorialProvider } from "@/components/providers/TutorialProvider"
+import { SearchCommandWrapper } from "@/components/SearchCommandWrapper"
 
 
 const inter = Inter({ subsets: ["latin"] })
@@ -61,16 +62,17 @@ export default async function RootLayout({
   }
 
   return (
-    <html lang={locale} suppressHydrationWarning className="dark">
+      <html lang={locale} suppressHydrationWarning className="bg-background">
       <body className={`${inter.className} min-h-screen bg-background text-foreground antialiased selection:bg-indigo-500/30 selection:text-indigo-200`}>
         <AntigravityBackground />
         <NextIntlClientProvider locale={locale} messages={messages}>
-          <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false} forcedTheme="dark">
+          <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
             <SidebarProvider>
               <ReactQueryProvider>
                 <TutorialProvider>
                   {children}
                   <TutorialOverlay />
+                  <SearchCommandWrapper />
                 </TutorialProvider>
                 <Toaster position="bottom-right" theme="dark" closeButton richColors />
               </ReactQueryProvider>

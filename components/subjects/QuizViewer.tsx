@@ -27,6 +27,7 @@ import {
   Sparkles
 } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
+import { useTheme } from "next-themes"
 
 import MarkdownRenderer from "@/components/MarkdownRenderer"
 import { Button } from "@/components/ui/button"
@@ -67,36 +68,39 @@ interface QuizViewerProps {
 
 const MASTERY_COLORS: Record<MasteryLevel, { bg: string; text: string; border: string; icon: typeof Brain; shadow: string }> = {
   new: {
-    bg: "bg-white",
-    text: "text-black",
-    border: "border-black",
+    bg: "bg-card",
+    text: "text-foreground",
+    border: "border-border",
     icon: CircleDashed,
-    shadow: "shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
+    shadow: "shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)]"
   },
   learning: {
     bg: "bg-[#FBCFE8]", // Pink
-    text: "text-black",
-    border: "border-black",
+    text: "text-foreground",
+    border: "border-border",
     icon: AlertCircle,
-    shadow: "shadow-[4px_4px_0px_0px_#BE185D]"
+    shadow: "shadow-[4px_4px_0px_0px_#BE185D] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)]"
   },
   reviewing: {
     bg: "bg-[#FDE68A]", // Amber
-    text: "text-black",
-    border: "border-black",
+    text: "text-foreground",
+    border: "border-border",
     icon: RotateCcw,
-    shadow: "shadow-[4px_4px_0px_0px_#B45309]"
+    shadow: "shadow-[4px_4px_0px_0px_#B45309] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)]"
   },
   mastered: {
     bg: "bg-[#BBF7D0]", // Green
-    text: "text-black",
-    border: "border-black",
+    text: "text-foreground",
+    border: "border-border",
     icon: Award,
-    shadow: "shadow-[4px_4px_0px_0px_#15803D]"
+    shadow: "shadow-[4px_4px_0px_0px_#15803D] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)]"
   },
 }
 
 export default function QuizViewer({ questions, studySubjectId, mode = "practice", title, onClose }: QuizViewerProps) {
+  const { resolvedTheme } = useTheme()
+  const isDark = resolvedTheme === "dark"
+  
   const [currentQuestionId, setCurrentQuestionId] = useState<string | null>(null)
   const [selectedOption, setSelectedOption] = useState<number | null>(null)
   const [revealAnswer, setRevealAnswer] = useState(false)
@@ -431,31 +435,31 @@ export default function QuizViewer({ questions, studySubjectId, mode = "practice
   if (isFinished) {
     return (
       <div className="flex flex-col items-center justify-center h-full p-8 text-center space-y-8 animate-in fade-in zoom-in-95 duration-500 bg-transparent">
-        <div className="bg-white border-2 border-black rounded-3xl p-12 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] relative max-w-2xl w-full">
+        <div className="bg-card border-2 border-border rounded-3xl p-12 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)] relative max-w-2xl w-full">
 
           <div className="space-y-6">
-            <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-[#BBF7D0] border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] mb-4">
-              <Award className="h-10 w-10 text-black" strokeWidth={2.5} />
+            <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-[#BBF7D0] border-2 border-border shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] mb-4">
+              <Award className="h-10 w-10 text-foreground" strokeWidth={2.5} />
             </div>
 
-            <h2 className="text-4xl font-black uppercase text-black italic">Session terminée !</h2>
-            <p className="text-gray-500 font-bold text-lg max-w-md mx-auto">
+            <h2 className="text-4xl font-black uppercase text-foreground italic">Session terminée !</h2>
+            <p className="text-muted-foreground font-bold text-lg max-w-md mx-auto">
               Vous avez répondu à toutes les questions. Voici votre résumé.
             </p>
           </div>
 
           <div className="grid grid-cols-3 gap-6 w-full max-w-xl mx-auto mt-10">
-            <div className="bg-[#BAE6FD] border-2 border-black rounded-xl p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-              <div className="text-4xl font-black text-black mb-1">{accuracyPercent}%</div>
-              <div className="text-xs text-black font-bold uppercase">Précision</div>
+            <div className="bg-[#BAE6FD] border-2 border-border rounded-xl p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)]">
+              <div className="text-4xl font-black text-foreground mb-1">{accuracyPercent}%</div>
+              <div className="text-xs text-foreground font-bold uppercase">Précision</div>
             </div>
-            <div className="bg-[#BBF7D0] border-2 border-black rounded-xl p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-              <div className="text-4xl font-black text-black mb-1">{statusCounts.correct}</div>
-              <div className="text-xs text-black font-bold uppercase">Correctes</div>
+            <div className="bg-[#BBF7D0] border-2 border-border rounded-xl p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)]">
+              <div className="text-4xl font-black text-foreground mb-1">{statusCounts.correct}</div>
+              <div className="text-xs text-foreground font-bold uppercase">Correctes</div>
             </div>
-            <div className="bg-[#FBCFE8] border-2 border-black rounded-xl p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-              <div className="text-4xl font-black text-black mb-1">{statusCounts.incorrect}</div>
-              <div className="text-xs text-black font-bold uppercase">À revoir</div>
+            <div className="bg-[#FBCFE8] border-2 border-border rounded-xl p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)]">
+              <div className="text-4xl font-black text-foreground mb-1">{statusCounts.incorrect}</div>
+              <div className="text-xs text-foreground font-bold uppercase">À revoir</div>
             </div>
           </div>
 
@@ -464,7 +468,7 @@ export default function QuizViewer({ questions, studySubjectId, mode = "practice
               variant="default"
               size="lg"
               onClick={() => handleRestart(false)}
-              className="h-14 px-8 text-sm font-black uppercase rounded-xl bg-white text-black border-2 border-black hover:bg-gray-100 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-y-[2px] active:translate-y-[4px] active:shadow-none transition-all"
+              className="h-14 px-8 text-sm font-black uppercase rounded-xl bg-card text-foreground border-2 border-border hover:bg-muted shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] hover:translate-y-[2px] active:translate-y-[4px] active:shadow-none transition-all"
             >
               <RotateCcw className="mr-2 h-5 w-5" />
               Tout recommencer
@@ -473,7 +477,7 @@ export default function QuizViewer({ questions, studySubjectId, mode = "practice
               <Button
                 size="lg"
                 onClick={() => handleRestart(true)}
-                className="h-14 px-8 text-sm font-black uppercase rounded-xl bg-black text-white hover:bg-[#8B5CF6] border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-y-[2px] active:translate-y-[4px] active:shadow-none transition-all"
+                className="h-14 px-8 text-sm font-black uppercase rounded-xl bg-foreground text-background hover:bg-primary border-2 border-border shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] hover:translate-y-[2px] active:translate-y-[4px] active:shadow-none transition-all"
               >
                 <Target className="mr-2 h-5 w-5" />
                 Revoir les erreurs
@@ -498,38 +502,40 @@ export default function QuizViewer({ questions, studySubjectId, mode = "practice
   return (
     <div className="h-full flex flex-col p-4 md:p-8 font-sans overflow-hidden">
       {/* Container Principal style QuizHub */}
-      <div className="w-full max-w-5xl mx-auto h-full flex flex-col bg-[#FDF6E3] border-2 border-black rounded-3xl overflow-hidden shadow-[8px_8px_0px_0px_rgba(255,255,255,0.5)]">
+      <div className="w-full max-w-5xl mx-auto h-full flex flex-col bg-background border-2 border-border rounded-3xl overflow-hidden shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)]">
 
         {/* Header */}
-        <div className="p-6 md:p-8 border-b-2 border-black flex items-center justify-between bg-white shrink-0">
+        <div className="p-6 md:p-8 border-b-2 border-border flex items-center justify-between bg-card shrink-0">
           <div className="flex items-center gap-4">
-            <span className="bg-black text-white px-3 py-1 rounded-lg font-bold text-xs uppercase">
+            <span className="bg-[#FDE68A] dark:bg-[#FDE68A] text-[#1e3a8a] dark:text-[#1e3a8a] px-3 py-1 rounded-lg font-bold text-xs uppercase border-2 border-border shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)]">
               Question {currentIndex + 1} / {prioritizedQuestions.length}
             </span>
-            <div className="h-3 w-24 md:w-64 bg-gray-200 rounded-full border-2 border-black overflow-hidden relative hidden sm:block">
+            <div className="h-3 w-24 md:w-64 bg-muted rounded-full border-2 border-border overflow-hidden relative hidden sm:block">
               <motion.div
-                className="absolute left-0 top-0 bottom-0 bg-[#8B5CF6] h-full"
+                className="absolute left-0 top-0 bottom-0 bg-primary h-full"
                 initial={{ width: 0 }}
                 animate={{ width: `${((currentIndex + 1) / prioritizedQuestions.length) * 100}%` }}
               />
             </div>
             {/* Mode badge */}
             <span className={cn(
-              "hidden md:inline-flex px-2 py-0.5 rounded-md text-[10px] font-black uppercase border-2 border-black ml-2",
-              mode === "adaptive" ? "bg-[#FBCFE8]" : "bg-[#BBF7D0]"
+              "hidden md:inline-flex px-2 py-0.5 rounded-md text-[10px] font-black uppercase border-2 border-border ml-2",
+              mode === "adaptive" 
+                ? "bg-[#FBCFE8] dark:bg-[#FBCFE8] text-[#1e3a8a] dark:text-[#1e3a8a]" 
+                : "bg-[#BBF7D0] dark:bg-[#BBF7D0] text-[#1e3a8a] dark:text-[#1e3a8a]"
             )}>
               {mode === "adaptive" ? "Mode Adaptatif" : "Mode Pratique"}
             </span>
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-gray-100 border-2 border-black">
-              <div className="flex items-center gap-1.5 text-xs font-black text-emerald-600">
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-card border-2 border-border">
+              <div className="flex items-center gap-1.5 text-xs font-black text-[#FDE68A] dark:text-[#FDE68A]">
                 <CheckCircle2 className="h-4 w-4" />
                 {statusCounts.correct}
               </div>
-              <div className="w-0.5 h-4 bg-gray-300" />
-              <div className="flex items-center gap-1.5 text-xs font-black text-rose-600">
+              <div className="w-0.5 h-4 bg-border/20" />
+              <div className="flex items-center gap-1.5 text-xs font-black text-[#FDE68A] dark:text-[#FDE68A]">
                 <XCircle className="h-4 w-4" />
                 {statusCounts.incorrect}
               </div>
@@ -537,7 +543,7 @@ export default function QuizViewer({ questions, studySubjectId, mode = "practice
 
             <button
               onClick={onClose}
-              className="h-10 w-10 border-2 border-black rounded-lg flex items-center justify-center hover:bg-red-500 hover:text-white transition-colors bg-white"
+              className="h-10 w-10 border-2 border-border rounded-lg flex items-center justify-center hover:bg-destructive hover:text-destructive-foreground transition-colors bg-card text-foreground"
             >
               <X className="h-6 w-6" strokeWidth={3} />
             </button>
@@ -556,8 +562,16 @@ export default function QuizViewer({ questions, studySubjectId, mode = "practice
                 className="w-full max-w-4xl flex flex-col items-center"
               >
                 {/* Question Text */}
-                <h2 className="text-3xl md:text-5xl font-black text-center mb-12 text-black leading-tight">
-                  <MarkdownRenderer content={current.prompt} />
+                <h2 
+                  className="text-3xl md:text-5xl font-black text-center mb-12 leading-tight"
+                  style={{ color: revealAnswer ? (isDark ? "#93c5fd" : "#1e3a8a") : "#FDE68A" }}
+                >
+                  <div 
+                    className="[&_*]:!text-inherit [&_p]:!text-inherit [&_strong]:!text-inherit [&_em]:!text-inherit"
+                    style={{ color: revealAnswer ? (isDark ? "#93c5fd" : "#1e3a8a") : "#FDE68A" }}
+                  >
+                    <MarkdownRenderer content={current.prompt} />
+                  </div>
                 </h2>
 
                 {/* Options Grid */}
@@ -568,33 +582,38 @@ export default function QuizViewer({ questions, studySubjectId, mode = "practice
                     const isIncorrectSelection = revealAnswer && isSelected && !isCorrect
 
                     // Determine styles based on state
-                    // Default State (White/Neo-Brutalism)
-                    let buttonStyle = "bg-white border-black text-black hover:bg-gray-50"
-                    let letterStyle = "bg-white text-black border-black"
-                    let shadowStyle = "shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
+                    // Default State (Neo-Brutalism) - Jaune/beige par défaut
+                    let buttonStyle = "bg-card border-border hover:bg-muted"
+                    let letterStyle = "bg-card text-foreground border-border"
+                    let shadowStyle = "shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)]"
+                    let textColor = "#FDE68A" // Jaune/beige par défaut
 
                     if (revealAnswer) {
                       if (isCorrect) {
-                        // Correct Answer
-                        buttonStyle = "bg-[#dcfce7] border-[#16a34a] text-black"
-                        letterStyle = "bg-black text-white border-black"
-                        shadowStyle = "shadow-[4px_4px_0px_0px_#16a34a]"
+                        // Correct Answer - Noir/bleu après validation
+                        buttonStyle = "bg-[#dcfce7] dark:bg-emerald-950/30 border-[#16a34a]"
+                        letterStyle = "bg-foreground text-background border-border"
+                        shadowStyle = "shadow-[4px_4px_0px_0px_#16a34a] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)]"
+                        textColor = isDark ? "#93c5fd" : "#1e3a8a" // Bleu clair en dark mode, bleu foncé en light mode
                       } else if (isIncorrectSelection) {
-                        // Wrong Selection
-                        buttonStyle = "bg-[#ffe4e6] border-[#e11d48] text-black"
+                        // Wrong Selection - Noir/bleu après validation
+                        buttonStyle = "bg-[#ffe4e6] dark:bg-red-950/30 border-[#e11d48]"
                         letterStyle = "bg-[#e11d48] text-white border-[#e11d48]"
-                        shadowStyle = "shadow-[4px_4px_0px_0px_#e11d48]"
+                        shadowStyle = "shadow-[4px_4px_0px_0px_#e11d48] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)]"
+                        textColor = isDark ? "#93c5fd" : "#1e3a8a" // Bleu clair en dark mode, bleu foncé en light mode
                       } else {
                         // Unselected and not correct - Ghost style
-                        buttonStyle = "bg-transparent border-gray-200 text-gray-300 cursor-not-allowed"
-                        letterStyle = "bg-transparent text-gray-300 border-gray-200"
+                        buttonStyle = "bg-transparent border-border/20 cursor-not-allowed"
+                        letterStyle = "bg-transparent text-muted-foreground border-border/20"
                         shadowStyle = "shadow-none"
+                        textColor = "" // Utilise la couleur par défaut
                       }
                     } else if (isSelected) {
-                      // Active Selection (before reveal) -> Green like image
-                      buttonStyle = "bg-[#dcfce7] border-[#16a34a] text-black"
-                      letterStyle = "bg-black text-white border-black"
-                      shadowStyle = "shadow-[4px_4px_0px_0px_#16a34a]"
+                      // Active Selection (before reveal) - Garde jaune/beige jusqu'à validation
+                      buttonStyle = "bg-[#dcfce7] dark:bg-emerald-950/30 border-[#16a34a]"
+                      letterStyle = "bg-foreground text-background border-border"
+                      shadowStyle = "shadow-[4px_4px_0px_0px_#16a34a] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)]"
+                      textColor = "#FDE68A" // Jaune/beige même quand sélectionné
                     }
 
                     return (
@@ -610,7 +629,7 @@ export default function QuizViewer({ questions, studySubjectId, mode = "practice
                           "relative border-2 rounded-2xl p-6 h-full min-h-[5rem] flex items-center gap-5 transition-all duration-200 text-left overflow-hidden",
                           buttonStyle,
                           shadowStyle,
-                          !revealAnswer && !isSelected && "hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]"
+                          !revealAnswer && !isSelected && "hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[6px_6px_0px_0px_rgba(255,255,255,1)]"
                         )}>
                           <div className={cn(
                             "h-12 w-12 min-w-[3rem] rounded-xl border-2 flex flex-shrink-0 items-center justify-center font-black text-lg transition-colors",
@@ -619,9 +638,17 @@ export default function QuizViewer({ questions, studySubjectId, mode = "practice
                             {String.fromCharCode(65 + index)}
                           </div>
 
-                          <span className="text-xl font-bold leading-tight flex-1">
-                            <MarkdownRenderer content={option} />
-                          </span>
+                          <div 
+                            className="text-xl font-bold leading-tight flex-1"
+                            style={textColor ? { color: textColor } : undefined}
+                          >
+                            <div 
+                              className="[&_*]:!text-inherit [&_p]:!text-inherit [&_strong]:!text-inherit [&_em]:!text-inherit"
+                              style={textColor ? { color: textColor } : undefined}
+                            >
+                              <MarkdownRenderer content={option} />
+                            </div>
+                          </div>
 
                           {revealAnswer && isCorrect && <Check className="ml-auto text-[#16a34a] h-8 w-8 flex-shrink-0" strokeWidth={3} />}
                           {revealAnswer && isIncorrectSelection && <X className="ml-auto text-[#e11d48] h-8 w-8 flex-shrink-0" strokeWidth={3} />}
@@ -637,14 +664,16 @@ export default function QuizViewer({ questions, studySubjectId, mode = "practice
                     <motion.div
                       initial={{ height: 0, opacity: 0 }}
                       animate={{ height: "auto", opacity: 1 }}
-                      className="w-full max-w-4xl mt-8 pt-6 border-t-2 border-black/10"
+                      className="w-full max-w-4xl mt-8 pt-6 border-t-2 border-border/10"
                     >
-                      <div className="bg-[#BAE6FD] border-2 border-black rounded-2xl p-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-                        <div className="flex items-center gap-2 mb-2 font-black uppercase text-sm">
+                      <div className="bg-[#BAE6FD] border-2 border-border rounded-2xl p-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)]">
+                        <div className="flex items-center gap-2 mb-2 font-black uppercase text-sm text-[#FDE68A] dark:text-[#FDE68A]">
                           <Sparkles className="h-4 w-4" /> Explication
                         </div>
-                        <div className="font-medium text-black">
-                          <MarkdownRenderer content={current.explanation} />
+                        <div className="font-medium text-[#FDE68A] dark:text-[#FDE68A]">
+                          <div className="[&_*]:!text-inherit [&_p]:!text-inherit [&_strong]:!text-inherit [&_em]:!text-inherit" style={{ color: "#FDE68A" }}>
+                            <MarkdownRenderer content={current.explanation} />
+                          </div>
                         </div>
                       </div>
                     </motion.div>
@@ -657,11 +686,11 @@ export default function QuizViewer({ questions, studySubjectId, mode = "practice
         </div>
 
         {/* Footer */}
-        <div className="p-6 md:p-8 bg-white border-t-2 border-black flex justify-between items-center shrink-0 w-full z-10">
-          <div className="font-black text-xl hidden sm:block">
+        <div className="p-6 md:p-8 bg-card border-t-2 border-border flex justify-between items-center shrink-0 w-full z-10">
+          <div className="font-black text-xl hidden sm:block text-[#FDE68A] dark:text-[#FDE68A]">
             Score: {statusCounts.correct} / {prioritizedQuestions.length}
           </div>
-          <div className="sm:hidden font-black text-base">
+          <div className="sm:hidden font-black text-base text-[#FDE68A] dark:text-[#FDE68A]">
             {statusCounts.correct}/{prioritizedQuestions.length}
           </div>
 
@@ -670,7 +699,7 @@ export default function QuizViewer({ questions, studySubjectId, mode = "practice
               variant="ghost"
               onClick={handlePrevious}
               disabled={currentIndex === 0}
-              className="hidden sm:flex"
+              className="hidden sm:flex text-[#FDE68A] dark:text-[#FDE68A]"
             >
               Précédent
             </Button>
@@ -679,14 +708,14 @@ export default function QuizViewer({ questions, studySubjectId, mode = "practice
               <Button
                 onClick={handleReveal}
                 disabled={selectedOption === null}
-                className="h-14 px-10 rounded-xl border-2 border-black bg-[#FBBF24] text-black hover:bg-[#F59E0B] text-xl font-bold shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-y-[2px] active:translate-y-[4px] active:shadow-none transition-all disabled:opacity-50 disabled:shadow-none disabled:translate-y-[4px]"
+                className="h-14 px-10 rounded-xl border-2 border-border bg-accent text-foreground hover:bg-accent/90 text-xl font-bold shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] hover:translate-y-[2px] active:translate-y-[4px] active:shadow-none transition-all disabled:opacity-50 disabled:shadow-none disabled:translate-y-[4px]"
               >
                 Vérifier
               </Button>
             ) : (
               <Button
                 onClick={handleNext}
-                className="h-14 px-10 rounded-xl border-2 border-black bg-black text-white hover:bg-[#8B5CF6] text-xl font-bold shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-y-[2px] active:translate-y-[4px] active:shadow-none transition-all"
+                className="h-14 px-10 rounded-xl border-2 border-border bg-foreground text-background hover:bg-primary text-xl font-bold shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] hover:translate-y-[2px] active:translate-y-[4px] active:shadow-none transition-all"
               >
                 {currentIndex < prioritizedQuestions.length - 1 ? "Question Suivante" : "Terminer"} <ArrowRight className="ml-3 h-6 w-6" strokeWidth={3} />
               </Button>

@@ -640,9 +640,10 @@
   },
   "Favorites": {
     "title": "FAVORIS",
-    "hallOfFameTitle": "Ton Hall of Fame<br />Personnel.",
+    "hallOfFameTitle": "Ton Panthéon",
     "hallOfFameDesc": "Épingle tes matières et documents les plus importants ici pour un accès ultra-rapide.",
-    "starSubjectsTitle": "Matières Stars.",
+    "starSubjectsTitle": "Matières Phares.",
+    "exampleSubject": "Analyse I",
     "starSubjectsDesc": "Garde tes focus actuels en tête de liste.",
     "keyDocumentsTitle": "Documents Clés.",
     "keyDocumentsDesc": "Ne perds jamais la trace de cette fiche de révision.",
@@ -707,5 +708,39 @@
       "successRedirect": "✅ Connecté ! Redirection...",
       "genericError": "Une erreur est survenue"
     }
+  },
+  "Errors": {
+    "ai": {
+      "authentication": "Erreur d'authentification avec l'IA. Veuillez contacter le support.",
+      "rateLimit": "Trop de requêtes simultanées. Veuillez patienter quelques instants avant de réessayer.",
+      "quotaExceeded": "Quota d'utilisation dépassé. Veuillez réessayer plus tard ou contacter le support.",
+      "contextTooLong": "Le document est trop long pour être traité en une seule fois. Veuillez le diviser en sections plus petites.",
+      "serverError": "Erreur temporaire du serveur IA. Veuillez réessayer dans quelques instants.",
+      "timeout": "La requête a pris trop de temps. Veuillez réessayer avec un document plus court ou diviser votre demande.",
+      "networkError": "Erreur de connexion réseau. Vérifiez votre connexion internet et réessayez.",
+      "unknown": "Une erreur inattendue s'est produite. Veuillez réessayer ou contacter le support si le problème persiste."
+    },
+    "fallback": {
+      "regenerate": "Régénérer",
+      "manualMode": "Mode manuel",
+      "suggestRegenerate": "Vous pouvez essayer de régénérer le contenu.",
+      "suggestManual": "Vous pouvez également créer le contenu manuellement."
+    }
+  },
+  "Search": {
+    "placeholder": "RECHERCHER DANS TOUT...",
+    "all": "Tout",
+    "documents": "Documents",
+    "flashcards": "Flashcards",
+    "quiz": "Quiz",
+    "subjects": "Matières",
+    "searching": "Recherche en cours...",
+    "noResults": "Aucun résultat",
+    "tryDifferentQuery": "Essayez avec d'autres mots-clés",
+    "startTyping": "Commencez à taper",
+    "minChars": "Minimum 2 caractères",
+    "navigate": "Naviguer",
+    "select": "Sélectionner",
+    "close": "Fermer"
   }
 }
