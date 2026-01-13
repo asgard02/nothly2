@@ -49,7 +49,7 @@ export default function DashboardClient({ user }: DashboardClientProps) {
     }, 500)
 
     return () => clearTimeout(timer)
-  }, [content, title, selectedNote?.id])
+  }, [content, title, selectedNote, saveNote])
 
   // Gestion de la sélection de texte pour le menu contextuel
   useEffect(() => {
@@ -117,9 +117,9 @@ export default function DashboardClient({ user }: DashboardClientProps) {
     setSaveStatus("")
   }
 
-  const saveNote = async () => {
+  const saveNote = useCallback(async () => {
     if (!selectedNote) return
-    
+
     const res = await fetch(`/api/notes/${selectedNote.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -128,15 +128,15 @@ export default function DashboardClient({ user }: DashboardClientProps) {
 
     if (res.ok) {
       const updatedNote = await res.json()
-      
+
       // Met à jour la liste des notes
-      setNotes(notes.map(n => 
+      setNotes(notes.map(n =>
         n.id === updatedNote.id ? updatedNote : n
       ))
-      
+
       setSaveStatus("saved")
     }
-  }
+  }, [selectedNote, title, content, notes])
 
   const deleteNote = async () => {
     if (!selectedNote) return
