@@ -54,6 +54,24 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
     return () => window.removeEventListener("keydown", handleKeyDown)
   }, [open, onOpenChange])
 
+  const performSearch = useCallback(async (searchQuery: string) => {
+    setIsLoading(true)
+    try {
+      const response = await fetch(`/api/search?q=${encodeURIComponent(searchQuery)}&type=${selectedType}`)
+      if (!response.ok) {
+        throw new Error("Erreur lors de la recherche")
+      }
+      const data = await response.json()
+      setResults(data.results || [])
+      setSelectedIndex(0)
+    } catch (error) {
+      console.error("[SearchCommand] Erreur recherche:", error)
+      setResults([])
+    } finally {
+      setIsLoading(false)
+    }
+  }, [selectedType])
+
   // Recherche avec debounce
   useEffect(() => {
     if (!open) {
@@ -72,25 +90,7 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
     }, 300)
 
     return () => clearTimeout(timeoutId)
-  }, [query, open, selectedType])
-
-  const performSearch = async (searchQuery: string) => {
-    setIsLoading(true)
-    try {
-      const response = await fetch(`/api/search?q=${encodeURIComponent(searchQuery)}&type=${selectedType}`)
-      if (!response.ok) {
-        throw new Error("Erreur lors de la recherche")
-      }
-      const data = await response.json()
-      setResults(data.results || [])
-      setSelectedIndex(0)
-    } catch (error) {
-      console.error("[SearchCommand] Erreur recherche:", error)
-      setResults([])
-    } finally {
-      setIsLoading(false)
-    }
-  }
+  }, [query, open, selectedType, performSearch])
 
   const handleSelect = useCallback(
     (result: SearchResult) => {

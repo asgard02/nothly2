@@ -6,11 +6,12 @@ import { createClient } from "@/lib/supabase-client"
 
 export default function ResetPage() {
     const router = useRouter()
-    const supabase = createClient()
     const [status, setStatus] = useState("Cleaning up...")
 
     useEffect(() => {
         const cleanup = async () => {
+            const supabase = createClient()
+
             try {
                 // 1. Clear Supabase Session
                 await supabase.auth.signOut()
