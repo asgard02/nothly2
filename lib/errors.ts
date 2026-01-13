@@ -14,25 +14,24 @@ export interface OpenAIErrorResponse {
 
 export enum OpenAIErrorType {
   // Erreurs d'authentification
-  AUTHENTICATION_ERROR = "invalid_api_key",
   INVALID_API_KEY = "invalid_api_key",
-  
+
   // Erreurs de quota/rate limit
   RATE_LIMIT_EXCEEDED = "rate_limit_exceeded",
   QUOTA_EXCEEDED = "insufficient_quota",
-  
+
   // Erreurs de requête
   INVALID_REQUEST = "invalid_request_error",
   CONTEXT_LENGTH_EXCEEDED = "context_length_exceeded",
-  
+
   // Erreurs serveur
   SERVER_ERROR = "server_error",
   INTERNAL_SERVER_ERROR = "internal_server_error",
-  
+
   // Erreurs réseau/timeout
   TIMEOUT = "timeout",
   NETWORK_ERROR = "network_error",
-  
+
   // Erreurs inconnues
   UNKNOWN = "unknown_error",
 }
@@ -71,7 +70,7 @@ export function detectOpenAIErrorType(error: any): OpenAIErrorType {
     errorCode === "invalid_api_key" ||
     status === 401
   ) {
-    return OpenAIErrorType.AUTHENTICATION_ERROR
+    return OpenAIErrorType.INVALID_API_KEY
   }
 
   // Erreurs de rate limit
@@ -143,10 +142,6 @@ export function detectOpenAIErrorType(error: any): OpenAIErrorType {
  */
 export function getUserFriendlyMessage(errorType: OpenAIErrorType, language: 'fr' | 'en' = 'fr'): string {
   const messages: Record<OpenAIErrorType, { fr: string; en: string }> = {
-    [OpenAIErrorType.AUTHENTICATION_ERROR]: {
-      fr: "Erreur d'authentification avec l'IA. Veuillez contacter le support.",
-      en: "AI authentication error. Please contact support.",
-    },
     [OpenAIErrorType.INVALID_API_KEY]: {
       fr: "Clé API invalide. Veuillez contacter le support.",
       en: "Invalid API key. Please contact support.",
@@ -211,7 +206,6 @@ export function isRetryableError(errorType: OpenAIErrorType): boolean {
 export function hasFallbackAvailable(errorType: OpenAIErrorType): boolean {
   // Toutes les erreurs sauf authentification et quota peuvent avoir un fallback
   return ![
-    OpenAIErrorType.AUTHENTICATION_ERROR,
     OpenAIErrorType.INVALID_API_KEY,
     OpenAIErrorType.QUOTA_EXCEEDED,
   ].includes(errorType)
