@@ -845,7 +845,6 @@ export default function SubjectView({ subject, onBack, onSelectDocument, onUpdat
                   { id: "pdf", label: t("tabPdf"), icon: FileText, count: filteredDocs.length, color: "bg-[#BAE6FD]", tutorialId: "tab-pdf" },
                   { id: "flashcards", label: t("tabFlashcards"), icon: Brain, count: flashcardsCollections.length, color: "bg-[#FBCFE8]", tutorialId: "tab-flashcards" },
                   { id: "quiz", label: t("tabQuiz"), icon: ListChecks, count: quizCollections.length, color: "bg-[#BBF7D0]", tutorialId: "tab-quiz" },
-                  { id: "video", label: t("tabVideo"), icon: Video, count: realVideos?.filter(v => v.status === "done").length || 0, color: "bg-[#DDD6FE]", tutorialId: "tab-video" },
                   { id: "resume", label: t("tabSummaries"), icon: BookOpen, count: totalSummaries, color: "bg-[#FDE68A]", tutorialId: "tab-summaries" },
                 ].map((tab) => (
                   <button
