@@ -11,6 +11,8 @@ import { withRateLimit } from "@/lib/rate-limit"
 const DOCUMENTS_BUCKET =
   process.env.GCS_BUCKET ?? process.env.GCP_STORAGE_BUCKET ?? process.env.SUPABASE_DOCUMENTS_BUCKET ?? "nothly-storage"
 
+export const dynamic = "force-dynamic"
+
 export async function GET(req: NextRequest) {
   const supabase = await createServerClient()
   if (!supabase) {

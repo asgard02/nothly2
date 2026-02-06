@@ -5,6 +5,8 @@ import { getStorageBucket } from "@/lib/storage"
 
 const DOCUMENTS_BUCKET = process.env.SUPABASE_DOCUMENTS_BUCKET || "documents"
 
+export const dynamic = "force-dynamic"
+
 export async function GET(
   _req: NextRequest,
   { params }: { params: { id: string } }

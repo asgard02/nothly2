@@ -25,6 +25,8 @@ function isValidMode(mode: unknown): mode is GenerationMode {
   return typeof mode === "string" && (VALID_MODES as readonly string[]).includes(mode)
 }
 
+export const dynamic = "force-dynamic"
+
 export async function POST(req: NextRequest) {
   const user = await getUser()
 

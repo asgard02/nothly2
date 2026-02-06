@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server"
 import { getSupabaseAdmin } from "@/lib/db"
 import { createServerClient } from "@supabase/ssr"
 
+export const dynamic = "force-dynamic"
+
 // POST /api/notes/[id]/beacon - Sauvegarde via sendBeacon (avant fermeture page)
 export async function POST(
   request: NextRequest,

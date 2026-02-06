@@ -30,6 +30,8 @@ function getStripeClient(): Stripe | null {
   return stripeClient
 }
 
+export const dynamic = "force-dynamic"
+
 // POST: Reçoit les webhooks de Stripe
 export async function POST(request: NextRequest) {
   const stripe = getStripeClient()

@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server"
 import { getUser } from "@/lib/auth"
 import { improveNote } from "@/lib/ai"
 
+export const dynamic = "force-dynamic"
+
 // POST: Améliore le contenu d'une note avec l'IA
 export async function POST(request: NextRequest) {
   const user = await getUser()

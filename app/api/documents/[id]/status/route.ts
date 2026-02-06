@@ -7,6 +7,9 @@ import { getSupabaseAdmin } from "@/lib/db"
  * Retourne le statut du document et du job associé (pour polling UI).
  * Léger : pas de chargement des sections/versions.
  */
+
+export const dynamic = "force-dynamic"
+
 export async function GET(
   _req: NextRequest,
   { params }: { params: { id: string } }

@@ -4,6 +4,7 @@ import { mockLogin } from "@/lib/auth"
 
 // Force le runtime Node.js pour cette route (nécessaire pour Supabase)
 export const runtime = "nodejs"
+export const dynamic = "force-dynamic"
 
 // Route de développement uniquement - désactivée en production
 // GET: Affiche un formulaire de login simple pour le dev

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createServerClient } from "@supabase/ssr"
 
+export const dynamic = "force-dynamic"
+
 // Endpoint de monitoring pour surveiller les requêtes en temps réel
 // Protégé: requiert une authentification et le mode développement
 export async function GET(request: NextRequest) {

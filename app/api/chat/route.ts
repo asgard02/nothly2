@@ -98,6 +98,8 @@ async function summarizeLongContent(content: string, maxLength: number): Promise
   return `${start}\n\n[... section résumée ...]\n\n${summarizedMiddle}\n\n[... suite ...]\n\n${end}`
 }
 
+export const dynamic = "force-dynamic"
+
 export async function POST(req: NextRequest) {
   // Vérification de l'authentification
   const user = await getUser()
