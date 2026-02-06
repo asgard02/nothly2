@@ -2,7 +2,6 @@ import { setTimeout as sleep } from "node:timers/promises"
 
 import { getSupabaseAdmin } from "@/lib/db"
 import {
-  getJob,
   updateJob,
   type AsyncJob,
   type JobStatus,
@@ -13,9 +12,23 @@ import {
 } from "@/lib/documents/processor"
 
 const BASE_POLL_INTERVAL_MS = Number(process.env.JOB_POLL_INTERVAL_MS || 2000)
-const MAX_POLL_INTERVAL_MS = 30000 // 30 secondes max
+const MAX_POLL_INTERVAL_MS = 30000
 const BACKOFF_MULTIPLIER = 1.5
-const JOB_TIMEOUT_MS = 5 * 60 * 1000 // 5 minutes timeout par job
+const JOB_TIMEOUT_MS = 5 * 60 * 1000
+
+/** Log structuré (une ligne JSON par message) pour agrégation en prod */
+function log(level: "info" | "warn" | "error", msg: string, meta?: Record<string, unknown>) {
+  const line = JSON.stringify({
+    ts: new Date().toISOString(),
+    level,
+    worker: "document-generation",
+    msg,
+    ...meta,
+  })
+  if (level === "error") console.error(line)
+  else if (level === "warn") console.warn(line)
+  else console.log(line)
+}
 
 async function fetchNextPendingJob(): Promise<AsyncJob | null> {
   const admin = getSupabaseAdmin()
@@ -52,10 +65,10 @@ async function fetchNextPendingJob(): Promise<AsyncJob | null> {
     .single()
 
   if (updateError || !claimedJob) {
-    // Job déjà pris par un autre worker ou erreur
     return null
   }
 
+  log("info", "job_claimed", { jobId: claimedJob.id, documentId: (claimedJob.payload as any)?.documentId })
   return claimedJob as AsyncJob
 }
 
@@ -69,7 +82,7 @@ async function runJob(job: AsyncJob) {
         finishedAt: new Date(),
       })
     } catch (e) {
-      console.error("[process-document-jobs] Failed to update job status (payload missing)", e)
+      log("error", "update_job_failed", { jobId: job.id, reason: "payload_missing", err: (e as Error)?.message })
     }
     return
   }
@@ -84,13 +97,13 @@ async function runJob(job: AsyncJob) {
       progress: 0,
     })
   } catch (e) {
-    console.error("[process-document-jobs] Failed to set job progress", e)
+    log("warn", "set_progress_failed", { jobId: job.id, err: (e as Error)?.message })
   }
 
   // Créer un timeout pour le job
   const timeoutId = setTimeout(async () => {
     const elapsed = Date.now() - startTime
-    console.error(`[process-document-jobs] Job ${job.id} timeout after ${elapsed}ms`)
+    log("error", "job_timeout", { jobId: job.id, documentId: payload.documentId, elapsedMs: elapsed })
     try {
       await updateJob(job.id, {
         status: "failed",
@@ -98,7 +111,7 @@ async function runJob(job: AsyncJob) {
         finishedAt: new Date(),
       })
     } catch (e) {
-      console.error("[process-document-jobs] Failed to update job status (timeout)", e)
+      log("error", "update_job_failed", { jobId: job.id, reason: "timeout", err: (e as Error)?.message })
     }
   }, JOB_TIMEOUT_MS)
 
@@ -132,11 +145,19 @@ async function runJob(job: AsyncJob) {
       finishedAt: new Date(),
       result,
     })
+    log("info", "job_succeeded", {
+      jobId: job.id,
+      documentId: payload.documentId,
+      sectionsCount: (result as any)?.sectionsCount,
+      elapsedMs: Date.now() - startTime,
+    })
   } catch (error: any) {
     clearTimeout(timeoutId)
-    console.error("[process-document-jobs] job failed", {
+    log("error", "job_failed", {
       jobId: job.id,
-      error: error?.message || error,
+      documentId: payload.documentId,
+      error: error?.message || String(error),
+      elapsedMs: Date.now() - startTime,
     })
 
     const admin = getSupabaseAdmin()
@@ -151,7 +172,7 @@ async function runJob(job: AsyncJob) {
         .eq("id", payload.documentId)
       
       if (updateError) {
-        console.error("Failed to update document status to failed", updateError)
+        log("warn", "document_status_update_failed", { documentId: payload.documentId, err: updateError?.message })
       }
     }
 
@@ -159,12 +180,12 @@ async function runJob(job: AsyncJob) {
       status: "failed",
       error: error?.message || String(error),
       finishedAt: new Date(),
-    }).catch(e => console.error("Failed to update job status to failed", e))
+    }).catch((e) => log("error", "update_job_status_failed", { jobId: job.id, err: (e as Error)?.message }))
   }
 }
 
 async function main() {
-  console.log("[process-document-jobs] Worker started")
+  log("info", "worker_started", { pollIntervalMs: BASE_POLL_INTERVAL_MS, timeoutMs: JOB_TIMEOUT_MS })
   let pollInterval = BASE_POLL_INTERVAL_MS
   let consecutiveEmptyPolls = 0
 
@@ -190,7 +211,7 @@ async function main() {
 }
 
 main().catch((error) => {
-  console.error("[process-document-jobs] Fatal error", error)
+  log("error", "fatal", { err: (error as Error)?.message ?? String(error) })
   process.exit(1)
 })
 

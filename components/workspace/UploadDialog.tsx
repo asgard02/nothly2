@@ -5,6 +5,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { Loader2, UploadCloud, AlertCircle, X, FileText } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useTranslations } from "next-intl"
+import { useTutorial } from "@/components/providers/TutorialProvider"
 
 interface UploadDialogProps {
   open: boolean
@@ -21,6 +22,7 @@ export function UploadDialog({
 }: UploadDialogProps) {
   const t = useTranslations("UploadDialog")
   const queryClient = useQueryClient()
+  const { isOpen: isTutorialOpen, isPaused: isTutorialPaused, resumeTutorial } = useTutorial()
   const [file, setFile] = useState<File | null>(null)
   const [title, setTitle] = useState("")
   const [uploadError, setUploadError] = useState<string | null>(null)
@@ -132,6 +134,14 @@ export function UploadDialog({
       }
       resetForm()
       onOpenChange(false)
+      
+      // Resume tutorial if it was paused (waiting for upload)
+      if (isTutorialOpen && isTutorialPaused) {
+        // Small delay to let dialog close animation complete
+        setTimeout(() => {
+          resumeTutorial()
+        }, 300)
+      }
     },
     onError: (err: unknown) => {
       const message = err instanceof Error ? err.message : t("errorGeneric")

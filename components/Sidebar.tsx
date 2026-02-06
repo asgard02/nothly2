@@ -30,11 +30,11 @@ export default function Sidebar() {
   }
 
   const menuItems = [
-    { icon: LayoutDashboard, label: t("dashboard"), path: "/workspace/dashboard", color: "shadow-[4px_4px_0px_0px_#8B5CF6]" },
-    { icon: Grid, label: t("subjects"), path: "/workspace/subjects", color: "shadow-[4px_4px_0px_0px_#F472B6]" },
-    { icon: Brain, label: t("quiz"), path: "/workspace/quiz", color: "shadow-[4px_4px_0px_0px_#FBBF24]" },
-    { icon: Star, label: t("favorites"), path: "/workspace/favorites", color: "shadow-[4px_4px_0px_0px_#BAE6FD]" },
-    { icon: Calendar, label: t("calendar"), path: "/calendar", color: "shadow-[4px_4px_0px_0px_#BBF7D0]" }
+    { icon: LayoutDashboard, label: t("dashboard"), path: "/workspace/dashboard", color: "shadow-[4px_4px_0px_0px_#8B5CF6]", tutorialId: "nav-dashboard" },
+    { icon: Grid, label: t("subjects"), path: "/workspace/subjects", color: "shadow-[4px_4px_0px_0px_#F472B6]", tutorialId: "nav-subjects" },
+    { icon: Brain, label: t("quiz"), path: "/workspace/quiz", color: "shadow-[4px_4px_0px_0px_#FBBF24]", tutorialId: "nav-quiz" },
+    { icon: Star, label: t("favorites"), path: "/workspace/favorites", color: "shadow-[4px_4px_0px_0px_#BAE6FD]", tutorialId: "nav-favorites" },
+    { icon: Calendar, label: t("calendar"), path: "/calendar", color: "shadow-[4px_4px_0px_0px_#BBF7D0]", tutorialId: "nav-calendar" }
   ]
 
   const isActive = (path: string) => pathname === path
@@ -74,6 +74,7 @@ export default function Sidebar() {
                 <button
                   key={item.path}
                   onClick={() => router.push(item.path)}
+                  data-tutorial={item.tutorialId}
                   className={cn(
                     "group flex items-center w-full px-4 py-3 rounded-xl border-2 border-transparent transition-all duration-200",
                     isOpen ? "justify-start" : "justify-center px-0",

@@ -3,36 +3,22 @@
 import { useEffect, useMemo, useState, useCallback, useRef } from "react"
 import {
   CheckCircle2,
-  ChevronLeft,
-  ChevronRight,
   CircleDashed,
-  Eye,
-  EyeOff,
-  Flag,
   Target,
   XCircle,
-  Brain,
-  TrendingUp,
-  Clock,
-  Zap,
   RotateCcw,
-  BarChart3,
   Award,
   AlertCircle,
-  Loader2,
   Check,
   X,
   ArrowRight,
-  HelpCircle,
   Sparkles
 } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
-import { useTheme } from "next-themes"
 
 import MarkdownRenderer from "@/components/MarkdownRenderer"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { Progress } from "@/components/ui/progress"
 
 export type QuizQuestionType = "multiple_choice" | "true_false" | "completion"
 
@@ -98,9 +84,6 @@ const MASTERY_COLORS: Record<MasteryLevel, { bg: string; text: string; border: s
 }
 
 export default function QuizViewer({ questions, studySubjectId, mode = "practice", title, onClose }: QuizViewerProps) {
-  const { resolvedTheme } = useTheme()
-  const isDark = resolvedTheme === "dark"
-  
   const [currentQuestionId, setCurrentQuestionId] = useState<string | null>(null)
   const [selectedOption, setSelectedOption] = useState<number | null>(null)
   const [revealAnswer, setRevealAnswer] = useState(false)
@@ -507,10 +490,10 @@ export default function QuizViewer({ questions, studySubjectId, mode = "practice
         {/* Header */}
         <div className="p-6 md:p-8 border-b-2 border-border flex items-center justify-between bg-card shrink-0">
           <div className="flex items-center gap-4">
-            <span className="bg-[#FDE68A] dark:bg-[#FDE68A] text-[#1e3a8a] dark:text-[#1e3a8a] px-3 py-1 rounded-lg font-bold text-xs uppercase border-2 border-border shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)]">
+            <span className="bg-foreground text-background px-3 py-1 rounded-lg font-bold text-xs uppercase">
               Question {currentIndex + 1} / {prioritizedQuestions.length}
             </span>
-            <div className="h-3 w-24 md:w-64 bg-muted rounded-full border-2 border-border overflow-hidden relative hidden sm:block">
+            <div className="h-3 w-32 md:w-64 bg-muted rounded-full border-2 border-border overflow-hidden relative hidden sm:block">
               <motion.div
                 className="absolute left-0 top-0 bottom-0 bg-primary h-full"
                 initial={{ width: 0 }}
@@ -521,8 +504,8 @@ export default function QuizViewer({ questions, studySubjectId, mode = "practice
             <span className={cn(
               "hidden md:inline-flex px-2 py-0.5 rounded-md text-[10px] font-black uppercase border-2 border-border ml-2",
               mode === "adaptive" 
-                ? "bg-[#FBCFE8] dark:bg-[#FBCFE8] text-[#1e3a8a] dark:text-[#1e3a8a]" 
-                : "bg-[#BBF7D0] dark:bg-[#BBF7D0] text-[#1e3a8a] dark:text-[#1e3a8a]"
+                ? "bg-[#FBCFE8] text-foreground" 
+                : "bg-[#BBF7D0] text-foreground"
             )}>
               {mode === "adaptive" ? "Mode Adaptatif" : "Mode Pratique"}
             </span>
@@ -530,12 +513,12 @@ export default function QuizViewer({ questions, studySubjectId, mode = "practice
 
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-card border-2 border-border">
-              <div className="flex items-center gap-1.5 text-xs font-black text-[#FDE68A] dark:text-[#FDE68A]">
+              <div className="flex items-center gap-1.5 text-xs font-black text-green-600 dark:text-green-400">
                 <CheckCircle2 className="h-4 w-4" />
                 {statusCounts.correct}
               </div>
               <div className="w-0.5 h-4 bg-border/20" />
-              <div className="flex items-center gap-1.5 text-xs font-black text-[#FDE68A] dark:text-[#FDE68A]">
+              <div className="flex items-center gap-1.5 text-xs font-black text-red-600 dark:text-red-400">
                 <XCircle className="h-4 w-4" />
                 {statusCounts.incorrect}
               </div>
@@ -562,14 +545,8 @@ export default function QuizViewer({ questions, studySubjectId, mode = "practice
                 className="w-full max-w-4xl flex flex-col items-center"
               >
                 {/* Question Text */}
-                <h2 
-                  className="text-3xl md:text-5xl font-black text-center mb-12 leading-tight"
-                  style={{ color: revealAnswer ? (isDark ? "#93c5fd" : "#1e3a8a") : "#FDE68A" }}
-                >
-                  <div 
-                    className="[&_*]:!text-inherit [&_p]:!text-inherit [&_strong]:!text-inherit [&_em]:!text-inherit"
-                    style={{ color: revealAnswer ? (isDark ? "#93c5fd" : "#1e3a8a") : "#FDE68A" }}
-                  >
+                <h2 className="text-3xl md:text-5xl font-black text-center mb-12 leading-tight text-foreground">
+                  <div className="[&_*]:!text-inherit [&_p]:!text-inherit [&_strong]:!text-inherit [&_em]:!text-inherit">
                     <MarkdownRenderer content={current.prompt} />
                   </div>
                 </h2>
@@ -581,39 +558,19 @@ export default function QuizViewer({ questions, studySubjectId, mode = "practice
                     const isCorrect = revealAnswer && isOptionCorrect(option)
                     const isIncorrectSelection = revealAnswer && isSelected && !isCorrect
 
-                    // Determine styles based on state
-                    // Default State (Neo-Brutalism) - Jaune/beige par défaut
-                    let buttonStyle = "bg-card border-border hover:bg-muted"
-                    let letterStyle = "bg-card text-foreground border-border"
-                    let shadowStyle = "shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)]"
-                    let textColor = "#FDE68A" // Jaune/beige par défaut
+                    let borderColor = "border-border"
+                    let bgColor = "bg-card"
 
                     if (revealAnswer) {
                       if (isCorrect) {
-                        // Correct Answer - Noir/bleu après validation
-                        buttonStyle = "bg-[#dcfce7] dark:bg-emerald-950/30 border-[#16a34a]"
-                        letterStyle = "bg-foreground text-background border-border"
-                        shadowStyle = "shadow-[4px_4px_0px_0px_#16a34a] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)]"
-                        textColor = isDark ? "#93c5fd" : "#1e3a8a" // Bleu clair en dark mode, bleu foncé en light mode
+                        borderColor = "border-green-600"
+                        bgColor = "bg-green-100 dark:bg-green-950/30"
                       } else if (isIncorrectSelection) {
-                        // Wrong Selection - Noir/bleu après validation
-                        buttonStyle = "bg-[#ffe4e6] dark:bg-red-950/30 border-[#e11d48]"
-                        letterStyle = "bg-[#e11d48] text-white border-[#e11d48]"
-                        shadowStyle = "shadow-[4px_4px_0px_0px_#e11d48] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)]"
-                        textColor = isDark ? "#93c5fd" : "#1e3a8a" // Bleu clair en dark mode, bleu foncé en light mode
-                      } else {
-                        // Unselected and not correct - Ghost style
-                        buttonStyle = "bg-transparent border-border/20 cursor-not-allowed"
-                        letterStyle = "bg-transparent text-muted-foreground border-border/20"
-                        shadowStyle = "shadow-none"
-                        textColor = "" // Utilise la couleur par défaut
+                        borderColor = "border-red-600"
+                        bgColor = "bg-red-100 dark:bg-red-950/30"
                       }
                     } else if (isSelected) {
-                      // Active Selection (before reveal) - Garde jaune/beige jusqu'à validation
-                      buttonStyle = "bg-[#dcfce7] dark:bg-emerald-950/30 border-[#16a34a]"
-                      letterStyle = "bg-foreground text-background border-border"
-                      shadowStyle = "shadow-[4px_4px_0px_0px_#16a34a] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)]"
-                      textColor = "#FDE68A" // Jaune/beige même quand sélectionné
+                      bgColor = "bg-[#FCD34D]" // Jaune vibrant comme Quiz Hub
                     }
 
                     return (
@@ -623,35 +580,29 @@ export default function QuizViewer({ questions, studySubjectId, mode = "practice
                         className="group relative disabled:cursor-not-allowed w-full outline-none"
                         disabled={revealAnswer}
                       >
-                        {/* Static Shadow Element if needed, or use CSS shadow on main element. Using box-shadow class is easier. */}
-
+                        {/* Shadow element - 3D effect */}
                         <div className={cn(
-                          "relative border-2 rounded-2xl p-6 h-full min-h-[5rem] flex items-center gap-5 transition-all duration-200 text-left overflow-hidden",
-                          buttonStyle,
-                          shadowStyle,
-                          !revealAnswer && !isSelected && "hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[6px_6px_0px_0px_rgba(255,255,255,1)]"
+                          "absolute inset-0 bg-black dark:bg-white rounded-xl transition-transform",
+                          isSelected && !revealAnswer ? "translate-x-2 translate-y-2" : "translate-x-1 translate-y-1"
+                        )} />
+                        <div className={cn(
+                          "relative border-2 rounded-xl p-6 h-full min-h-[5rem] flex items-center gap-4 transition-all overflow-hidden",
+                          borderColor,
+                          bgColor,
+                          !revealAnswer && "hover:-translate-y-1 hover:-translate-x-1 hover:bg-[#FCD34D]"
                         )}>
                           <div className={cn(
-                            "h-12 w-12 min-w-[3rem] rounded-xl border-2 flex flex-shrink-0 items-center justify-center font-black text-lg transition-colors",
-                            letterStyle
+                            "h-10 w-10 rounded-lg border-2 border-border flex flex-shrink-0 items-center justify-center font-black bg-card transition-colors text-foreground",
+                            isSelected && "bg-foreground text-background"
                           )}>
                             {String.fromCharCode(65 + index)}
                           </div>
+                          <span className="text-xl font-bold text-left leading-tight text-foreground flex-1">
+                            <MarkdownRenderer content={option} />
+                          </span>
 
-                          <div 
-                            className="text-xl font-bold leading-tight flex-1"
-                            style={textColor ? { color: textColor } : undefined}
-                          >
-                            <div 
-                              className="[&_*]:!text-inherit [&_p]:!text-inherit [&_strong]:!text-inherit [&_em]:!text-inherit"
-                              style={textColor ? { color: textColor } : undefined}
-                            >
-                              <MarkdownRenderer content={option} />
-                            </div>
-                          </div>
-
-                          {revealAnswer && isCorrect && <Check className="ml-auto text-[#16a34a] h-8 w-8 flex-shrink-0" strokeWidth={3} />}
-                          {revealAnswer && isIncorrectSelection && <X className="ml-auto text-[#e11d48] h-8 w-8 flex-shrink-0" strokeWidth={3} />}
+                          {revealAnswer && isCorrect && <Check className="ml-auto text-green-600 dark:text-green-400 h-6 w-6" strokeWidth={3} />}
+                          {revealAnswer && isIncorrectSelection && <X className="ml-auto text-red-600 dark:text-red-400 h-6 w-6" strokeWidth={3} />}
                         </div>
                       </button>
                     )
@@ -666,14 +617,12 @@ export default function QuizViewer({ questions, studySubjectId, mode = "practice
                       animate={{ height: "auto", opacity: 1 }}
                       className="w-full max-w-4xl mt-8 pt-6 border-t-2 border-border/10"
                     >
-                      <div className="bg-[#BAE6FD] border-2 border-border rounded-2xl p-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)]">
-                        <div className="flex items-center gap-2 mb-2 font-black uppercase text-sm text-[#FDE68A] dark:text-[#FDE68A]">
+                      <div className="bg-[#BAE6FD] dark:bg-sky-950/30 border-2 border-border rounded-2xl p-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)]">
+                        <div className="flex items-center gap-2 mb-2 font-black uppercase text-sm text-foreground">
                           <Sparkles className="h-4 w-4" /> Explication
                         </div>
-                        <div className="font-medium text-[#FDE68A] dark:text-[#FDE68A]">
-                          <div className="[&_*]:!text-inherit [&_p]:!text-inherit [&_strong]:!text-inherit [&_em]:!text-inherit" style={{ color: "#FDE68A" }}>
-                            <MarkdownRenderer content={current.explanation} />
-                          </div>
+                        <div className="font-medium text-foreground">
+                          <MarkdownRenderer content={current.explanation} />
                         </div>
                       </div>
                     </motion.div>
@@ -687,11 +636,11 @@ export default function QuizViewer({ questions, studySubjectId, mode = "practice
 
         {/* Footer */}
         <div className="p-6 md:p-8 bg-card border-t-2 border-border flex justify-between items-center shrink-0 w-full z-10">
-          <div className="font-black text-xl hidden sm:block text-[#FDE68A] dark:text-[#FDE68A]">
-            Score: {statusCounts.correct} / {prioritizedQuestions.length}
+          <div className="font-black text-xl hidden sm:block text-foreground uppercase">
+            Score: {statusCounts.correct}
           </div>
-          <div className="sm:hidden font-black text-base text-[#FDE68A] dark:text-[#FDE68A]">
-            {statusCounts.correct}/{prioritizedQuestions.length}
+          <div className="sm:hidden font-black text-base text-foreground uppercase">
+            Score: {statusCounts.correct}
           </div>
 
           <div className="flex gap-4">
@@ -699,7 +648,7 @@ export default function QuizViewer({ questions, studySubjectId, mode = "practice
               variant="ghost"
               onClick={handlePrevious}
               disabled={currentIndex === 0}
-              className="hidden sm:flex text-[#FDE68A] dark:text-[#FDE68A]"
+              className="hidden sm:flex"
             >
               Précédent
             </Button>
@@ -708,16 +657,16 @@ export default function QuizViewer({ questions, studySubjectId, mode = "practice
               <Button
                 onClick={handleReveal}
                 disabled={selectedOption === null}
-                className="h-14 px-10 rounded-xl border-2 border-border bg-accent text-foreground hover:bg-accent/90 text-xl font-bold shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] hover:translate-y-[2px] active:translate-y-[4px] active:shadow-none transition-all disabled:opacity-50 disabled:shadow-none disabled:translate-y-[4px]"
+                className="h-14 px-10 rounded-xl border-2 border-border bg-[#FCD34D] text-foreground hover:bg-[#FBBF24] text-xl font-bold shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] hover:translate-y-[2px] active:translate-y-[4px] active:shadow-none transition-all disabled:opacity-50 disabled:shadow-none disabled:translate-y-[4px]"
               >
-                Vérifier
+                Vérifier la Réponse
               </Button>
             ) : (
               <Button
                 onClick={handleNext}
                 className="h-14 px-10 rounded-xl border-2 border-border bg-foreground text-background hover:bg-primary text-xl font-bold shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] hover:translate-y-[2px] active:translate-y-[4px] active:shadow-none transition-all"
               >
-                {currentIndex < prioritizedQuestions.length - 1 ? "Question Suivante" : "Terminer"} <ArrowRight className="ml-3 h-6 w-6" strokeWidth={3} />
+                {currentIndex < prioritizedQuestions.length - 1 ? "Question Suivante" : "Terminer le Quiz"} <ArrowRight className="ml-3 h-6 w-6" strokeWidth={3} />
               </Button>
             )}
           </div>

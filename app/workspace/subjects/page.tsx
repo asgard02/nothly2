@@ -139,6 +139,7 @@ export default function SubjectsPage() {
                                 {/* CTA Button */}
                                 <Button
                                     onClick={() => setIsCreateSubjectOpen(true)}
+                                    data-tutorial="create-subject-empty"
                                     className="group h-14 px-8 rounded-xl border-4 border-border bg-accent hover:bg-accent/90 text-foreground text-lg font-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[6px_6px_0px_0px_rgba(255,255,255,1)] hover:-translate-y-0.5 transition-all duration-200 active:translate-y-1 active:shadow-none uppercase mb-6"
                                 >
                                     <Plus className="mr-2 h-6 w-6 group-hover:rotate-90 transition-transform duration-300" strokeWidth={3} />
@@ -178,7 +179,7 @@ export default function SubjectsPage() {
                         const color = savedColor || colors[colorIndex % colors.length]
 
                         return (
-                            <Link href={`/workspace/subjects/${subject.id}`} key={subject.id}>
+                            <Link href={`/workspace/subjects/${subject.id}`} key={subject.id} data-tutorial="subject-card">
                                 <div className={cn("bg-card border-2 border-border rounded-3xl p-6 h-64 flex flex-col justify-between shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:shadow-[6px_6px_0px_0px_rgba(255,255,255,1)] hover:-translate-y-2 hover:shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[10px_10px_0px_0px_rgba(255,255,255,1)] transition-all duration-200 ease-out group relative overflow-hidden")}>
                                     {/* Decorative Blob */}
                                     <div className={cn("absolute -right-8 -top-8 w-32 h-32 rounded-full border-2 border-border opacity-100 transition-transform duration-300 group-hover:scale-110", color)}></div>
@@ -247,7 +248,7 @@ export default function SubjectsPage() {
                     })}
                     {/* Create New Card - Only show when there are existing subjects */}
                     {filteredSubjects.length > 0 && (
-                                                    <button onClick={() => setIsCreateSubjectOpen(true)} className="border-4 border-dashed border-border/20 rounded-3xl p-6 h-64 flex flex-col items-center justify-center gap-4 hover:border-border hover:bg-muted/50 transition-all duration-200 ease-out group">
+                        <button onClick={() => setIsCreateSubjectOpen(true)} data-tutorial="create-subject-card" className="border-4 border-dashed border-border/20 rounded-3xl p-6 h-64 flex flex-col items-center justify-center gap-4 hover:border-border hover:bg-muted/50 transition-all duration-200 ease-out group">
                             <div className="h-16 w-16 rounded-full bg-[#BBF7D0] border-2 border-border flex items-center justify-center shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] group-hover:scale-110 transition-transform">
                                 <Plus className="h-8 w-8 text-foreground" strokeWidth={3} />
                             </div>
@@ -330,7 +331,7 @@ export default function SubjectsPage() {
                     })}
                     {/* Create New List Item - Only show when there are existing subjects */}
                     {filteredSubjects.length > 0 && (
-                        <button onClick={() => setIsCreateSubjectOpen(true)} className="border-2 border-dashed border-border/20 rounded-xl p-4 flex items-center justify-center gap-4 hover:border-border hover:bg-muted/50 transition-all duration-200 ease-out group">
+                        <button onClick={() => setIsCreateSubjectOpen(true)} data-tutorial="create-subject-list" className="border-2 border-dashed border-border/20 rounded-xl p-4 flex items-center justify-center gap-4 hover:border-border hover:bg-muted/50 transition-all duration-200 ease-out group">
                             <Plus className="h-6 w-6 text-muted-foreground group-hover:text-foreground" strokeWidth={3} />
                             <span className="font-black text-lg uppercase text-muted-foreground group-hover:text-foreground">{t('createFirstSubject')}</span>
                         </button>

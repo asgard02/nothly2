@@ -20,6 +20,34 @@ function normalizeMathDelimiters(content: string): string {
     .replace(/\\\(([\s\S]*?)\\\)/g, '$$$1$$')     // \( ... \) -> $ ... $
 }
 
+// Fonction pour valider les URLs et éviter les XSS
+function sanitizeUrl(url: string | undefined): string | undefined {
+  if (!url) return undefined
+  
+  // Autoriser uniquement les protocoles sûrs
+  const safeProtocols = ['http:', 'https:', 'mailto:']
+  
+  try {
+    // Gérer les URLs relatives
+    if (url.startsWith('/') || url.startsWith('#') || url.startsWith('./') || url.startsWith('../')) {
+      return url
+    }
+    
+    const parsed = new URL(url, 'https://placeholder.com')
+    
+    // Bloquer javascript:, data:, vbscript:, etc.
+    if (!safeProtocols.includes(parsed.protocol)) {
+      console.warn('[MarkdownRenderer] URL bloquée (protocole non sûr):', parsed.protocol)
+      return undefined
+    }
+    
+    return url
+  } catch {
+    // URL invalide
+    return undefined
+  }
+}
+
 function MarkdownRenderer({ content }: { content: string }) {
   const { theme, resolvedTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
@@ -100,11 +128,18 @@ function MarkdownRenderer({ content }: { content: string }) {
               <code className="bg-muted text-foreground px-1 py-0.5 rounded">{children}</code>
             )
           },
-          // Pour les liens
+          // Pour les liens (avec validation XSS)
           a({ href, children }) {
+            const safeHref = sanitizeUrl(href as string)
+            
+            // Si l'URL n'est pas sûre, afficher juste le texte
+            if (!safeHref) {
+              return <span className="text-muted-foreground">{children}</span>
+            }
+            
             return (
               <a
-                href={href as string}
+                href={safeHref}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-primary hover:underline"

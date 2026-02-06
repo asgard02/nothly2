@@ -43,23 +43,72 @@ const nextConfig = {
     return config
   },
   
-  // Headers pour éviter les problèmes de cache (seulement en production)
+  // Headers de sécurité et cache
   async headers() {
-    // Ne pas ajouter de headers en développement pour éviter les problèmes avec HMR
+    const securityHeaders = [
+      {
+        // Protection contre le clickjacking
+        key: 'X-Frame-Options',
+        value: 'DENY',
+      },
+      {
+        // Empêche le MIME type sniffing
+        key: 'X-Content-Type-Options',
+        value: 'nosniff',
+      },
+      {
+        // Protection XSS du navigateur
+        key: 'X-XSS-Protection',
+        value: '1; mode=block',
+      },
+      {
+        // Contrôle les informations de référence
+        key: 'Referrer-Policy',
+        value: 'strict-origin-when-cross-origin',
+      },
+      {
+        // Permissions du navigateur
+        key: 'Permissions-Policy',
+        value: 'camera=(), microphone=(self), geolocation=()',
+      },
+    ]
+
+    // Headers additionnels en production uniquement
     if (process.env.NODE_ENV === 'production') {
-      return [
+      securityHeaders.push(
         {
-          source: '/:path*',
-          headers: [
-            {
-              key: 'Cache-Control',
-              value: 'public, max-age=0, must-revalidate',
-            },
-          ],
+          key: 'Cache-Control',
+          value: 'public, max-age=0, must-revalidate',
         },
-      ]
+        {
+          // Content Security Policy
+          key: 'Content-Security-Policy',
+          value: [
+            "default-src 'self'",
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval'", // Next.js nécessite unsafe-eval en dev
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+            "font-src 'self' https://fonts.gstatic.com data:",
+            "img-src 'self' data: https: blob:",
+            "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.openai.com https://api.stripe.com",
+            "frame-ancestors 'none'",
+            "base-uri 'self'",
+            "form-action 'self'",
+          ].join('; '),
+        },
+        {
+          // Force HTTPS
+          key: 'Strict-Transport-Security',
+          value: 'max-age=31536000; includeSubDomains',
+        }
+      )
     }
-    return []
+
+    return [
+      {
+        source: '/:path*',
+        headers: securityHeaders,
+      },
+    ]
   },
 }
 

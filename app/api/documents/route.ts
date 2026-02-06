@@ -5,39 +5,11 @@ import pdfParse from "pdf-parse"
 
 import { createServerClient } from "@/lib/supabase-server"
 import { getSupabaseAdmin } from "@/lib/db"
-import { getStorageBucket } from "@/lib/storage"
+import { getBucket } from "@/lib/server/gcs"
+import { withRateLimit } from "@/lib/rate-limit"
 
 const DOCUMENTS_BUCKET =
-  process.env.GCP_STORAGE_BUCKET || process.env.SUPABASE_DOCUMENTS_BUCKET || "documents"
-
-async function ensureBucket() {
-  try {
-    const bucket = getStorageBucket(DOCUMENTS_BUCKET)
-    // Ne pas vérifier l'existence du bucket car cela nécessite storage.buckets.get
-    // Le bucket sera créé automatiquement lors du premier upload si nécessaire
-    // ou l'erreur sera claire si les permissions sont insuffisantes
-    try {
-      const [exists] = await bucket.exists()
-      if (!exists) {
-        await bucket.create()
-      }
-    } catch (existsError: any) {
-      // Si on n'a pas la permission storage.buckets.get, on ignore cette erreur
-      // Le bucket sera utilisé directement lors de l'upload
-      if (existsError?.message?.includes("storage.buckets.get") || existsError?.code === 403) {
-        console.log("[ensureBucket] ⚠️ Cannot check bucket existence (missing storage.buckets.get permission)")
-        console.log("[ensureBucket] ℹ️  Proceeding anyway - bucket will be used directly during upload")
-        // Ne pas throw - on continue car l'upload fonctionnera quand même
-        return
-      }
-      // Pour les autres erreurs, on les propage
-      throw existsError
-    }
-  } catch (error) {
-    console.error("[ensureBucket] Unable to ensure GCS bucket", error)
-    throw error
-  }
-}
+  process.env.GCS_BUCKET ?? process.env.GCP_STORAGE_BUCKET ?? process.env.SUPABASE_DOCUMENTS_BUCKET ?? "nothly-storage"
 
 export async function GET(req: NextRequest) {
   const supabase = await createServerClient()
@@ -177,23 +149,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Non authentifié" }, { status: 401 })
     }
 
+    // Rate limiting pour les uploads (protection contre l'abus de stockage)
+    const rateLimitResponse = await withRateLimit(req, "upload", user.id)
+    if (rateLimitResponse) return rateLimitResponse
+
     const admin = getSupabaseAdmin()
     adminClient = admin
     if (!admin) {
       return NextResponse.json({ error: "Configuration Supabase manquante" }, { status: 500 })
-    }
-
-    try {
-    await ensureBucket()
-    } catch (bucketError: any) {
-      console.error("[POST /api/documents] ❌ Error ensuring bucket:", bucketError)
-      if (bucketError?.message?.includes("invalid_grant") || bucketError?.message?.includes("account not found")) {
-        return NextResponse.json({ 
-          error: "Google Cloud Storage authentication failed. Please check your GCP_SERVICE_ACCOUNT_KEY configuration.",
-          details: "The service account key is invalid or the account doesn't exist. Run: npx tsx --env-file=.env.local scripts/test-storage-auth.ts to diagnose."
-        }, { status: 500 })
-      }
-      throw bucketError
     }
 
     // Créer/mettre à jour l'utilisateur dans la table users si elle existe
@@ -214,7 +177,20 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const formData = await req.formData()
+    let formData: FormData
+    try {
+      formData = await req.formData()
+    } catch (formError: unknown) {
+      const msg = formError instanceof Error ? formError.message : String(formError)
+      const isAbort =
+        (formError as { name?: string })?.name === "AbortError" ||
+        (msg.includes("stream") && (msg.includes("destroyed") || msg.includes("aborted")))
+      if (isAbort) {
+        console.warn("[POST /api/documents] Client disconnected before formData parsed:", msg)
+        return new NextResponse(null, { status: 499 }) // Client Closed Request
+      }
+      throw formError
+    }
     const file = formData.get("file") as File | null
     const manualTitle = formData.get("title")?.toString()
     const manualText = formData.get("text")?.toString()
@@ -306,7 +282,7 @@ export async function POST(req: NextRequest) {
       checksum = createHash("sha256").update(buffer).digest("hex")
 
       try {
-        const bucket = getStorageBucket(DOCUMENTS_BUCKET)
+        const bucket = getBucket(DOCUMENTS_BUCKET)
         const remoteFile = bucket.file(filePath)
         await remoteFile.save(buffer, {
           resumable: false,
@@ -321,17 +297,25 @@ export async function POST(req: NextRequest) {
         })
       } catch (uploadError: any) {
         console.error("[POST /api/documents] upload GCS", uploadError)
-        
-        // Gérer spécifiquement l'erreur invalid_grant de Google Storage
+
+        if (uploadError?.code === "ERR_OSSL_UNSUPPORTED" || uploadError?.message?.includes("DECODER routines::unsupported")) {
+          throw new Error(
+            "Google Cloud Storage: OpenSSL compatibility error. " +
+            "Ensure GOOGLE_APPLICATION_CREDENTIALS points to a valid key file, or run with: NODE_OPTIONS=--openssl-legacy-provider npm run dev"
+          )
+        }
         if (uploadError?.message?.includes("invalid_grant") || uploadError?.message?.includes("account not found")) {
           console.error("[POST /api/documents] ❌ Google Storage authentication error - service account invalid")
           throw new Error(
             "Google Cloud Storage authentication failed. " +
-            "Please check your GCP_SERVICE_ACCOUNT_KEY environment variable. " +
+            "Please check your GCP_SERVICE_ACCOUNT_KEY or key file. " +
             "The service account key may be invalid, expired, or the account may have been deleted."
           )
         }
-        
+        if (uploadError?.message?.includes("stream was destroyed") || uploadError?.message?.includes("write after")) {
+          throw new Error("Upload was interrupted. Please try again.")
+        }
+
         throw new Error(uploadError?.message || "Erreur lors du téléversement vers GCS")
       }
 
@@ -390,17 +374,38 @@ export async function POST(req: NextRequest) {
       documentId,
       status: "processing",
     })
-  } catch (error: any) {
-    console.error("[POST /api/documents]", error)
-    const message = error?.message || "Erreur serveur"
+  } catch (error: unknown) {
+    const err = error instanceof Error ? error : new Error(String(error))
+    const msg = err.message
+    const isStreamDestroyed =
+      msg.includes("stream") && (msg.includes("destroyed") || msg.includes("aborted") || msg.includes("ECONNRESET"))
 
-    if (documentId && adminClient) {
-      await adminClient
-        .from("documents")
-        .update({ status: "failed", updated_at: new Date().toISOString() })
-        .eq("id", documentId)
+    if (isStreamDestroyed) {
+      console.warn("[POST /api/documents] Client disconnected (stream destroyed):", msg)
+      if (documentId && adminClient) {
+        try {
+          await adminClient
+            .from("documents")
+            .update({ status: "failed", updated_at: new Date().toISOString() })
+            .eq("id", documentId)
+        } catch (dbErr) {
+          console.warn("[POST /api/documents] Could not update document status:", dbErr)
+        }
+      }
+      return new NextResponse(null, { status: 499 })
     }
 
-    return NextResponse.json({ error: message }, { status: 500 })
+    console.error("[POST /api/documents]", err)
+    if (documentId && adminClient) {
+      try {
+        await adminClient
+          .from("documents")
+          .update({ status: "failed", updated_at: new Date().toISOString() })
+          .eq("id", documentId)
+      } catch (dbErr) {
+        console.warn("[POST /api/documents] Could not update document status:", dbErr)
+      }
+    }
+    return NextResponse.json({ error: msg || "Erreur serveur" }, { status: 500 })
   }
 }

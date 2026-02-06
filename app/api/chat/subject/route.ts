@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createServerClient } from "@/lib/supabase-server"
 import { getSupabaseAdmin } from "@/lib/db"
+import { withRateLimit } from "@/lib/rate-limit"
 
 export const dynamic = "force-dynamic"
 
@@ -20,6 +21,10 @@ export async function POST(request: NextRequest) {
     if (authError || !user) {
       return NextResponse.json({ error: "Non authentifié" }, { status: 401 })
     }
+
+    // Rate limiting pour les endpoints IA (coûteux)
+    const rateLimitResponse = await withRateLimit(request, "ai", user.id)
+    if (rateLimitResponse) return rateLimitResponse
 
     const admin = getSupabaseAdmin()
     if (!admin) {

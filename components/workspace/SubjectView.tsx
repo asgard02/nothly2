@@ -3,7 +3,7 @@
 import { useState, useTransition, useMemo, useEffect, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { useRouter } from "next/navigation"
-import { ArrowLeft, ArrowRight, FileText, Plus, Search, Sparkles, BookOpen, MessageSquare, Send, Loader2, X, Brain, ListChecks, ChevronDown, ChevronUp, Calendar, Trash2, Pencil, Check, Zap, Star } from "lucide-react"
+import { ArrowLeft, ArrowRight, FileText, Plus, Search, Sparkles, BookOpen, MessageSquare, Send, Loader2, X, Brain, ListChecks, ChevronDown, ChevronUp, Calendar, Trash2, Pencil, Check, Zap, Star, Video, Play, Pause, Layout, PenTool, Presentation } from "lucide-react"
 import { toast } from "@/components/CustomToast"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -25,6 +25,7 @@ import { GenerationDialog, type GenerationIntent } from "./GenerationDialog"
 import DeleteConfirmationDialog from "@/components/DeleteConfirmationDialog"
 import MarkdownRenderer from "@/components/MarkdownRenderer"
 import { useTranslations } from "next-intl"
+import { useCreateVideo, useVideo, useVideoList, useVideoQuota } from "@/lib/hooks/useVideo"
 
 interface SubjectViewProps {
   subject: Subject
@@ -56,7 +57,52 @@ export default function SubjectView({ subject, onBack, onSelectDocument, onUpdat
     quiz: true,
     resume: true,
   })
-  const [activeTab, setActiveTab] = useState<"pdf" | "flashcards" | "quiz" | "resume">("pdf")
+  const [activeTab, setActiveTab] = useState<"pdf" | "flashcards" | "quiz" | "video" | "resume">("pdf")
+  // Video tab (Notebook LM–style: sources + format → slides + voiceover)
+  type VideoFormatId = "whiteboard" | "drawing" | "animated" | "presentation"
+  const [videoView, setVideoView] = useState<"list" | "generating" | "player">("list")
+  const [isVideoStudioOpen, setIsVideoStudioOpen] = useState(false)
+  const [selectedVideoSourceIds, setSelectedVideoSourceIds] = useState<string[]>([])
+  const [selectedVideoFormat, setSelectedVideoFormat] = useState<VideoFormatId>("whiteboard")
+  const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null)
+  const [currentSlideIndex, setCurrentSlideIndex] = useState(0)
+  const [isPlaying, setIsPlaying] = useState(false)
+  const playerRef = useRef<HTMLDivElement>(null)
+  
+  // Real video API hooks
+  const { createVideo, isCreating: isCreatingVideo, error: createVideoError } = useCreateVideo()
+  const { videos: realVideos, quota: videoQuota, refresh: refreshVideos, deleteVideo: deleteVideoApi } = useVideoList()
+  const { video: currentVideoData, isProcessing: isVideoProcessing, isComplete: isVideoComplete, isFailed: isVideoFailed } = useVideo(
+    videoView === "generating" ? selectedVideoId : null,
+    {
+      onComplete: (v) => {
+        setVideoView("player")
+        refreshVideos()
+      },
+      onError: (err) => {
+        toast.error(err)
+        setVideoView("list")
+        refreshVideos()
+      }
+    }
+  )
+  
+  // Fetch video with URL when entering player mode
+  const [playerVideoData, setPlayerVideoData] = useState<any>(null)
+  useEffect(() => {
+    if (videoView === "player" && selectedVideoId) {
+      fetch(`/api/videos/${selectedVideoId}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.mp4_url) {
+            setPlayerVideoData(data)
+          }
+        })
+        .catch(err => console.error("Failed to fetch video URL:", err))
+    } else {
+      setPlayerVideoData(null)
+    }
+  }, [videoView, selectedVideoId])
   const [showNoDocsWarning, setShowNoDocsWarning] = useState(true)
 
   // États pour l'overlay de génération
@@ -241,6 +287,52 @@ export default function SubjectView({ subject, onBack, onSelectDocument, onUpdat
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight
     }
   }, [messages, showChatInput])
+
+  // Pending video config when user clicks Generate (so we can create the video when generation "finishes")
+  const pendingVideoConfigRef = useRef<{ sourceIds: string[]; sourceTitles: string[]; format: VideoFormatId } | null>(null)
+
+  useEffect(() => {
+    if (isVideoStudioOpen) {
+      setSelectedVideoSourceIds([])
+      setSelectedVideoFormat("whiteboard")
+    }
+  }, [isVideoStudioOpen])
+
+  // Video generating: call real API when triggered
+  useEffect(() => {
+    if (videoView !== "generating" || !pendingVideoConfigRef.current || selectedVideoId) return
+    const config = pendingVideoConfigRef.current
+    
+    // Call real API to create video
+    const startVideoGeneration = async () => {
+      try {
+        // Use the first selected document as source
+        const sourceId = config.sourceIds[0]
+        if (!sourceId) {
+          toast.error("Aucun document sélectionné")
+          setVideoView("list")
+          return
+        }
+        
+        const videoId = await createVideo("document", sourceId, subject.title + " – Vidéo explicative")
+        if (videoId) {
+          setSelectedVideoId(videoId)
+          // Keep in generating view - the useVideo hook will track progress
+        } else {
+          toast.error(createVideoError || "Impossible de créer la vidéo")
+          setVideoView("list")
+        }
+        pendingVideoConfigRef.current = null
+      } catch (err: any) {
+        console.error("Video generation error:", err)
+        toast.error(err.message || "Erreur lors de la création")
+        setVideoView("list")
+        pendingVideoConfigRef.current = null
+      }
+    }
+    
+    startVideoGeneration()
+  }, [videoView, selectedVideoId, createVideo, createVideoError, subject.title])
 
   const sortedDocs = documents.sort((a: any, b: any) =>
     new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
@@ -738,7 +830,8 @@ export default function SubjectView({ subject, onBack, onSelectDocument, onUpdat
                   </div>
                   <Button
                     onClick={() => setIsUploadOpen(true)}
-                    className="h-12 rounded-xl bg-[#8B5CF6] hover:bg-[#7C3AED] text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-y-[2px] active:translate-y-[4px] active:shadow-none transition-all px-6 border-2 border-black font-bold uppercase"
+                    data-tutorial="upload-button"
+                    className="h-12 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] hover:translate-y-[2px] active:translate-y-[4px] active:shadow-none transition-all px-6 border-2 border-border font-bold uppercase"
                   >
                     <Plus className="h-5 w-5 mr-2" strokeWidth={3} />
                     {t("addDocument")}
@@ -747,16 +840,18 @@ export default function SubjectView({ subject, onBack, onSelectDocument, onUpdat
               </div>
 
               {/* Onglets Premium */}
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3" data-tutorial="tabs-container">
                 {[
-                  { id: "pdf", label: t("tabPdf"), icon: FileText, count: filteredDocs.length, color: "bg-[#BAE6FD]" },
-                  { id: "flashcards", label: t("tabFlashcards"), icon: Brain, count: flashcardsCollections.length, color: "bg-[#FBCFE8]" },
-                  { id: "quiz", label: t("tabQuiz"), icon: ListChecks, count: quizCollections.length, color: "bg-[#BBF7D0]" },
-                  { id: "resume", label: t("tabSummaries"), icon: BookOpen, count: totalSummaries, color: "bg-[#FDE68A]" },
+                  { id: "pdf", label: t("tabPdf"), icon: FileText, count: filteredDocs.length, color: "bg-[#BAE6FD]", tutorialId: "tab-pdf" },
+                  { id: "flashcards", label: t("tabFlashcards"), icon: Brain, count: flashcardsCollections.length, color: "bg-[#FBCFE8]", tutorialId: "tab-flashcards" },
+                  { id: "quiz", label: t("tabQuiz"), icon: ListChecks, count: quizCollections.length, color: "bg-[#BBF7D0]", tutorialId: "tab-quiz" },
+                  { id: "video", label: t("tabVideo"), icon: Video, count: realVideos?.filter(v => v.status === "done").length || 0, color: "bg-[#DDD6FE]", tutorialId: "tab-video" },
+                  { id: "resume", label: t("tabSummaries"), icon: BookOpen, count: totalSummaries, color: "bg-[#FDE68A]", tutorialId: "tab-summaries" },
                 ].map((tab) => (
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id as any)}
+                    data-tutorial={tab.tutorialId}
                     className={cn(
                       "relative py-3 px-5 rounded-xl flex items-center gap-2 text-sm font-black uppercase transition-all duration-200 border-2 border-transparent",
                       activeTab === tab.id
@@ -821,7 +916,8 @@ export default function SubjectView({ subject, onBack, onSelectDocument, onUpdat
                       <Button
                         onClick={() => setIsUploadOpen(true)}
                         size="lg"
-                        className="h-14 rounded-xl px-8 bg-[#8B5CF6] hover:bg-[#7C3AED] text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-y-[2px] active:translate-y-[4px] active:shadow-none transition-all border-2 border-black font-black uppercase"
+                        data-tutorial="upload-empty-state"
+                        className="h-14 rounded-xl px-8 bg-primary hover:bg-primary/90 text-primary-foreground shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] hover:translate-y-[2px] active:translate-y-[4px] active:shadow-none transition-all border-2 border-border font-black uppercase"
                       >
                         <Plus className="h-5 w-5 mr-2" strokeWidth={3} />
                         {t("addDocument")}
@@ -1066,6 +1162,267 @@ export default function SubjectView({ subject, onBack, onSelectDocument, onUpdat
                     ))}
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* Section Video Overview (Notebook LM–style: sources + format → slides + voiceover, saved like flashcards) */}
+            {activeTab === "video" && (
+              <div className="space-y-6">
+                <AnimatePresence mode="wait">
+                  {/* List: no videos → empty state + Create first; has videos → grid + Create new */}
+                  {videoView === "list" && (
+                    <motion.div
+                      key="video-list"
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -8 }}
+                      className="space-y-6"
+                    >
+                      {/* Quota info */}
+                      {videoQuota && (
+                        <div className="flex items-center justify-between text-sm text-muted-foreground px-1">
+                          <span>{videoQuota.remaining} vidéo{videoQuota.remaining > 1 ? "s" : ""} restante{videoQuota.remaining > 1 ? "s" : ""} ce mois</span>
+                          <span className="text-xs uppercase font-bold">{videoQuota.plan === "pro" ? "Pro" : "Gratuit"}</span>
+                        </div>
+                      )}
+                      
+                      {(!realVideos || realVideos.length === 0) ? (
+                        <div className="flex flex-col items-center justify-center py-12">
+                          <div className="rounded-[32px] bg-card border-[3px] border-black p-12 max-w-xl w-full shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] relative overflow-hidden">
+                            <div className="absolute top-0 left-0 w-full h-2 bg-[#8b5cf6] border-b-[3px] border-black" />
+                            <div className="w-24 h-24 rounded-2xl bg-[#DDD6FE] border-[3px] border-black flex items-center justify-center mx-auto mb-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                              <Video className="h-12 w-12 text-[#8b5cf6]" strokeWidth={2.5} />
+                            </div>
+                            <h3 className="text-2xl font-black uppercase mb-2 text-foreground text-center">{t("videoNoVideos")}</h3>
+                            <p className="text-muted-foreground font-medium text-center mb-8 leading-relaxed">
+                              {t("videoNoVideosDesc")}
+                            </p>
+                            <Button
+                              onClick={() => setIsVideoStudioOpen(true)}
+                              disabled={!videoQuota?.remaining}
+                              className="w-full h-14 rounded-2xl px-8 bg-[#8b5cf6] hover:bg-[#7c3aed] text-white border-[3px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5 active:translate-y-0 active:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all font-black uppercase flex items-center justify-center gap-3 disabled:opacity-50"
+                            >
+                              <Sparkles className="h-6 w-6" strokeWidth={2.5} />
+                              {!videoQuota?.remaining ? "Quota dépassé" : t("videoCreateFirst")}
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          <div className="flex justify-end">
+                            <Button
+                              onClick={() => setIsVideoStudioOpen(true)}
+                              disabled={!videoQuota?.remaining}
+                              className="rounded-xl px-6 py-3 bg-[#8b5cf6] hover:bg-[#7c3aed] text-white border-[3px] border-black shadow-neo hover:-translate-y-0.5 active:translate-y-0 font-black uppercase flex items-center gap-2 disabled:opacity-50"
+                            >
+                              <Plus className="h-5 w-5" />
+                              {t("videoCreateNew")}
+                            </Button>
+                          </div>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {realVideos.filter(v => v.status === "done").map((v) => (
+                              <div
+                                key={v.id}
+                                onClick={() => { setSelectedVideoId(v.id); setVideoView("player"); }}
+                                className="group bg-card border-[3px] border-black rounded-3xl p-6 hover:shadow-[8px_8px_0px_0px_#DDD6FE] dark:hover:shadow-[8px_8px_0px_0px_rgba(255,255,255,0.2)] hover:-translate-y-1 transition-all cursor-pointer relative overflow-hidden shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]"
+                              >
+                                <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                                  <Video className="h-24 w-24 text-foreground" />
+                                </div>
+                                <div className="flex justify-between items-start mb-4 relative z-10">
+                                  <div className="w-12 h-12 bg-[#DDD6FE] rounded-xl border-[3px] border-black flex items-center justify-center shadow-neo">
+                                    <Video className="h-6 w-6 text-[#8b5cf6]" strokeWidth={2.5} />
+                                  </div>
+                                  <span className="bg-foreground text-background px-2 py-1 rounded-lg text-xs font-black uppercase">
+                                    {v.slide_count} slide{v.slide_count > 1 ? "s" : ""}
+                                  </span>
+                                </div>
+                                <h3 className="font-black text-xl mb-1 relative z-10 line-clamp-2 uppercase text-foreground">{v.title}</h3>
+                                <p className="text-muted-foreground text-xs font-bold uppercase relative z-10">
+                                  {Math.floor(v.duration_seconds / 60)}:{(v.duration_seconds % 60).toString().padStart(2, "0")} · {new Date(v.created_at).toLocaleDateString()}
+                                </p>
+                              </div>
+                            ))}
+                            {/* Show processing videos */}
+                            {realVideos.filter(v => v.status !== "done" && v.status !== "failed").map((v) => (
+                              <div
+                                key={v.id}
+                                className="bg-card border-[3px] border-black rounded-3xl p-6 relative overflow-hidden shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] opacity-70"
+                              >
+                                <div className="flex justify-between items-start mb-4">
+                                  <div className="w-12 h-12 bg-[#DDD6FE] rounded-xl border-[3px] border-black flex items-center justify-center shadow-neo">
+                                    <Loader2 className="h-6 w-6 text-[#8b5cf6] animate-spin" strokeWidth={2.5} />
+                                  </div>
+                                  <span className="bg-amber-500 text-white px-2 py-1 rounded-lg text-xs font-black uppercase">
+                                    {v.progress}%
+                                  </span>
+                                </div>
+                                <h3 className="font-black text-xl mb-1 line-clamp-2 uppercase text-foreground">{v.title}</h3>
+                                <p className="text-muted-foreground text-xs font-bold uppercase">En cours de génération...</p>
+                                <Progress value={v.progress} className="mt-3 h-2" />
+                              </div>
+                            ))}
+                          </div>
+                        </>
+                      )}
+                    </motion.div>
+                  )}
+
+                  {videoView === "generating" && (
+                    <motion.div
+                      key="video-generating"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="flex flex-col items-center justify-center py-12"
+                    >
+                      <div className="rounded-[32px] bg-card border-[3px] border-black p-10 max-w-lg w-full shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] relative overflow-hidden">
+                        <div className="absolute top-4 right-4 flex gap-1">
+                          {[0, 1, 2].map((i) => (
+                            <motion.span
+                              key={i}
+                              className="w-2 h-2 rounded-full bg-[#fcd34d] border-2 border-black"
+                              animate={{ scale: [1, 1.3, 1], opacity: [0.7, 1, 0.7] }}
+                              transition={{ duration: 0.8, repeat: Infinity, delay: i * 0.2 }}
+                            />
+                          ))}
+                        </div>
+                        <div className="flex flex-col items-center gap-6">
+                          <motion.div
+                            animate={{ rotate: 360 }}
+                            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                            className="w-16 h-16 rounded-2xl bg-[#fcd34d] border-[3px] border-black flex items-center justify-center shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
+                          >
+                            <Sparkles className="h-8 w-8 text-black" strokeWidth={2.5} />
+                          </motion.div>
+                          <h3 className="text-xl font-black uppercase text-foreground">
+                            {currentVideoData?.status === "generating_script" && "Génération du script..."}
+                            {currentVideoData?.status === "generating_slides" && "Création des illustrations..."}
+                            {currentVideoData?.status === "generating_audio" && "Synthèse vocale..."}
+                            {currentVideoData?.status === "rendering_video" && "Assemblage vidéo..."}
+                            {currentVideoData?.status === "uploading" && "Téléversement..."}
+                            {(!currentVideoData?.status || currentVideoData?.status === "queued") && t("videoGenerating")}
+                          </h3>
+                          <div className="w-full space-y-2">
+                            <div className="h-4 rounded-xl bg-muted border-[3px] border-black overflow-hidden">
+                              <motion.div
+                                className="h-full bg-[#8b5cf6] border-r-[3px] border-black"
+                                initial={{ width: 0 }}
+                                animate={{ width: `${currentVideoData?.progress || 0}%` }}
+                                transition={{ duration: 0.3 }}
+                              />
+                            </div>
+                            <div className="flex justify-between text-xs font-bold uppercase text-muted-foreground">
+                              <span className={cn((currentVideoData?.progress || 0) >= 5 && "text-foreground")}>Script</span>
+                              <span className={cn((currentVideoData?.progress || 0) >= 50 && "text-foreground")}>Images</span>
+                              <span className={cn((currentVideoData?.progress || 0) >= 70 && "text-foreground")}>Audio</span>
+                              <span className={cn((currentVideoData?.progress || 0) >= 90 && "text-foreground")}>Vidéo</span>
+                            </div>
+                          </div>
+                          <p className="text-sm font-bold text-muted-foreground">{currentVideoData?.progress || 0}%</p>
+                          {currentVideoData?.slide_count ? (
+                            <p className="text-xs text-muted-foreground">{currentVideoData.slide_count} slides · ~{Math.round((currentVideoData.duration_seconds || 0) / 60)} min</p>
+                          ) : null}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => { setVideoView("list"); setSelectedVideoId(null); }}
+                            className="text-muted-foreground"
+                          >
+                            Annuler
+                          </Button>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+
+                  {videoView === "player" && selectedVideoId && (() => {
+                    const videoInfo = realVideos?.find((v) => v.id === selectedVideoId)
+                    const videoWithUrl = playerVideoData
+                    
+                    if (!videoInfo && !videoWithUrl) {
+                      return (
+                        <div className="flex flex-col items-center justify-center py-12">
+                          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground mb-4" />
+                          <p className="text-muted-foreground">Chargement de la vidéo...</p>
+                        </div>
+                      )
+                    }
+                    
+                    const currentVideo = videoWithUrl || videoInfo
+                    
+                    return (
+                      <motion.div
+                        key="video-player"
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="space-y-4"
+                      >
+                        <div className="rounded-[32px] bg-card border-[3px] border-black overflow-hidden shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
+                          {/* Real Video Player */}
+                          <div ref={playerRef} className="aspect-video bg-black relative">
+                            {videoWithUrl?.mp4_url ? (
+                              <video
+                                src={videoWithUrl.mp4_url}
+                                controls
+                                poster={videoWithUrl.thumbnail_url}
+                                className="w-full h-full"
+                                autoPlay={false}
+                              >
+                                Votre navigateur ne supporte pas la lecture vidéo.
+                              </video>
+                            ) : (
+                              <div className="absolute inset-0 flex items-center justify-center">
+                                <div className="text-center">
+                                  <Loader2 className="h-12 w-12 text-muted-foreground mx-auto mb-4 animate-spin" />
+                                  <p className="text-muted-foreground">Chargement de la vidéo...</p>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Video Info */}
+                        <div className="rounded-2xl bg-card border-[3px] border-black p-6 shadow-neo">
+                          <h3 className="text-xl font-black uppercase text-foreground mb-2">{currentVideo?.title}</h3>
+                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                            <span>{currentVideo?.slide_count || 0} slides</span>
+                            <span>•</span>
+                            <span>{Math.floor((currentVideo?.duration_seconds || 0) / 60)}:{((currentVideo?.duration_seconds || 0) % 60).toString().padStart(2, "0")}</span>
+                            <span>•</span>
+                            <span>{currentVideo?.created_at ? new Date(currentVideo.created_at).toLocaleDateString() : ""}</span>
+                          </div>
+                        </div>
+
+                        <div className="flex justify-between">
+                          <Button
+                            variant="outline"
+                            onClick={() => { setSelectedVideoId(null); setVideoView("list"); setPlayerVideoData(null); }}
+                            className="rounded-xl border-[3px] border-black font-black uppercase shadow-neo hover:-translate-y-0.5 active:translate-y-0"
+                          >
+                            <ArrowLeft className="h-4 w-4 mr-2" />
+                            {t("videoBackToList")}
+                          </Button>
+                          {videoWithUrl?.mp4_url && (
+                            <Button
+                              onClick={() => {
+                                const a = document.createElement("a")
+                                a.href = videoWithUrl.mp4_url
+                                a.download = `${currentVideo?.title || "video"}.mp4`
+                                document.body.appendChild(a)
+                                a.click()
+                                document.body.removeChild(a)
+                              }}
+                              className="rounded-xl border-[3px] border-black font-black uppercase shadow-neo hover:-translate-y-0.5 active:translate-y-0 bg-[#8b5cf6] text-white"
+                            >
+                              Télécharger
+                            </Button>
+                          )}
+                        </div>
+                      </motion.div>
+                    )
+                  })()}
+                </AnimatePresence>
               </div>
             )}
 
@@ -1321,24 +1678,27 @@ export default function SubjectView({ subject, onBack, onSelectDocument, onUpdat
             transition={{ duration: 0.3, ease: "easeInOut" }}
             className="mb-6 flex justify-center z-20 relative"
           >
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3" data-tutorial="action-buttons">
               <button
                 onClick={() => handleOpenGenerationDialog("flashcards")}
-                        className="px-6 py-4 text-sm font-black uppercase rounded-2xl bg-card border-2 border-border hover:bg-secondary hover:text-secondary-foreground transition-all flex items-center gap-3 text-foreground shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[6px_6px_0px_0px_rgba(255,255,255,1)] hover:-translate-y-1 active:translate-y-0 active:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:active:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)]"
+                data-tutorial="action-flashcards"
+                className="px-6 py-4 text-sm font-black uppercase rounded-2xl bg-card border-2 border-border hover:bg-secondary hover:text-secondary-foreground transition-all flex items-center gap-3 text-foreground shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[6px_6px_0px_0px_rgba(255,255,255,1)] hover:-translate-y-1 active:translate-y-0 active:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:active:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)]"
               >
                 <Brain className="h-5 w-5" strokeWidth={2.5} />
                 {t("generateFlashcards")}
               </button>
               <button
                 onClick={() => handleOpenGenerationDialog("quiz")}
-                        className="px-6 py-4 text-sm font-black uppercase rounded-2xl bg-card border-2 border-border hover:bg-[#BBF7D0] hover:text-foreground transition-all flex items-center gap-3 text-foreground shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[6px_6px_0px_0px_rgba(255,255,255,1)] hover:-translate-y-1 active:translate-y-0 active:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:active:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)]"
+                data-tutorial="action-quiz"
+                className="px-6 py-4 text-sm font-black uppercase rounded-2xl bg-card border-2 border-border hover:bg-[#BBF7D0] hover:text-foreground transition-all flex items-center gap-3 text-foreground shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[6px_6px_0px_0px_rgba(255,255,255,1)] hover:-translate-y-1 active:translate-y-0 active:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:active:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)]"
               >
                 <ListChecks className="h-5 w-5" strokeWidth={2.5} />
                 {t("generateQuiz")}
               </button>
               <button
                 onClick={() => handleOpenGenerationDialog("summary")}
-                        className="px-6 py-4 text-sm font-black uppercase rounded-2xl bg-card border-2 border-border hover:bg-accent hover:text-foreground transition-all flex items-center gap-3 text-foreground shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[6px_6px_0px_0px_rgba(255,255,255,1)] hover:-translate-y-1 active:translate-y-0 active:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:active:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)]"
+                data-tutorial="action-summary"
+                className="px-6 py-4 text-sm font-black uppercase rounded-2xl bg-card border-2 border-border hover:bg-accent hover:text-foreground transition-all flex items-center gap-3 text-foreground shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[6px_6px_0px_0px_rgba(255,255,255,1)] hover:-translate-y-1 active:translate-y-0 active:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:active:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)]"
               >
                 <FileText className="h-5 w-5" strokeWidth={2.5} />
                 {t("summarize")}
@@ -1348,7 +1708,8 @@ export default function SubjectView({ subject, onBack, onSelectDocument, onUpdat
 
               <button
                 onClick={() => setShowChatInput(!showChatInput)}
-                  className={cn(
+                data-tutorial="action-chat"
+                className={cn(
                   "p-4 rounded-2xl border-2 border-border transition-all shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[6px_6px_0px_0px_rgba(255,255,255,1)] hover:-translate-y-1 active:translate-y-0 active:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:active:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)]",
                   showChatInput
                     ? "bg-foreground text-background hover:bg-foreground/90"
@@ -1483,6 +1844,97 @@ export default function SubjectView({ subject, onBack, onSelectDocument, onUpdat
         intent={generationIntent}
         onConfirm={handleConfirmGeneration}
       />
+
+      {/* Video Studio overlay: sources + format, then generate */}
+      <Dialog open={isVideoStudioOpen} onOpenChange={setIsVideoStudioOpen}>
+        <DialogContent className="sm:max-w-lg border-[3px] border-black rounded-2xl shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] bg-card p-0 gap-0 overflow-hidden">
+          <div className="h-2 bg-[#8b5cf6] border-b-[3px] border-black" />
+          <DialogHeader className="p-6 pb-4 text-left">
+            <DialogTitle className="text-xl font-black uppercase">{t("videoStudioTitle")}</DialogTitle>
+            <DialogDescription className="text-muted-foreground text-sm">
+              {t("videoStudioDesc")}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="px-6 pb-6 space-y-6">
+            <div>
+              <p className="text-xs font-black uppercase text-foreground mb-1">{subject.title}</p>
+              <p className="text-xs text-muted-foreground">{t("videoSelectSources")}</p>
+            </div>
+            {filteredDocs.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-4 rounded-xl bg-muted border-2 border-dashed border-black/20">{t("noDocuments")}</p>
+            ) : (
+              <div className="space-y-2 max-h-40 overflow-y-auto rounded-xl border-[3px] border-black p-3 bg-[#FDFBF7]">
+                {filteredDocs.map((doc: any) => {
+                  const isSelected = selectedVideoSourceIds.includes(doc.id)
+                  return (
+                    <button
+                      key={doc.id}
+                      type="button"
+                      onClick={() => setSelectedVideoSourceIds((ids) => (isSelected ? ids.filter((id) => id !== doc.id) : [...ids, doc.id]))}
+                      className={cn(
+                        "w-full flex items-center gap-3 p-3 rounded-xl border-[3px] text-left font-bold uppercase text-sm transition-all",
+                        isSelected ? "bg-[#DDD6FE] border-black shadow-neo" : "bg-card border-black/20 hover:border-black/50"
+                      )}
+                    >
+                      <div className={cn("w-5 h-5 rounded-md border-[3px] flex items-center justify-center flex-shrink-0", isSelected ? "bg-[#8b5cf6] border-black" : "border-black")}>
+                        {isSelected && <Check className="h-3 w-3 text-white" strokeWidth={3} />}
+                      </div>
+                      <FileText className="h-5 w-5 text-foreground flex-shrink-0" />
+                      <span className="truncate">{doc.title}</span>
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+            <div>
+              <h4 className="text-sm font-black uppercase text-foreground mb-3">{t("videoSelectFormat")}</h4>
+              <div className="grid grid-cols-2 gap-3">
+                {[
+                  { id: "whiteboard" as const, label: t("videoFormatWhiteboard"), icon: Layout, color: "bg-[#BAE6FD]" },
+                  { id: "drawing" as const, label: t("videoFormatDrawing"), icon: PenTool, color: "bg-[#FBCFE8]" },
+                  { id: "animated" as const, label: t("videoFormatAnimated"), icon: Sparkles, color: "bg-[#fcd34d]" },
+                  { id: "presentation" as const, label: t("videoFormatPresentation"), icon: Presentation, color: "bg-[#BBF7D0]" },
+                ].map((f) => (
+                  <button
+                    key={f.id}
+                    type="button"
+                    onClick={() => setSelectedVideoFormat(f.id)}
+                    className={cn(
+                      "flex items-center gap-3 p-4 rounded-2xl border-[3px] font-black uppercase text-sm transition-all",
+                      selectedVideoFormat === f.id ? "border-black shadow-neo " + f.color : "border-black/20 bg-card hover:border-black/50"
+                    )}
+                  >
+                    <f.icon className="h-6 w-6 flex-shrink-0" strokeWidth={2.5} />
+                    {f.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="flex gap-3 pt-2">
+              <Button
+                variant="outline"
+                onClick={() => setIsVideoStudioOpen(false)}
+                className="rounded-xl border-[3px] border-black font-black uppercase flex-1"
+              >
+                {tCommon("cancel")}
+              </Button>
+              <Button
+                disabled={selectedVideoSourceIds.length === 0}
+                onClick={() => {
+                  const sourceTitles = filteredDocs.filter((d: any) => selectedVideoSourceIds.includes(d.id)).map((d: any) => d.title)
+                  pendingVideoConfigRef.current = { sourceIds: [...selectedVideoSourceIds], sourceTitles, format: selectedVideoFormat }
+                  setIsVideoStudioOpen(false)
+                  setVideoView("generating")
+                }}
+                className="rounded-xl px-8 bg-[#8b5cf6] hover:bg-[#7c3aed] text-white border-[3px] border-black shadow-neo hover:-translate-y-0.5 active:translate-y-0 font-black uppercase flex-1 disabled:opacity-50 disabled:pointer-events-none"
+              >
+                <Sparkles className="h-5 w-5 mr-2" />
+                {t("generateVideo")}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="sm:max-w-[425px]">

@@ -35,3 +35,15 @@ yarn-error.log*
 next-env.d.ts
 
 .env.local.bak
+
+# Video feature (kept locally, not pushed)
+app/api/videos/
+components/video/
+lib/hooks/useVideo.ts
+lib/video/
+scripts/check-video-jobs.ts
+scripts/process-video-jobs.ts
+scripts/test-video-url.ts
+supabase-video-feature.sql
+tests/video.test.ts
+docs/VIDEO_FEATURE.md

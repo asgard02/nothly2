@@ -1,7 +1,8 @@
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import { getUser } from "@/lib/auth"
 import { readFileSync, existsSync } from "fs"
 import { join } from "path"
+import { withRateLimit } from "@/lib/rate-limit"
 
 // Prompt système enrichi avec toutes les infos sur Nothly
 function loadSystemPrompt(): string {
@@ -97,13 +98,17 @@ async function summarizeLongContent(content: string, maxLength: number): Promise
   return `${start}\n\n[... section résumée ...]\n\n${summarizedMiddle}\n\n[... suite ...]\n\n${end}`
 }
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   // Vérification de l'authentification
   const user = await getUser()
   
   if (!user) {
     return NextResponse.json({ error: "Non authentifié" }, { status: 401 })
   }
+
+  // Rate limiting pour les endpoints IA (coûteux)
+  const rateLimitResponse = await withRateLimit(req, "ai", user.id)
+  if (rateLimitResponse) return rateLimitResponse
 
   try {
     const { messages, context } = await req.json()

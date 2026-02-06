@@ -1,0 +1,21 @@
+# Worker document (chunking PDF) — à déployer sur Railway / Fly.io / Render
+# Build: docker build -f Dockerfile.worker-documents -t nothly-worker-docs .
+# Run:   docker run --env-file .env.production nothly-worker-docs
+
+FROM node:20-slim
+
+WORKDIR /app
+
+# Dépendances (incl. dev pour tsx) — npm install pour éviter les désyncs lock file
+COPY package.json package-lock.json ./
+RUN npm install
+
+# Code nécessaire au worker
+COPY tsconfig.json ./
+COPY lib ./lib
+COPY scripts ./scripts
+
+# Variable pour résolution @/
+ENV NODE_PATH=.
+
+CMD ["npx", "tsx", "scripts/process-document-jobs.ts"]

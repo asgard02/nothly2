@@ -74,7 +74,7 @@ export default async function RootLayout({
                   <TutorialOverlay />
                   <SearchCommandWrapper />
                 </TutorialProvider>
-                <Toaster position="bottom-right" theme="dark" closeButton richColors />
+                <Toaster position="bottom-right" closeButton richColors />
               </ReactQueryProvider>
             </SidebarProvider>
           </ThemeProvider>

@@ -13,6 +13,34 @@ function escapeInlineHeadings(content: string): string {
   return content.replace(/([^\n])###/g, '$1\\###')
 }
 
+// Fonction pour valider les URLs et éviter les XSS
+function sanitizeUrl(url: string | undefined): string | undefined {
+  if (!url) return undefined
+  
+  // Autoriser uniquement les protocoles sûrs
+  const safeProtocols = ['http:', 'https:', 'mailto:']
+  
+  try {
+    // Gérer les URLs relatives
+    if (url.startsWith('/') || url.startsWith('#') || url.startsWith('./') || url.startsWith('../')) {
+      return url
+    }
+    
+    const parsed = new URL(url, 'https://placeholder.com')
+    
+    // Bloquer javascript:, data:, vbscript:, etc.
+    if (!safeProtocols.includes(parsed.protocol)) {
+      console.warn('[MarkdownMessage] URL bloquée (protocole non sûr):', parsed.protocol)
+      return undefined
+    }
+    
+    return url
+  } catch {
+    // URL invalide
+    return undefined
+  }
+}
+
 export default function MarkdownMessage({ content }: { content: string }) {
   const { theme, resolvedTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
@@ -69,16 +97,25 @@ export default function MarkdownMessage({ content }: { content: string }) {
               <code className="bg-muted px-1 py-0.5 rounded">{children}</code>
             )
           },
-          a: ({ href, children }) => (
-            <a
-              href={href as string}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-primary hover:underline"
-            >
-              {children}
-            </a>
-          ),
+          a: ({ href, children }) => {
+            const safeHref = sanitizeUrl(href as string)
+            
+            // Si l'URL n'est pas sûre, afficher juste le texte
+            if (!safeHref) {
+              return <span className="text-muted-foreground">{children}</span>
+            }
+            
+            return (
+              <a
+                href={safeHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary hover:underline"
+              >
+                {children}
+              </a>
+            )
+          },
         }}
       >
         {escapedContent}

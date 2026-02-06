@@ -128,3 +128,20 @@
   .bg-neo-blue { background-color: #BAE6FD; }
   .bg-neo-green { background-color: #BBF7D0; }
 }
+
+/* Force light theme styles for login page inputs */
+@layer components {
+  /* Target inputs within the login page container */
+  .login-page input[type="email"],
+  .login-page input[type="password"],
+  .login-page input[type="text"] {
+    background-color: white !important;
+    color: black !important;
+  }
+  
+  .login-page input[type="email"]::placeholder,
+  .login-page input[type="password"]::placeholder,
+  .login-page input[type="text"]::placeholder {
+    color: #6B7280 !important; /* gray-500 */
+  }
+}

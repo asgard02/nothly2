@@ -4,6 +4,7 @@ import { getUser } from "@/lib/auth"
 import { type GenerationMetadata, type GenerationMode } from "@/lib/ai-generation"
 import { AI_GENERATION_JOB_TYPE, type AIGenerationJobPayload } from "@/lib/ai/jobs"
 import { createJob } from "@/lib/jobs"
+import { withRateLimit } from "@/lib/rate-limit"
 
 const VALID_MODES: GenerationMode[] = [
   "improve",
@@ -30,6 +31,10 @@ export async function POST(req: NextRequest) {
   if (!user) {
     return NextResponse.json({ error: "Non authentifié" }, { status: 401 })
   }
+
+  // Rate limiting pour les endpoints IA (coûteux)
+  const rateLimitResponse = await withRateLimit(req, "ai", user.id)
+  if (rateLimitResponse) return rateLimitResponse
 
   let body: unknown
 

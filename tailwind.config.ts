@@ -54,7 +54,8 @@ const config = {
   			},
   			nothly: {
   				blue: '#3B82F6',
-  				violet: '#8B5CF6'
+  				violet: '#8B5CF6',
+  				yellow: '#fcd34d'
   			},
 			neo: {
 				violet: '#8B5CF6',

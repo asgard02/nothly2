@@ -180,7 +180,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#FFF0F5] flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="login-page min-h-screen bg-[#FFF0F5] flex items-center justify-center p-4 relative overflow-hidden">
       {/* Abstract Background pattern */}
       <div className="absolute inset-0 z-0" style={{
         backgroundImage: 'radial-gradient(#CBD5E1 1.5px, transparent 1.5px)',
@@ -287,7 +287,7 @@ export default function LoginPage() {
                     value={email}
                     onChange={(e) => { setEmail(e.target.value); setEmailError("") }}
                     disabled={isLoading}
-                    className={`pl-12 ${emailError ? "border-red-500 focus:border-red-500" : ""}`}
+                    className={`pl-12 !bg-white !text-black placeholder:!text-gray-500 ${emailError ? "border-red-500 focus:border-red-500" : ""}`}
                   />
                 </div>
                 {emailError && (
@@ -310,7 +310,7 @@ export default function LoginPage() {
                     value={password}
                     onChange={(e) => { setPassword(e.target.value); setPasswordError("") }}
                     disabled={isLoading}
-                    className={`pl-12 pr-12 ${passwordError ? "border-red-500 focus:border-red-500" : ""}`}
+                    className={`pl-12 pr-12 !bg-white !text-black placeholder:!text-gray-500 ${passwordError ? "border-red-500 focus:border-red-500" : ""}`}
                   />
                   <button
                     type="button"
@@ -409,7 +409,7 @@ export default function LoginPage() {
                       value={email}
                       onChange={(e) => { setEmail(e.target.value); setEmailError("") }}
                       disabled={isLoading}
-                      className={`pl-12 ${emailError ? "border-red-500 focus:border-red-500" : ""}`}
+                      className={`pl-12 !bg-white !text-black placeholder:!text-gray-500 ${emailError ? "border-red-500 focus:border-red-500" : ""}`}
                     />
                   </div>
                   {emailError && (
