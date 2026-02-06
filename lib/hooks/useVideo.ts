@@ -11,7 +11,15 @@ export function useCreateVideo() {
 
 export function useVideoList() {
   return {
-    videos: [],
+    videos: [] as Array<{
+      id: string
+      title: string
+      status: string
+      progress?: number
+      slide_count?: number
+      duration_seconds?: number
+      created_at?: string
+    }>,
     quota: null as { remaining: number; plan: string } | null,
     refresh: () => {},
     deleteVideo: async () => {},
