@@ -233,6 +233,7 @@ export function TutorialOverlay() {
     const router = useRouter()
     const [showWelcome, setShowWelcome] = useState(true)
     const [showCompletion, setShowCompletion] = useState(false)
+    const [dialogOpen, setDialogOpen] = useState(false)
     
     // Check if we're on a public page
     const isPublicPage = pathname === "/" || pathname?.startsWith("/login") || pathname?.startsWith("/register")
@@ -245,8 +246,24 @@ export function TutorialOverlay() {
         }
     }, [isOpen])
     
-    // Don't render on public pages or when paused (waiting for user to interact with dialog)
-    if (!isOpen || isPublicPage || isPaused) return null
+    // Auto-detect open dialogs (Radix portals) to hide tutorial overlay
+    useEffect(() => {
+        if (!isOpen) return
+        
+        const checkForDialogs = () => {
+            const openDialog = document.querySelector('[role="dialog"][data-state="open"]')
+            setDialogOpen(!!openDialog)
+        }
+        
+        checkForDialogs()
+        const observer = new MutationObserver(checkForDialogs)
+        observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ["data-state"] })
+        
+        return () => observer.disconnect()
+    }, [isOpen])
+    
+    // Don't render on public pages, when paused, or when a dialog is open
+    if (!isOpen || isPublicPage || isPaused || dialogOpen) return null
     
     // Show welcome screen first
     if (showWelcome) {
