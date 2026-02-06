@@ -12,10 +12,10 @@ import {
   Shield,
   Bell,
   Globe,
-  Database,
   ChevronRight
 } from "lucide-react"
 import { useTranslations } from "next-intl"
+import { cn } from "@/lib/utils"
 
 interface SettingsLayoutProps {
   children: React.ReactNode
@@ -56,11 +56,6 @@ export default function SettingsLayout({ children }: SettingsLayoutProps) {
       label: t("language"),
       icon: Globe,
     },
-    {
-      href: "/settings/data",
-      label: t("data"),
-      icon: Database,
-    },
   ]
 
   return (
@@ -69,17 +64,16 @@ export default function SettingsLayout({ children }: SettingsLayoutProps) {
 
       {/* Main container */}
       <MainContent className="flex flex-1 h-full overflow-hidden">
-        {/* Settings sidebar - style Gemini */}
-        <aside className="w-72 bg-card border-r border-border h-full flex flex-col overflow-hidden">
+        {/* Settings sidebar - neo-brutalist */}
+        <aside className="w-80 bg-card border-r-2 border-border h-full flex flex-col overflow-hidden">
           {/* Header */}
-          <div className="p-6 border-b border-border shrink-0">
-            <h2 className="text-xl font-bold text-foreground mb-1">{t("title")}</h2>
-            <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
+          <div className="p-8 border-b-2 border-border shrink-0 bg-secondary">
+            <h2 className="text-2xl font-black text-secondary-foreground uppercase tracking-tight">{t("title")}</h2>
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 p-3 overflow-y-auto">
-            <div className="space-y-1">
+          <nav className="flex-1 p-4 overflow-y-auto">
+            <div className="space-y-3">
               {menuItems.map((item) => {
                 const Icon = item.icon
                 const isActive = pathname === item.href
@@ -87,21 +81,19 @@ export default function SettingsLayout({ children }: SettingsLayoutProps) {
                   <Link
                     key={item.href}
                     href={item.href}
-                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group ${isActive
-                      ? "bg-primary/10 text-primary"
-                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                      }`}
+                    className={cn(
+                      "w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 border-2 font-bold uppercase tracking-wide",
+                      isActive
+                        ? "bg-foreground text-background border-border shadow-[4px_4px_0px_0px_#8B5CF6] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] translate-x-1"
+                        : "bg-card text-muted-foreground border-transparent hover:border-border hover:bg-accent hover:text-foreground hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] hover:-translate-y-1"
+                    )}
                   >
-                    <Icon className={`h-5 w-5 flex-shrink-0 ${isActive ? "text-primary" : "text-muted-foreground"
-                      }`} />
-                    <div className="flex-1 text-left">
-                      <p className={`text-sm font-medium ${isActive ? "text-primary" : "text-foreground"
-                        }`}>
-                        {item.label}
-                      </p>
-                    </div>
+                    <Icon className={cn("h-5 w-5 flex-shrink-0", isActive ? "text-accent" : "text-current")} strokeWidth={2.5} />
+                    <span className="flex-1 text-left text-sm">
+                      {item.label}
+                    </span>
                     {isActive && (
-                      <ChevronRight className="h-4 w-4 text-primary" />
+                      <ChevronRight className="h-5 w-5 text-background" strokeWidth={3} />
                     )}
                   </Link>
                 )
@@ -110,15 +102,15 @@ export default function SettingsLayout({ children }: SettingsLayoutProps) {
           </nav>
 
           {/* Footer */}
-          <div className="p-6 border-t border-border shrink-0">
-            <p className="text-xs text-muted-foreground text-center">
+          <div className="p-6 border-t-2 border-border shrink-0 bg-muted">
+            <p className="text-xs font-bold text-muted-foreground text-center uppercase">
               Nothly © 2025
             </p>
           </div>
         </aside>
 
         {/* Main content */}
-        <main className="flex-1 overflow-y-auto bg-background h-full p-6">
+        <main className="flex-1 overflow-y-auto bg-muted/30 h-full p-8">
           {children}
         </main>
       </MainContent>

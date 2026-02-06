@@ -1,14 +1,14 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { X, ChevronRight, User, Palette, CreditCard, Shield, Bell, Globe, Database } from "lucide-react"
+import { X, ChevronRight, User, Palette, CreditCard, Shield, Bell, Globe } from "lucide-react"
 
 interface SettingsModalProps {
     isOpen: boolean
     onClose: () => void
 }
 
-type SettingSection = "profile" | "appearance" | "plan" | "security" | "notifications" | "language" | "data"
+type SettingSection = "profile" | "appearance" | "plan" | "security" | "notifications" | "language"
 
 import { useTranslations } from "next-intl"
 import { cn } from "@/lib/utils"
@@ -43,9 +43,6 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                     break
                 case "language":
                     component = (await import("@/app/settings/language/page")).default
-                    break
-                case "data":
-                    component = (await import("@/app/settings/data/page")).default
                     break
             }
             setActiveComponent(() => component)
@@ -95,11 +92,6 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             id: "language" as SettingSection,
             label: t("language"),
             icon: Globe,
-        },
-        {
-            id: "data" as SettingSection,
-            label: t("data"),
-            icon: Database,
         },
     ]
 

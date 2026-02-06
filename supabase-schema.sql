@@ -6,6 +6,7 @@ create table users (
   id uuid primary key default gen_random_uuid(),
   email text unique not null,
   role text not null default 'free',
+  has_completed_onboarding boolean not null default false,
   created_at timestamptz default now()
 );
 
@@ -318,7 +319,8 @@ begin
 end;
 $$ language plpgsql;
 
-create trigger if not exists user_credits_update_timestamp
+drop trigger if exists user_credits_update_timestamp on user_credits;
+create trigger user_credits_update_timestamp
   before update on user_credits
   for each row execute function update_user_credits_timestamp();
 
@@ -385,4 +387,62 @@ create trigger if not exists user_credits_update_timestamp
 --   for all using (auth.uid() = user_id);
 -- create policy "Users can view their own usage" on usage_counters
 --   for select using (auth.uid() = user_id);
+
+-- Calendar Todos (daily task list)
+create table if not exists calendar_todos (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references auth.users(id) on delete cascade not null,
+  title text not null,
+  completed boolean not null default false,
+  date date not null,
+  created_at timestamptz default now()
+);
+
+create index if not exists calendar_todos_user_date_idx on calendar_todos(user_id, date);
+
+-- RLS (granular policies like calendar_events)
+alter table calendar_todos enable row level security;
+
+create policy "Users can view their own todos"
+  on calendar_todos for select
+  using (auth.uid() = user_id);
+
+create policy "Users can create their own todos"
+  on calendar_todos for insert
+  with check (auth.uid() = user_id);
+
+create policy "Users can update their own todos"
+  on calendar_todos for update
+  using (auth.uid() = user_id);
+
+create policy "Users can delete their own todos"
+  on calendar_todos for delete
+  using (auth.uid() = user_id);
+
+-- User streaks (track daily activity streaks per user)
+create table if not exists user_streaks (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references auth.users(id) on delete cascade not null unique,
+  current_streak integer not null default 0,
+  longest_streak integer not null default 0,
+  last_active_date date,
+  updated_at timestamptz default now()
+);
+
+create index if not exists user_streaks_user_id_idx on user_streaks(user_id);
+
+-- RLS for user_streaks
+alter table user_streaks enable row level security;
+
+create policy "Users can view their own streak"
+  on user_streaks for select
+  using (auth.uid() = user_id);
+
+create policy "Users can insert their own streak"
+  on user_streaks for insert
+  with check (auth.uid() = user_id);
+
+create policy "Users can update their own streak"
+  on user_streaks for update
+  using (auth.uid() = user_id);
 

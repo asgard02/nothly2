@@ -1,6 +1,6 @@
 "use client"
 
-import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from "react"
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from "react"
 import { usePathname, useRouter } from "next/navigation"
 
 // Tutorial step definition
@@ -113,6 +113,7 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
     const [currentStep, setCurrentStep] = useState(0)
     const pathname = usePathname()
     const router = useRouter()
+    const hasCheckedOnboarding = useRef(false)
 
     // Global steps (single ordered list)
     const steps = GLOBAL_TUTORIAL_STEPS
@@ -125,7 +126,7 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
     }, [steps, currentStep, pathname])
 
     const startTutorial = useCallback(() => {
-        // Reset the completion flag so it shows up
+        // Reset the local completion flag so it shows up
         localStorage.removeItem("nothly_tutorial_v6_completed")
         setCurrentStep(0)
         setIsOpen(true)
@@ -135,18 +136,28 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
         }
     }, [pathname, router])
 
-    const completeTutorial = useCallback(() => {
+    // Mark onboarding as completed in the database
+    const markOnboardingCompleted = useCallback(async () => {
         localStorage.setItem("nothly_tutorial_v6_completed", "true")
+        try {
+            await fetch("/api/onboarding", { method: "POST" })
+        } catch (err) {
+            console.error("[Tutorial] Failed to mark onboarding completed:", err)
+        }
+    }, [])
+
+    const completeTutorial = useCallback(() => {
+        markOnboardingCompleted()
         setIsOpen(false)
         setCurrentStep(0)
         setIsPaused(false)
-    }, [])
+    }, [markOnboardingCompleted])
 
     const skipTutorial = useCallback(() => {
-        localStorage.setItem("nothly_tutorial_v6_completed", "true")
+        markOnboardingCompleted()
         setIsOpen(false)
         setCurrentStep(0)
-    }, [])
+    }, [markOnboardingCompleted])
 
     const nextStep = useCallback(() => {
         if (currentStep < totalSteps - 1) {
@@ -175,43 +186,61 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
         }
     }, [currentStep, totalSteps])
 
-    // Initial check on mount + listen for storage changes + PATH CHANGE (for redirects)
+    // Check onboarding status from the database on first load in workspace
     useEffect(() => {
-        const checkAndLaunch = () => {
-            // Check session storage
-            const isFreshLoginSession = sessionStorage.getItem("nothly_fresh_login")
+        // Only check on workspace/calendar/settings pages (authenticated area)
+        const isAuthenticatedPage = pathname?.startsWith("/workspace") || pathname?.startsWith("/calendar") || pathname?.startsWith("/settings")
+        if (!isAuthenticatedPage) return
+        if (hasCheckedOnboarding.current) return
 
-            // Check URL params
-            const searchParams = new URLSearchParams(window.location.search)
-            const isFreshLoginParam = searchParams.get("fresh_login") === "true"
+        const checkOnboardingStatus = async () => {
+            try {
+                const res = await fetch("/api/onboarding")
+                if (!res.ok) return
 
-            const hasSeen = localStorage.getItem("nothly_tutorial_v6_completed")
+                const data = await res.json()
+                hasCheckedOnboarding.current = true
 
-            // Logic: Show if it's a fresh login (session or param) AND they haven't seen it yet
-            if ((isFreshLoginSession || isFreshLoginParam) && !hasSeen) {
+                if (data.has_completed_onboarding) {
+                    // User already completed onboarding — sync localStorage
+                    localStorage.setItem("nothly_tutorial_v6_completed", "true")
+                    return
+                }
+
+                // User has NOT completed onboarding → show tutorial
+                // Clear any stale localStorage from a previous account on same browser
+                localStorage.removeItem("nothly_tutorial_v6_completed")
+
                 // Small delay to ensure hydration/layout stability
                 setTimeout(() => {
                     setCurrentStep(0)
                     setIsOpen(true)
 
-                    // Cleanup flags
-                    sessionStorage.removeItem("nothly_fresh_login")
-                    if (isFreshLoginParam) {
-                        const newUrl = window.location.pathname + window.location.hash
-                        window.history.replaceState({}, '', newUrl)
+                    // If not on dashboard, redirect there to start tutorial from step 0
+                    if (pathname !== "/workspace/dashboard") {
+                        router.push("/workspace/dashboard")
                     }
-                }, 500)
+                }, 800)
+            } catch (err) {
+                console.error("[Tutorial] Failed to check onboarding status:", err)
             }
         }
 
-        // Run immediately and on path change
-        checkAndLaunch()
+        // Small delay to allow the page to settle after login redirect
+        const timer = setTimeout(checkOnboardingStatus, 300)
+        return () => clearTimeout(timer)
+    }, [pathname, router])
 
-        // Also listen for a custom event we will dispatch from login page
-        window.addEventListener("nothly-login-success", checkAndLaunch)
+    // Also listen for legacy "nothly-login-success" event (backward compat for current session)
+    useEffect(() => {
+        const handleLoginSuccess = () => {
+            // Reset the ref so we re-check onboarding status
+            hasCheckedOnboarding.current = false
+        }
 
-        return () => window.removeEventListener("nothly-login-success", checkAndLaunch)
-    }, [pathname])
+        window.addEventListener("nothly-login-success", handleLoginSuccess)
+        return () => window.removeEventListener("nothly-login-success", handleLoginSuccess)
+    }, [])
 
     return (
         <TutorialContext.Provider value={{

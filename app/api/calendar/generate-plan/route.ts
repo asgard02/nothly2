@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { subjectId, startDate, endDate, intensity } = body
+    const { subjectId, startDate, endDate, intensity, studyHourStart, studyHourEnd } = body
 
     if (!subjectId) {
       return NextResponse.json({ error: "subjectId est requis" }, { status: 400 })
@@ -59,6 +59,8 @@ export async function POST(request: NextRequest) {
     const docTitles = documents.map(d => d.title).join(", ")
     const start = new Date(startDate).toLocaleDateString("fr-FR")
     const end = new Date(endDate).toLocaleDateString("fr-FR")
+    const hourStart = studyHourStart || "08:00"
+    const hourEnd = studyHourEnd || "20:00"
 
     const systemPrompt = `Tu es un assistant pédagogique expert en planification d'études.
 Ton but est de créer un planning de révision structuré et réaliste pour un étudiant.
@@ -67,22 +69,30 @@ Paramètres:
 - Sujet: Matière "${subject.title}" contenant les documents: ${docTitles}
 - Période: Du ${start} au ${end}
 - Intensité: ${intensity || "Moyenne"}
+- Créneaux d'étude: de ${hourStart} à ${hourEnd} UNIQUEMENT
 
 Génère une liste d'événements de révision au format JSON.
 Chaque événement doit avoir:
 - title: Titre court et précis (ex: "Révision Chapitre 1", "Quiz Droit Civil")
 - date: Date au format ISO (YYYY-MM-DD)
-- time: Heure suggérée (HH:MM)
+- time: Heure au format HH:MM (ex: "09:00", "14:30")
 - duration: Durée en minutes (30, 60, 90, 120)
 - type: "study" (révision), "exam" (examen blanc/quiz), ou "deadline" (objectif à atteindre)
 - description: Courte description de ce qu'il faut faire
 
-Règles:
+Règles STRICTES sur les horaires:
+- TOUTES les sessions doivent être planifiées UNIQUEMENT entre ${hourStart} et ${hourEnd}.
+- JAMAIS d'événement avant ${hourStart} ou après ${hourEnd}.
+- Choisis des heures réalistes comme 09:00, 10:30, 14:00, 16:00, etc.
+- Chaque session doit se terminer avant ${hourEnd} (heure de début + durée <= ${hourEnd}).
+- Espace les sessions d'au moins 30 minutes de pause entre elles.
+
+Règles générales:
 - Répartis les sessions de manière équilibrée sur la période.
 - Alterne entre révision pure et tests (quiz).
 - Adapte la charge de travail à l'intensité demandée.
 - Ne surcharge pas les journées (max 2-3 sessions par jour).
-- Le JSON doit être un tableau d'objets.
+- Le JSON doit être un tableau d'objets. Réponds UNIQUEMENT avec le JSON, sans texte autour.
 `
 
     const openaiResponse = await fetch("https://api.openai.com/v1/chat/completions", {

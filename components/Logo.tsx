@@ -16,21 +16,13 @@ export default function Logo({
   className = "",
 }: LogoProps) {
   const logoElement = (
-    <div className={`flex items-center gap-2 ${className}`}>
-      {/* Petit badge coloré - style dashboard */}
-      <div
-        className="rounded-md bg-gradient-to-br from-nothly-blue to-nothly-violet shadow-sm"
-        style={{ width: size * 0.4, height: size * 0.4 }}
-      />
-      
-      {showText && (
-        <span 
-          className="text-lg font-bold tracking-tight bg-gradient-to-r from-nothly-blue to-nothly-violet bg-clip-text text-transparent"
-          style={{ fontSize: size * 0.65 }}
-        >
-          Nothly
-        </span>
-      )}
+    <div className={`flex items-center ${className}`}>
+      <span
+        className="font-black italic tracking-tighter"
+        style={{ fontSize: size }}
+      >
+        {showText ? "nothly." : "n."}
+      </span>
     </div>
   )
 

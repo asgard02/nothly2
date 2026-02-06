@@ -19,14 +19,6 @@ const inter = Inter({ subsets: ["latin"] })
 export const metadata: Metadata = {
   title: "Nothly - Notes intelligentes avec IA",
   description: "Créez, éditez et transformez vos notes en fiches de révision et quiz grâce à l'IA",
-  icons: {
-    icon: [
-      { url: "/logo-icon.png", type: "image/png" },
-    ],
-    apple: [
-      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
-    ],
-  },
   manifest: "/manifest.json",
   openGraph: {
     title: "Nothly - Notes intelligentes avec IA",

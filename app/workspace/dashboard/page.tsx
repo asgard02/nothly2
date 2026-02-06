@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { createClient } from "@/lib/supabase-client"
-import { Clock, BookOpen, TrendingUp, ArrowRight, Play, FileText, Calendar, Plus, CheckSquare, Sparkles, Smile, Brain, ListChecks } from "lucide-react"
+import { Clock, BookOpen, TrendingUp, ArrowRight, Play, FileText, Calendar, Plus, CheckSquare, Sparkles, Smile, Brain, ListChecks, Search, Command } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
@@ -16,6 +16,7 @@ import { useTranslations, useFormatter } from "next-intl"
 export default function DashboardPage() {
     const [user, setUser] = useState<{ email?: string, user_metadata?: { full_name?: string, name?: string } } | null>(null)
     const [loadingUser, setLoadingUser] = useState(true)
+    const [dayStreak, setDayStreak] = useState(0)
     const { data: subjects = [] } = useSubjects()
     const { data: documents = [] } = useDocuments()
 
@@ -37,6 +38,23 @@ export default function DashboardPage() {
         })
     }, [])
 
+    // Record activity & fetch real streak
+    useEffect(() => {
+        const updateStreak = async () => {
+            try {
+                // POST records today's activity and returns updated streak
+                const res = await fetch("/api/streak", { method: "POST" })
+                if (res.ok) {
+                    const data = await res.json()
+                    setDayStreak(data.current_streak || 0)
+                }
+            } catch (err) {
+                console.error("Streak update error:", err)
+            }
+        }
+        updateStreak()
+    }, [])
+
     const t = useTranslations("Dashboard")
     const format = useFormatter()
 
@@ -54,7 +72,6 @@ export default function DashboardPage() {
     // Real Stats
     const activeSubjectsCount = subjects.length
     const totalDocsCount = documents.length
-    const dayStreak = 3 // Placeholder
 
     // Colorful stats with rotated decorative shadows
     const stats = [
@@ -93,6 +110,20 @@ export default function DashboardPage() {
                             {t("subtitle")}
                         </p>
                     </div>
+
+                    {/* Cmd+K shortcut badge */}
+                    <button
+                        onClick={() => {
+                            window.dispatchEvent(new KeyboardEvent("keydown", { key: "k", metaKey: true, bubbles: true }))
+                        }}
+                        className="hidden md:flex items-center gap-2 bg-[#DDD6FE] px-5 py-3 rounded-xl border-2 border-border shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] rotate-2 hover:rotate-0 hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[6px_6px_0px_0px_rgba(255,255,255,1)] transition-all duration-300 cursor-pointer group"
+                    >
+                        <Search className="h-4 w-4 text-foreground group-hover:scale-110 transition-transform" strokeWidth={2.5} />
+                        <span className="text-sm font-black uppercase text-foreground tracking-wide">{t("searchLabel")}</span>
+                        <span className="flex items-center gap-0.5 bg-card/80 border border-border rounded-md px-2 py-0.5 text-xs font-bold text-foreground">
+                            <Command className="h-3 w-3" strokeWidth={2.5} />K
+                        </span>
+                    </button>
                 </div>
             </header>
 
@@ -218,14 +249,6 @@ export default function DashboardPage() {
                         </div>
                     </div>
 
-                    {/* To Do (Mock for now, can be turned into a "What's New" or feature highlight) */}
-                    <div className="bg-[#FBCFE8] border-2 border-border rounded-3xl p-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:shadow-[6px_6px_0px_0px_rgba(255,255,255,1)] relative rotate-1 hover:rotate-0 transition-transform duration-300" data-tutorial="keyboard-shortcuts">
-                        <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-card border-2 border-border px-4 py-1 rounded-full text-xs font-black uppercase shadow-sm z-10 text-foreground">{t("proTip")}</div>
-                        <h3 className="font-black text-xl mb-4 text-center mt-2 text-foreground">{t("keyboardShortcuts")}</h3>
-                        <div className="text-sm font-bold text-center text-foreground">
-                            {t("press")} <span className="bg-card border border-border rounded px-1">Cmd</span> + <span className="bg-card border border-border rounded px-1">K</span> {t("toSearch")}
-                        </div>
-                    </div>
                 </div>
 
             </div>

@@ -93,8 +93,6 @@ export default function LoginPage() {
       } else if (data.session) {
         setMessage(t('errors.successRedirect'))
         setIsSuccess(true)
-        sessionStorage.setItem("nothly_fresh_login", "true")
-        window.dispatchEvent(new Event("nothly-login-success"))
         router.replace("/workspace")
       }
     } catch (error) {

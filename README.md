@@ -248,14 +248,15 @@ curl -X POST http://localhost:3000/api/ai \
 
 ## 📝 TODO / Améliorations futures
 
-- [ ] Authentification Supabase complète (OAuth, email/password)
-- [ ] Mode sombre
-- [ ] Recherche de notes
-- [ ] Tags et catégories
+- [x] Authentification Supabase complète (OAuth, email/password)
+- [x] Mode sombre
+- [x] Recherche de notes
+- [x] Tags et catégories
+- [ ] **Notifications** — La page Settings > Notifications est prête côté UI (toggles pour email, push, suggestions IA, digest hebdo, nouvelles features, marketing). Il reste à brancher un vrai backend de notifications (email via Resend/SendGrid, push via Web Push API). La page est actuellement désactivée avec un bandeau "Bientôt disponible".
 - [ ] Partage de notes
 - [ ] Export PDF avancé avec mise en page
 - [ ] Statistiques d'usage
-- [ ] Notifications par email
+- [ ] Système d'abonnement Stripe (actuellement en bêta publique gratuite)
 - [ ] Application mobile (React Native)
 
 ## 🆘 Support

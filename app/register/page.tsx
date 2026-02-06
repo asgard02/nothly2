@@ -73,8 +73,6 @@ export default function RegisterPage() {
         // User is automatically signed in (email confirmation disabled)
         setIsSuccess(true)
         setMessage("🎉 Account created successfully! Logging you in...")
-        sessionStorage.setItem("nothly_fresh_login", "true")
-        window.dispatchEvent(new Event("nothly-login-success"))
         setTimeout(() => {
           router.push("/workspace")
         }, 1500)

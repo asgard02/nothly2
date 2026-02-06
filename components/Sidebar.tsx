@@ -2,7 +2,6 @@
 
 import { useState } from "react"
 import { useRouter, usePathname } from "next/navigation"
-import Logo from "@/components/Logo"
 import { Settings, LogOut, PanelLeftClose, PanelLeft, Calendar, LayoutDashboard, Grid, Brain, Star, HelpCircle } from "lucide-react"
 import { useTranslations } from "next-intl"
 import SettingsModal from "@/components/SettingsModal"
@@ -49,20 +48,29 @@ export default function Sidebar() {
       >
         <div className="flex flex-col h-full bg-card border-2 border-border rounded-3xl shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)] overflow-hidden">
           {/* Header */}
-          <div className={cn("flex items-center p-6", isOpen ? "justify-between" : "justify-center")}>
-            {isOpen ? (
+          {isOpen ? (
+            <div className="flex items-center justify-between p-6">
               <span className="text-3xl font-black italic tracking-tighter text-foreground">nothly.</span>
-            ) : (
-              <span className="text-3xl font-black italic tracking-tighter text-foreground">n.</span>
-            )}
-
-            <button
-              onClick={toggle}
-              className="p-2 hover:bg-foreground hover:text-background border-2 border-transparent hover:border-border rounded-lg transition-colors text-foreground"
-            >
-              {isOpen ? <PanelLeftClose className="h-5 w-5" /> : <PanelLeft className="h-5 w-5" />}
-            </button>
-          </div>
+              <button
+                onClick={toggle}
+                className="p-2 hover:bg-foreground hover:text-background border-2 border-transparent hover:border-border rounded-lg transition-colors text-foreground"
+              >
+                <PanelLeftClose className="h-5 w-5" />
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center justify-center p-6">
+              <button
+                onClick={toggle}
+                className="group relative flex items-center justify-center w-10 h-10 rounded-lg transition-all text-foreground hover:bg-foreground hover:text-background border-2 border-transparent hover:border-border"
+              >
+                <span className="text-3xl font-black italic tracking-tighter transition-opacity duration-200 group-hover:opacity-0">
+                  n.
+                </span>
+                <PanelLeft className="h-5 w-5 absolute opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
+              </button>
+            </div>
+          )}
 
           {/* Menu principal */}
           <nav className="flex flex-col flex-1 px-4 gap-3 overflow-y-auto py-4">

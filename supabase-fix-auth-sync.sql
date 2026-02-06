@@ -14,8 +14,8 @@ AS $$
 BEGIN
   -- Insert into public.users
   BEGIN
-    INSERT INTO public.users (id, email, role)
-    VALUES (NEW.id, NEW.email, 'free')
+    INSERT INTO public.users (id, email, role, has_completed_onboarding)
+    VALUES (NEW.id, NEW.email, 'free', false)
     ON CONFLICT (id) DO NOTHING;
   EXCEPTION WHEN OTHERS THEN
     -- Capture detailed error info
