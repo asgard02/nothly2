@@ -773,9 +773,9 @@ export default function SubjectView({ subject, onBack, onSelectDocument, onUpdat
       {/* Header avec design premium - Caché quand on affiche flashcards/quiz */}
       {!isViewingStudy && (
         <div className="flex-shrink-0 z-20 px-6 pt-6 mb-4">
-          <div className="bg-card border-2 border-border rounded-3xl p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)] relative overflow-hidden">
+          <div className="bg-card border-2 border-border rounded-3xl p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,0.15)] relative overflow-hidden">
             {/* Ambient background glow inside header */}
-            <div className="absolute top-0 right-0 w-64 h-64 bg-[#DDD6FE] rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2 opacity-50 pointer-events-none" />
+            <div className="absolute top-0 right-0 w-64 h-64 bg-[#DDD6FE] dark:bg-violet-500/10 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2 opacity-50 pointer-events-none" />
 
             <div className="relative z-10">
               <div className="flex items-center justify-between mb-8">
@@ -810,7 +810,7 @@ export default function SubjectView({ subject, onBack, onSelectDocument, onUpdat
                       >
                         <Star className={cn("h-6 w-6", subject.is_favorite && "fill-yellow-500 text-yellow-500")} strokeWidth={2.5} />
                       </button>
-                      <span className="text-sm font-bold text-foreground bg-secondary px-3 py-1 rounded-full border-2 border-border shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)]">
+                      <span className="text-sm font-bold text-foreground bg-secondary px-3 py-1 rounded-full border-2 border-border shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.15)]">
                         {(subject.doc_count || 0)} DOC{(subject.doc_count || 0) > 1 ? "S" : ""}
                       </span>
                     </h1>
@@ -825,13 +825,13 @@ export default function SubjectView({ subject, onBack, onSelectDocument, onUpdat
                       placeholder={t("searchPlaceholder")}
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-64 pl-10 pr-4 py-3 text-sm font-bold rounded-xl border-2 border-border bg-card focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:focus:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] focus:outline-none transition-all placeholder:text-muted-foreground text-foreground uppercase"
+                      className="w-64 pl-10 pr-4 py-3 text-sm font-bold rounded-xl border-2 border-border bg-card focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:focus:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)] focus:outline-none transition-all placeholder:text-muted-foreground text-foreground uppercase"
                     />
                   </div>
                   <Button
                     onClick={() => setIsUploadOpen(true)}
                     data-tutorial="upload-button"
-                    className="h-12 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] hover:translate-y-[2px] active:translate-y-[4px] active:shadow-none transition-all px-6 border-2 border-border font-bold uppercase"
+                    className="h-12 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)] hover:translate-y-[2px] active:translate-y-[4px] active:shadow-none transition-all px-6 border-2 border-border font-bold uppercase"
                   >
                     <Plus className="h-5 w-5 mr-2" strokeWidth={3} />
                     {t("addDocument")}
@@ -842,10 +842,10 @@ export default function SubjectView({ subject, onBack, onSelectDocument, onUpdat
               {/* Onglets Premium */}
               <div className="flex items-center gap-3" data-tutorial="tabs-container">
                 {[
-                  { id: "pdf", label: t("tabPdf"), icon: FileText, count: filteredDocs.length, color: "bg-[#BAE6FD]", tutorialId: "tab-pdf" },
-                  { id: "flashcards", label: t("tabFlashcards"), icon: Brain, count: flashcardsCollections.length, color: "bg-[#FBCFE8]", tutorialId: "tab-flashcards" },
-                  { id: "quiz", label: t("tabQuiz"), icon: ListChecks, count: quizCollections.length, color: "bg-[#BBF7D0]", tutorialId: "tab-quiz" },
-                  { id: "resume", label: t("tabSummaries"), icon: BookOpen, count: totalSummaries, color: "bg-[#FDE68A]", tutorialId: "tab-summaries" },
+                  { id: "pdf", label: t("tabPdf"), icon: FileText, count: filteredDocs.length, color: "bg-[#BAE6FD] dark:bg-sky-500/15", tutorialId: "tab-pdf" },
+                  { id: "flashcards", label: t("tabFlashcards"), icon: Brain, count: flashcardsCollections.length, color: "bg-[#FBCFE8] dark:bg-pink-500/15", tutorialId: "tab-flashcards" },
+                  { id: "quiz", label: t("tabQuiz"), icon: ListChecks, count: quizCollections.length, color: "bg-[#BBF7D0] dark:bg-emerald-500/15", tutorialId: "tab-quiz" },
+                  { id: "resume", label: t("tabSummaries"), icon: BookOpen, count: totalSummaries, color: "bg-[#FDE68A] dark:bg-amber-500/15", tutorialId: "tab-summaries" },
                 ].map((tab) => (
                   <button
                     key={tab.id}
@@ -854,7 +854,7 @@ export default function SubjectView({ subject, onBack, onSelectDocument, onUpdat
                     className={cn(
                       "relative py-3 px-5 rounded-xl flex items-center gap-2 text-sm font-black uppercase transition-all duration-200 border-2 border-transparent",
                       activeTab === tab.id
-                        ? cn("border-border shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] -translate-y-1", tab.color, "text-foreground")
+                        ? cn("border-border shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)] -translate-y-1", tab.color, "text-foreground")
                         : "text-muted-foreground hover:text-foreground hover:bg-muted hover:border-border"
                     )}
                   >
@@ -902,10 +902,10 @@ export default function SubjectView({ subject, onBack, onSelectDocument, onUpdat
                   </div>
                 ) : filteredDocs.length === 0 ? (
                   <div className="flex flex-col items-center justify-center text-center">
-                    <div className="rounded-3xl bg-card border-2 border-border p-16 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)] max-w-lg w-full relative overflow-hidden group">
+                    <div className="rounded-3xl bg-card border-2 border-border p-16 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,0.15)] max-w-lg w-full relative overflow-hidden group">
                       <div className="absolute top-0 left-0 w-full h-2 bg-accent border-b-2 border-border"></div>
 
-                      <div className="w-24 h-24 rounded-full bg-[#BAE6FD] border-2 border-border flex items-center justify-center mb-6 mx-auto shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] group-hover:scale-110 transition-transform">
+                      <div className="w-24 h-24 rounded-full bg-[#BAE6FD] dark:bg-sky-500/20 border-2 border-border flex items-center justify-center mb-6 mx-auto shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)] group-hover:scale-110 transition-transform">
                         <FileText className="h-10 w-10 text-foreground" strokeWidth={2.5} />
                       </div>
                       <h3 className="text-2xl font-black uppercase mb-2 text-foreground">{t("noDocuments")}</h3>
@@ -916,7 +916,7 @@ export default function SubjectView({ subject, onBack, onSelectDocument, onUpdat
                         onClick={() => setIsUploadOpen(true)}
                         size="lg"
                         data-tutorial="upload-empty-state"
-                        className="h-14 rounded-xl px-8 bg-primary hover:bg-primary/90 text-primary-foreground shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] hover:translate-y-[2px] active:translate-y-[4px] active:shadow-none transition-all border-2 border-border font-black uppercase"
+                        className="h-14 rounded-xl px-8 bg-primary hover:bg-primary/90 text-primary-foreground shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)] hover:translate-y-[2px] active:translate-y-[4px] active:shadow-none transition-all border-2 border-border font-black uppercase"
                       >
                         <Plus className="h-5 w-5 mr-2" strokeWidth={3} />
                         {t("addDocument")}
@@ -929,9 +929,9 @@ export default function SubjectView({ subject, onBack, onSelectDocument, onUpdat
                       <div
                         key={doc.id}
                         onClick={() => handleViewPdf(doc.id)}
-                        className="group relative bg-card border-2 border-border rounded-2xl p-5 transition-all duration-200 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[6px_6px_0px_0px_rgba(255,255,255,1)] hover:-translate-y-1 cursor-pointer flex items-center gap-5"
+                        className="group relative bg-card border-2 border-border rounded-2xl p-5 transition-all duration-200 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[6px_6px_0px_0px_rgba(255,255,255,0.15)] hover:-translate-y-1 cursor-pointer flex items-center gap-5"
                       >
-                        <div className="flex-shrink-0 w-16 h-16 rounded-xl bg-muted border-2 border-border flex items-center justify-center text-foreground shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)] group-hover:bg-[#BAE6FD] transition-colors">
+                        <div className="flex-shrink-0 w-16 h-16 rounded-xl bg-muted border-2 border-border flex items-center justify-center text-foreground shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.15)] group-hover:bg-[#BAE6FD] dark:group-hover:bg-sky-500/20 transition-colors">
                           <FileText className="h-8 w-8" strokeWidth={2} />
                         </div>
 
@@ -962,7 +962,7 @@ export default function SubjectView({ subject, onBack, onSelectDocument, onUpdat
                                     e.stopPropagation()
                                     handleOpenGenerationDialog("flashcards")
                                   }}
-                                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-black uppercase bg-[#FBCFE8] dark:bg-pink-950/30 text-foreground border-2 border-border hover:bg-[#F9A8D4] dark:hover:bg-pink-950/50 hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)] hover:-translate-y-[1px] transition-all"
+                                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-black uppercase bg-[#FBCFE8] dark:bg-pink-950/30 text-foreground border-2 border-border hover:bg-[#F9A8D4] dark:hover:bg-pink-950/50 hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.15)] hover:-translate-y-[1px] transition-all"
                                 >
                                   <Brain className="h-4 w-4" strokeWidth={2.5} />
                                   Flashcards
@@ -972,7 +972,7 @@ export default function SubjectView({ subject, onBack, onSelectDocument, onUpdat
                                     e.stopPropagation()
                                     handleOpenGenerationDialog("quiz")
                                   }}
-                                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-black uppercase bg-[#BBF7D0] dark:bg-emerald-950/30 text-foreground border-2 border-border hover:bg-[#86EFAC] dark:hover:bg-emerald-950/50 hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)] hover:-translate-y-[1px] transition-all"
+                                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-black uppercase bg-[#BBF7D0] dark:bg-emerald-950/30 text-foreground border-2 border-border hover:bg-[#86EFAC] dark:hover:bg-emerald-950/50 hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.15)] hover:-translate-y-[1px] transition-all"
                                 >
                                   <ListChecks className="h-4 w-4" strokeWidth={2.5} />
                                   Quiz
@@ -1015,7 +1015,7 @@ export default function SubjectView({ subject, onBack, onSelectDocument, onUpdat
                                         router.push(`/documents/${doc.id}/sections/${summary.sectionId}`)
                                       }
                                     }}
-                                    className="flex-shrink-0 w-64 p-3 rounded-xl bg-muted hover:bg-muted/80 border-2 border-border transition-colors text-xs cursor-pointer shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)]"
+                                    className="flex-shrink-0 w-64 p-3 rounded-xl bg-muted hover:bg-muted/80 border-2 border-border transition-colors text-xs cursor-pointer shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.15)]"
                                   >
                                     <h4 className="font-bold mb-1 line-clamp-1 uppercase text-foreground">{summary.heading}</h4>
                                     <p className="text-muted-foreground line-clamp-2">
@@ -1046,7 +1046,7 @@ export default function SubjectView({ subject, onBack, onSelectDocument, onUpdat
                   </div>
                 ) : flashcardsCollections.length === 0 ? (
                       <div className="flex flex-col items-center justify-center py-16 text-center bg-card border-2 border-dashed border-border rounded-3xl">
-                    <div className="w-24 h-24 rounded-full bg-[#FBCFE8] border-2 border-border flex items-center justify-center mb-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)]">
+                    <div className="w-24 h-24 rounded-full bg-[#FBCFE8] dark:bg-pink-500/20 border-2 border-border flex items-center justify-center mb-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)]">
                       <Brain className="h-10 w-10 text-foreground" strokeWidth={2.5} />
                     </div>
                     <h3 className="text-2xl font-black uppercase mb-2 text-foreground">{t("noFlashcards")}</h3>
@@ -1055,7 +1055,7 @@ export default function SubjectView({ subject, onBack, onSelectDocument, onUpdat
                     </p>
                     <Button
                       onClick={() => handleOpenGenerationDialog("flashcards")}
-                      className="h-12 rounded-xl px-8 bg-foreground text-background hover:bg-primary hover:text-primary-foreground shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] hover:translate-y-[2px] active:translate-y-[4px] active:shadow-none transition-all border-2 border-border font-black uppercase"
+                      className="h-12 rounded-xl px-8 bg-foreground text-background hover:bg-primary hover:text-primary-foreground shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)] hover:translate-y-[2px] active:translate-y-[4px] active:shadow-none transition-all border-2 border-border font-black uppercase"
                     >
                       <Sparkles className="h-5 w-5 mr-2" />
                       {t("createFlashcardsNow")}
@@ -1069,13 +1069,13 @@ export default function SubjectView({ subject, onBack, onSelectDocument, onUpdat
                         onClick={() => {
                           setSelectedFlashcardCollectionId(collection.id)
                         }}
-                        className="group bg-card border-2 border-border rounded-3xl p-6 hover:shadow-[8px_8px_0px_0px_#FBCFE8] dark:hover:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)] hover:-translate-y-1 transition-all cursor-pointer relative overflow-hidden shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:shadow-[6px_6px_0px_0px_rgba(255,255,255,1)]"
+                        className="group bg-card border-2 border-border rounded-3xl p-6 hover:shadow-[8px_8px_0px_0px_#FBCFE8] dark:hover:shadow-[8px_8px_0px_0px_rgba(255,255,255,0.15)] hover:-translate-y-1 transition-all cursor-pointer relative overflow-hidden shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:shadow-[6px_6px_0px_0px_rgba(255,255,255,0.15)]"
                       >
                         <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
                           <Brain className="h-24 w-24 text-foreground" />
                         </div>
                         <div className="flex justify-between items-start mb-4 relative z-10">
-                          <div className="w-12 h-12 bg-[#FBCFE8] dark:bg-pink-950/30 rounded-xl border-2 border-border flex items-center justify-center shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)]">
+                          <div className="w-12 h-12 bg-[#FBCFE8] dark:bg-pink-950/30 rounded-xl border-2 border-border flex items-center justify-center shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.15)]">
                             <Brain className="h-6 w-6 text-foreground" strokeWidth={2.5} />
                           </div>
                           <span className="bg-foreground text-background px-2 py-1 rounded-lg text-xs font-black uppercase">
@@ -1111,7 +1111,7 @@ export default function SubjectView({ subject, onBack, onSelectDocument, onUpdat
                   </div>
                 ) : quizCollections.length === 0 ? (
                       <div className="flex flex-col items-center justify-center py-16 text-center bg-card border-2 border-dashed border-border rounded-3xl">
-                    <div className="w-24 h-24 rounded-full bg-[#BBF7D0] border-2 border-border flex items-center justify-center mb-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)]">
+                    <div className="w-24 h-24 rounded-full bg-[#BBF7D0] dark:bg-emerald-500/20 border-2 border-border flex items-center justify-center mb-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)]">
                       <ListChecks className="h-10 w-10 text-foreground" strokeWidth={2.5} />
                     </div>
                     <h3 className="text-2xl font-black uppercase mb-2 text-foreground">{t("noQuiz")}</h3>
@@ -1120,7 +1120,7 @@ export default function SubjectView({ subject, onBack, onSelectDocument, onUpdat
                     </p>
                     <Button
                       onClick={() => handleOpenGenerationDialog("quiz")}
-                      className="h-12 rounded-xl px-8 bg-foreground text-background hover:bg-primary hover:text-primary-foreground shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] hover:translate-y-[2px] active:translate-y-[4px] active:shadow-none transition-all border-2 border-border font-black uppercase"
+                      className="h-12 rounded-xl px-8 bg-foreground text-background hover:bg-primary hover:text-primary-foreground shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)] hover:translate-y-[2px] active:translate-y-[4px] active:shadow-none transition-all border-2 border-border font-black uppercase"
                     >
                       <Sparkles className="h-5 w-5 mr-2" />
                       {t("createQuizNow")}
@@ -1134,13 +1134,13 @@ export default function SubjectView({ subject, onBack, onSelectDocument, onUpdat
                         onClick={() => {
                           setSelectedQuizCollection(collection)
                         }}
-                        className="group bg-card border-2 border-border rounded-3xl p-6 hover:shadow-[8px_8px_0px_0px_#BBF7D0] dark:hover:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)] hover:-translate-y-1 transition-all cursor-pointer relative overflow-hidden shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:shadow-[6px_6px_0px_0px_rgba(255,255,255,1)]"
+                        className="group bg-card border-2 border-border rounded-3xl p-6 hover:shadow-[8px_8px_0px_0px_#BBF7D0] dark:hover:shadow-[8px_8px_0px_0px_rgba(255,255,255,0.15)] hover:-translate-y-1 transition-all cursor-pointer relative overflow-hidden shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:shadow-[6px_6px_0px_0px_rgba(255,255,255,0.15)]"
                       >
                         <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
                           <ListChecks className="h-24 w-24 text-foreground" />
                         </div>
                         <div className="flex justify-between items-start mb-4 relative z-10">
-                          <div className="w-12 h-12 bg-[#BBF7D0] dark:bg-emerald-950/30 rounded-xl border-2 border-border flex items-center justify-center shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)]">
+                          <div className="w-12 h-12 bg-[#BBF7D0] dark:bg-emerald-950/30 rounded-xl border-2 border-border flex items-center justify-center shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.15)]">
                             <ListChecks className="h-6 w-6 text-foreground" strokeWidth={2.5} />
                           </div>
                           <span className="bg-foreground text-background px-2 py-1 rounded-lg text-xs font-black uppercase">
@@ -1189,8 +1189,8 @@ export default function SubjectView({ subject, onBack, onSelectDocument, onUpdat
                         <div className="flex flex-col items-center justify-center py-12">
                           <div className="rounded-[32px] bg-card border-[3px] border-black p-12 max-w-xl w-full shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] relative overflow-hidden">
                             <div className="absolute top-0 left-0 w-full h-2 bg-[#8b5cf6] border-b-[3px] border-black" />
-                            <div className="w-24 h-24 rounded-2xl bg-[#DDD6FE] border-[3px] border-black flex items-center justify-center mx-auto mb-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-                              <Video className="h-12 w-12 text-[#8b5cf6]" strokeWidth={2.5} />
+                            <div className="w-24 h-24 rounded-2xl bg-[#DDD6FE] dark:bg-violet-500/20 border-[3px] border-black dark:border-border flex items-center justify-center mx-auto mb-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)]">
+                              <Video className="h-12 w-12 text-[#8b5cf6] dark:text-violet-400" strokeWidth={2.5} />
                             </div>
                             <h3 className="text-2xl font-black uppercase mb-2 text-foreground text-center">{t("videoNoVideos")}</h3>
                             <p className="text-muted-foreground font-medium text-center mb-8 leading-relaxed">
@@ -1229,8 +1229,8 @@ export default function SubjectView({ subject, onBack, onSelectDocument, onUpdat
                                   <Video className="h-24 w-24 text-foreground" />
                                 </div>
                                 <div className="flex justify-between items-start mb-4 relative z-10">
-                                  <div className="w-12 h-12 bg-[#DDD6FE] rounded-xl border-[3px] border-black flex items-center justify-center shadow-neo">
-                                    <Video className="h-6 w-6 text-[#8b5cf6]" strokeWidth={2.5} />
+                                  <div className="w-12 h-12 bg-[#DDD6FE] dark:bg-violet-500/20 rounded-xl border-[3px] border-black dark:border-border flex items-center justify-center shadow-neo">
+                                    <Video className="h-6 w-6 text-[#8b5cf6] dark:text-violet-400" strokeWidth={2.5} />
                                   </div>
                                   <span className="bg-foreground text-background px-2 py-1 rounded-lg text-xs font-black uppercase">
                                     {v.slide_count || 0} slide{(v.slide_count || 0) > 1 ? "s" : ""}
@@ -1249,8 +1249,8 @@ export default function SubjectView({ subject, onBack, onSelectDocument, onUpdat
                                 className="bg-card border-[3px] border-black rounded-3xl p-6 relative overflow-hidden shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] opacity-70"
                               >
                                 <div className="flex justify-between items-start mb-4">
-                                  <div className="w-12 h-12 bg-[#DDD6FE] rounded-xl border-[3px] border-black flex items-center justify-center shadow-neo">
-                                    <Loader2 className="h-6 w-6 text-[#8b5cf6] animate-spin" strokeWidth={2.5} />
+                                  <div className="w-12 h-12 bg-[#DDD6FE] dark:bg-violet-500/20 rounded-xl border-[3px] border-black dark:border-border flex items-center justify-center shadow-neo">
+                                    <Loader2 className="h-6 w-6 text-[#8b5cf6] dark:text-violet-400 animate-spin" strokeWidth={2.5} />
                                   </div>
                                   <span className="bg-amber-500 text-white px-2 py-1 rounded-lg text-xs font-black uppercase">
                                     {v.progress}%
@@ -1437,7 +1437,7 @@ export default function SubjectView({ subject, onBack, onSelectDocument, onUpdat
                   </div>
                 ) : totalSummaries === 0 ? (
                       <div className="flex flex-col items-center justify-center py-16 text-center bg-card border-2 border-dashed border-border rounded-3xl">
-                    <div className="w-24 h-24 rounded-full bg-[#FDE68A] border-2 border-border flex items-center justify-center mb-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)]">
+                    <div className="w-24 h-24 rounded-full bg-[#FDE68A] dark:bg-amber-500/20 border-2 border-border flex items-center justify-center mb-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)]">
                       <BookOpen className="h-10 w-10 text-foreground" strokeWidth={2.5} />
                     </div>
                     <h3 className="text-2xl font-black uppercase mb-2 text-foreground">{t("noSummaries")}</h3>
@@ -1448,7 +1448,7 @@ export default function SubjectView({ subject, onBack, onSelectDocument, onUpdat
                       onClick={() => {
                         handleOpenGenerationDialog("summary")
                       }}
-                      className="h-12 rounded-xl px-8 bg-foreground text-background hover:bg-primary hover:text-primary-foreground shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] hover:translate-y-[2px] active:translate-y-[4px] active:shadow-none transition-all border-2 border-border font-black uppercase"
+                      className="h-12 rounded-xl px-8 bg-foreground text-background hover:bg-primary hover:text-primary-foreground shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)] hover:translate-y-[2px] active:translate-y-[4px] active:shadow-none transition-all border-2 border-border font-black uppercase"
                     >
                       <BookOpen className="h-5 w-5 mr-2" />
                       {t("generateSummaryNow")}
@@ -1468,11 +1468,11 @@ export default function SubjectView({ subject, onBack, onSelectDocument, onUpdat
                           {collectionSummaries.map((summary: any) => (
                             <div
                               key={summary.id}
-                              className="group relative flex flex-col bg-card border-2 border-border rounded-3xl p-6 hover:shadow-[8px_8px_0px_0px_#FDE68A] dark:hover:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)] hover:-translate-y-1 transition-all cursor-pointer overflow-hidden"
+                              className="group relative flex flex-col bg-card border-2 border-border rounded-3xl p-6 hover:shadow-[8px_8px_0px_0px_#FDE68A] dark:hover:shadow-[8px_8px_0px_0px_rgba(255,255,255,0.15)] hover:-translate-y-1 transition-all cursor-pointer overflow-hidden"
                             >
                               <div className="relative z-10 flex flex-col h-full">
                                 <div className="flex items-start justify-between mb-4">
-                                  <div className="w-12 h-12 rounded-xl bg-[#FDE68A] border-2 border-border flex items-center justify-center shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)]">
+                                  <div className="w-12 h-12 rounded-xl bg-[#FDE68A] dark:bg-amber-500/20 border-2 border-border flex items-center justify-center shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.15)]">
                                     <BookOpen className="h-6 w-6 text-foreground" strokeWidth={2.5} />
                                   </div>
                                   <button
@@ -1498,7 +1498,7 @@ export default function SubjectView({ subject, onBack, onSelectDocument, onUpdat
                                     ...summary,
                                     isDocumentSummary: false
                                   })}
-                                  className="w-full h-10 rounded-xl bg-card text-foreground border-2 border-border hover:bg-accent hover:text-foreground shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] hover:translate-y-[2px] active:translate-y-[4px] active:shadow-none transition-all font-bold uppercase"
+                                  className="w-full h-10 rounded-xl bg-card text-foreground border-2 border-border hover:bg-accent hover:text-foreground shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)] hover:translate-y-[2px] active:translate-y-[4px] active:shadow-none transition-all font-bold uppercase"
                                 >
                                   {t("readSummary")}
                                   <ArrowRight className="h-4 w-4 ml-2" strokeWidth={3} />
@@ -1628,7 +1628,7 @@ export default function SubjectView({ subject, onBack, onSelectDocument, onUpdat
                     <h2 className="text-xl font-black text-foreground flex items-center gap-3 uppercase">
                       {selectedSummary.title}
                       {selectedSummary.isDocumentSummary && (
-                        <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-[#BAE6FD] text-foreground border-2 border-border">
+                        <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-[#BAE6FD] dark:bg-sky-500/20 text-foreground border-2 border-border">
                           {selectedSummary.documentTitle}
                         </span>
                       )}
@@ -1644,7 +1644,7 @@ export default function SubjectView({ subject, onBack, onSelectDocument, onUpdat
             {/* Contenu du résumé */}
             <div className="flex-1 overflow-y-auto custom-scrollbar bg-background">
               <div className="max-w-3xl mx-auto px-6 py-12">
-                <div className="bg-card border-2 border-border rounded-3xl p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)] relative">
+                <div className="bg-card border-2 border-border rounded-3xl p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,0.15)] relative">
                   {/* Decorative elements */}
                   <div className="absolute top-0 right-0 p-6 opacity-5 pointer-events-none">
                     <BookOpen className="h-32 w-32 text-foreground" />
@@ -1681,7 +1681,7 @@ export default function SubjectView({ subject, onBack, onSelectDocument, onUpdat
               <button
                 onClick={() => handleOpenGenerationDialog("flashcards")}
                 data-tutorial="action-flashcards"
-                className="px-6 py-4 text-sm font-black uppercase rounded-2xl bg-card border-2 border-border hover:bg-secondary hover:text-secondary-foreground transition-all flex items-center gap-3 text-foreground shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[6px_6px_0px_0px_rgba(255,255,255,1)] hover:-translate-y-1 active:translate-y-0 active:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:active:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)]"
+                className="px-6 py-4 text-sm font-black uppercase rounded-2xl bg-card border-2 border-border hover:bg-secondary hover:text-secondary-foreground transition-all flex items-center gap-3 text-foreground shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[6px_6px_0px_0px_rgba(255,255,255,0.15)] hover:-translate-y-1 active:translate-y-0 active:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:active:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.15)]"
               >
                 <Brain className="h-5 w-5" strokeWidth={2.5} />
                 {t("generateFlashcards")}
@@ -1689,7 +1689,7 @@ export default function SubjectView({ subject, onBack, onSelectDocument, onUpdat
               <button
                 onClick={() => handleOpenGenerationDialog("quiz")}
                 data-tutorial="action-quiz"
-                className="px-6 py-4 text-sm font-black uppercase rounded-2xl bg-card border-2 border-border hover:bg-[#BBF7D0] hover:text-foreground transition-all flex items-center gap-3 text-foreground shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[6px_6px_0px_0px_rgba(255,255,255,1)] hover:-translate-y-1 active:translate-y-0 active:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:active:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)]"
+                className="px-6 py-4 text-sm font-black uppercase rounded-2xl bg-card border-2 border-border hover:bg-[#BBF7D0] dark:hover:bg-emerald-500/15 hover:text-foreground transition-all flex items-center gap-3 text-foreground shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[6px_6px_0px_0px_rgba(255,255,255,0.15)] hover:-translate-y-1 active:translate-y-0 active:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:active:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.15)]"
               >
                 <ListChecks className="h-5 w-5" strokeWidth={2.5} />
                 {t("generateQuiz")}
@@ -1697,7 +1697,7 @@ export default function SubjectView({ subject, onBack, onSelectDocument, onUpdat
               <button
                 onClick={() => handleOpenGenerationDialog("summary")}
                 data-tutorial="action-summary"
-                className="px-6 py-4 text-sm font-black uppercase rounded-2xl bg-card border-2 border-border hover:bg-accent hover:text-foreground transition-all flex items-center gap-3 text-foreground shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[6px_6px_0px_0px_rgba(255,255,255,1)] hover:-translate-y-1 active:translate-y-0 active:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:active:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)]"
+                className="px-6 py-4 text-sm font-black uppercase rounded-2xl bg-card border-2 border-border hover:bg-accent hover:text-foreground transition-all flex items-center gap-3 text-foreground shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[6px_6px_0px_0px_rgba(255,255,255,0.15)] hover:-translate-y-1 active:translate-y-0 active:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:active:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.15)]"
               >
                 <FileText className="h-5 w-5" strokeWidth={2.5} />
                 {t("summarize")}
@@ -1709,7 +1709,7 @@ export default function SubjectView({ subject, onBack, onSelectDocument, onUpdat
                 onClick={() => setShowChatInput(!showChatInput)}
                 data-tutorial="action-chat"
                 className={cn(
-                  "p-4 rounded-2xl border-2 border-border transition-all shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[6px_6px_0px_0px_rgba(255,255,255,1)] hover:-translate-y-1 active:translate-y-0 active:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:active:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)]",
+                  "p-4 rounded-2xl border-2 border-border transition-all shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[6px_6px_0px_0px_rgba(255,255,255,0.15)] hover:-translate-y-1 active:translate-y-0 active:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:active:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.15)]",
                   showChatInput
                     ? "bg-foreground text-background hover:bg-foreground/90"
                     : "bg-card text-muted-foreground hover:bg-foreground hover:text-background"
@@ -1733,7 +1733,7 @@ export default function SubjectView({ subject, onBack, onSelectDocument, onUpdat
             transition={{ duration: 0.3, ease: "easeOut" }}
             className="fixed bottom-6 right-6 z-50"
           >
-            <div className="w-[420px] bg-card border-2 border-border rounded-2xl shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:shadow-[6px_6px_0px_0px_rgba(255,255,255,1)] overflow-hidden flex flex-col max-h-[600px]">
+            <div className="w-[420px] bg-card border-2 border-border rounded-2xl shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:shadow-[6px_6px_0px_0px_rgba(255,255,255,0.15)] overflow-hidden flex flex-col max-h-[600px]">
               {/* Header simplifié */}
               <div className="flex justify-between items-center px-5 py-3 border-b-2 border-border bg-card">
                 <div className="flex items-center gap-2">
@@ -1767,7 +1767,7 @@ export default function SubjectView({ subject, onBack, onSelectDocument, onUpdat
                   messages.map((msg, i) => (
                     <div key={i} className={cn("flex w-full gap-3", msg.role === 'user' ? "justify-end" : "justify-start")}>
                       {msg.role === 'assistant' && (
-                        <div className="w-8 h-8 rounded-lg bg-primary border-2 border-border flex items-center justify-center flex-shrink-0 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)]">
+                        <div className="w-8 h-8 rounded-lg bg-primary border-2 border-border flex items-center justify-center flex-shrink-0 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.15)]">
                           <Sparkles className="h-4 w-4 text-primary-foreground" strokeWidth={2.5} />
                         </div>
                       )}
@@ -1787,7 +1787,7 @@ export default function SubjectView({ subject, onBack, onSelectDocument, onUpdat
                         </div>
                       </div>
                       {msg.role === 'user' && (
-                        <div className="w-8 h-8 rounded-lg bg-foreground border-2 border-border flex items-center justify-center flex-shrink-0 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)]">
+                        <div className="w-8 h-8 rounded-lg bg-foreground border-2 border-border flex items-center justify-center flex-shrink-0 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.15)]">
                           <span className="text-background text-xs font-black">U</span>
                         </div>
                       )}
@@ -1872,7 +1872,7 @@ export default function SubjectView({ subject, onBack, onSelectDocument, onUpdat
                       onClick={() => setSelectedVideoSourceIds((ids) => (isSelected ? ids.filter((id) => id !== doc.id) : [...ids, doc.id]))}
                       className={cn(
                         "w-full flex items-center gap-3 p-3 rounded-xl border-[3px] text-left font-bold uppercase text-sm transition-all",
-                        isSelected ? "bg-[#DDD6FE] border-black shadow-neo" : "bg-card border-black/20 hover:border-black/50"
+                        isSelected ? "bg-[#DDD6FE] dark:bg-violet-500/20 border-black dark:border-border shadow-neo" : "bg-card border-black/20 dark:border-border/50 hover:border-black/50 dark:hover:border-border"
                       )}
                     >
                       <div className={cn("w-5 h-5 rounded-md border-[3px] flex items-center justify-center flex-shrink-0", isSelected ? "bg-[#8b5cf6] border-black" : "border-black")}>
@@ -1889,10 +1889,10 @@ export default function SubjectView({ subject, onBack, onSelectDocument, onUpdat
               <h4 className="text-sm font-black uppercase text-foreground mb-3">{t("videoSelectFormat")}</h4>
               <div className="grid grid-cols-2 gap-3">
                 {[
-                  { id: "whiteboard" as const, label: t("videoFormatWhiteboard"), icon: Layout, color: "bg-[#BAE6FD]" },
-                  { id: "drawing" as const, label: t("videoFormatDrawing"), icon: PenTool, color: "bg-[#FBCFE8]" },
-                  { id: "animated" as const, label: t("videoFormatAnimated"), icon: Sparkles, color: "bg-[#fcd34d]" },
-                  { id: "presentation" as const, label: t("videoFormatPresentation"), icon: Presentation, color: "bg-[#BBF7D0]" },
+                  { id: "whiteboard" as const, label: t("videoFormatWhiteboard"), icon: Layout, color: "bg-[#BAE6FD] dark:bg-sky-500/15" },
+                  { id: "drawing" as const, label: t("videoFormatDrawing"), icon: PenTool, color: "bg-[#FBCFE8] dark:bg-pink-500/15" },
+                  { id: "animated" as const, label: t("videoFormatAnimated"), icon: Sparkles, color: "bg-[#fcd34d] dark:bg-amber-500/15" },
+                  { id: "presentation" as const, label: t("videoFormatPresentation"), icon: Presentation, color: "bg-[#BBF7D0] dark:bg-emerald-500/15" },
                 ].map((f) => (
                   <button
                     key={f.id}

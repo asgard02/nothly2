@@ -202,7 +202,7 @@ export function MentionInput({
       parts.push(
         <span
           key={`mention-${mention.id}`}
-          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#BAE6FD] dark:bg-blue-950/30 text-foreground border-2 border-border text-sm font-bold shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)]"
+          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#BAE6FD] dark:bg-blue-950/30 text-foreground border-2 border-border text-sm font-bold shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.15)]"
         >
           <FileText className="h-3 w-3" strokeWidth={2.5} />
           {mention.documentTitle}
@@ -246,7 +246,7 @@ export function MentionInput({
 
   return (
     <div className={cn("relative w-full max-w-3xl mx-auto", className)}>
-      <div className="relative flex items-end gap-2 p-3 rounded-3xl border-2 border-border bg-card shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] transition-all duration-300 group focus-within:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:focus-within:shadow-[6px_6px_0px_0px_rgba(255,255,255,1)] focus-within:-translate-y-0.5">
+      <div className="relative flex items-end gap-2 p-3 rounded-3xl border-2 border-border bg-card shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)] transition-all duration-300 group focus-within:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:focus-within:shadow-[6px_6px_0px_0px_rgba(255,255,255,0.15)] focus-within:-translate-y-0.5">
 
         {/* Bouton Plus (Menu) */}
         <div className="relative">
@@ -256,7 +256,7 @@ export function MentionInput({
               "flex-shrink-0 w-10 h-10 rounded-xl border-2 flex items-center justify-center transition-all duration-200",
               showMenu
                 ? "bg-foreground text-background border-border shadow-[2px_2px_0px_0px_rgba(139,92,246,1)] dark:shadow-[2px_2px_0px_0px_rgba(139,92,246,1)]"
-                : "bg-card text-foreground border-transparent hover:border-border hover:bg-muted hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)]"
+                : "bg-card text-foreground border-transparent hover:border-border hover:bg-muted hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.15)]"
             )}
             title="Options"
           >
@@ -269,7 +269,7 @@ export function MentionInput({
                 initial={{ opacity: 0, y: 10, scale: 0.95 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                className="absolute bottom-full left-0 mb-4 w-64 bg-card border-2 border-border rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] z-50 overflow-hidden"
+                className="absolute bottom-full left-0 mb-4 w-64 bg-card border-2 border-border rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)] z-50 overflow-hidden"
               >
                 <div className="p-2 space-y-1">
                   <button
@@ -293,7 +293,7 @@ export function MentionInput({
                         }
                       }, 0)
                     }}
-                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all border-2 border-transparent hover:border-border hover:bg-[#BAE6FD] dark:hover:bg-blue-950/30 hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)]"
+                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all border-2 border-transparent hover:border-border hover:bg-[#BAE6FD] dark:hover:bg-blue-950/30 hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.15)]"
                   >
                     <div className="p-2 rounded-lg bg-foreground text-background">
                       <AtSign className="h-4 w-4" strokeWidth={2.5} />
@@ -309,7 +309,7 @@ export function MentionInput({
                       setShowMenu(false)
                       onUpload?.()
                     }}
-                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all border-2 border-transparent hover:border-border hover:bg-[#BBF7D0] dark:hover:bg-emerald-950/30 hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)]"
+                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all border-2 border-transparent hover:border-border hover:bg-[#BBF7D0] dark:hover:bg-emerald-950/30 hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.15)]"
                   >
                     <div className="p-2 rounded-lg bg-muted text-foreground border-2 border-border">
                       <Plus className="h-4 w-4" strokeWidth={2.5} />
@@ -359,7 +359,7 @@ export function MentionInput({
             className={cn(
               "flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-200 border-2 border-border",
               value.trim()
-                ? "bg-primary text-primary-foreground shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)] hover:translate-y-[1px] hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] active:translate-y-[2px] active:shadow-none"
+                ? "bg-primary text-primary-foreground shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.15)] hover:translate-y-[1px] hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)] active:translate-y-[2px] active:shadow-none"
                 : "bg-muted text-muted-foreground border-border cursor-not-allowed"
             )}
           >
@@ -379,7 +379,7 @@ export function MentionInput({
               initial={{ opacity: 0, y: 10, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 10, scale: 0.95 }}
-              className="absolute bottom-full left-0 mb-4 w-full bg-card border-2 border-border rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] z-50 max-h-64 overflow-y-auto overflow-hidden"
+              className="absolute bottom-full left-0 mb-4 w-full bg-card border-2 border-border rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)] z-50 max-h-64 overflow-y-auto overflow-hidden"
             >
               <div className="p-2">
                 <div className="text-xs font-black uppercase text-muted-foreground px-3 py-2">
@@ -393,7 +393,7 @@ export function MentionInput({
                       "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all border-2",
                       index === selectedMentionIndex
                         ? "bg-foreground text-background border-border shadow-[2px_2px_0px_0px_rgba(186,230,253,1)] dark:shadow-[2px_2px_0px_0px_rgba(186,230,253,1)]"
-                        : "border-transparent hover:border-border hover:bg-[#BAE6FD] dark:hover:bg-blue-950/30 hover:text-foreground hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)]"
+                        : "border-transparent hover:border-border hover:bg-[#BAE6FD] dark:hover:bg-blue-950/30 hover:text-foreground hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.15)]"
                     )}
                   >
                     <FileText className={cn("h-4 w-4 shrink-0", index === selectedMentionIndex ? "text-[#BAE6FD] dark:text-[#BAE6FD]" : "text-current")} strokeWidth={2.5} />

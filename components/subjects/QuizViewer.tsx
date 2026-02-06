@@ -58,28 +58,28 @@ const MASTERY_COLORS: Record<MasteryLevel, { bg: string; text: string; border: s
     text: "text-foreground",
     border: "border-border",
     icon: CircleDashed,
-    shadow: "shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)]"
+    shadow: "shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)]"
   },
   learning: {
-    bg: "bg-[#FBCFE8]", // Pink
+    bg: "bg-[#FBCFE8] dark:bg-pink-500/20", // Pink
     text: "text-foreground",
     border: "border-border",
     icon: AlertCircle,
-    shadow: "shadow-[4px_4px_0px_0px_#BE185D] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)]"
+    shadow: "shadow-[4px_4px_0px_0px_#BE185D] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)]"
   },
   reviewing: {
-    bg: "bg-[#FDE68A]", // Amber
+    bg: "bg-[#FDE68A] dark:bg-amber-500/20", // Amber
     text: "text-foreground",
     border: "border-border",
     icon: RotateCcw,
-    shadow: "shadow-[4px_4px_0px_0px_#B45309] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)]"
+    shadow: "shadow-[4px_4px_0px_0px_#B45309] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)]"
   },
   mastered: {
-    bg: "bg-[#BBF7D0]", // Green
+    bg: "bg-[#BBF7D0] dark:bg-emerald-500/20", // Green
     text: "text-foreground",
     border: "border-border",
     icon: Award,
-    shadow: "shadow-[4px_4px_0px_0px_#15803D] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)]"
+    shadow: "shadow-[4px_4px_0px_0px_#15803D] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)]"
   },
 }
 
@@ -418,10 +418,10 @@ export default function QuizViewer({ questions, studySubjectId, mode = "practice
   if (isFinished) {
     return (
       <div className="flex flex-col items-center justify-center h-full p-8 text-center space-y-8 animate-in fade-in zoom-in-95 duration-500 bg-transparent">
-        <div className="bg-card border-2 border-border rounded-3xl p-12 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)] relative max-w-2xl w-full">
+        <div className="bg-card border-2 border-border rounded-3xl p-12 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,0.15)] relative max-w-2xl w-full">
 
           <div className="space-y-6">
-            <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-[#BBF7D0] border-2 border-border shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] mb-4">
+            <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-[#BBF7D0] dark:bg-emerald-500/20 border-2 border-border shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)] mb-4">
               <Award className="h-10 w-10 text-foreground" strokeWidth={2.5} />
             </div>
 
@@ -432,15 +432,15 @@ export default function QuizViewer({ questions, studySubjectId, mode = "practice
           </div>
 
           <div className="grid grid-cols-3 gap-6 w-full max-w-xl mx-auto mt-10">
-            <div className="bg-[#BAE6FD] border-2 border-border rounded-xl p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)]">
+            <div className="bg-[#BAE6FD] dark:bg-sky-500/20 border-2 border-border rounded-xl p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)]">
               <div className="text-4xl font-black text-foreground mb-1">{accuracyPercent}%</div>
               <div className="text-xs text-foreground font-bold uppercase">Précision</div>
             </div>
-            <div className="bg-[#BBF7D0] border-2 border-border rounded-xl p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)]">
+            <div className="bg-[#BBF7D0] dark:bg-emerald-500/20 border-2 border-border rounded-xl p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)]">
               <div className="text-4xl font-black text-foreground mb-1">{statusCounts.correct}</div>
               <div className="text-xs text-foreground font-bold uppercase">Correctes</div>
             </div>
-            <div className="bg-[#FBCFE8] border-2 border-border rounded-xl p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)]">
+            <div className="bg-[#FBCFE8] dark:bg-pink-500/20 border-2 border-border rounded-xl p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)]">
               <div className="text-4xl font-black text-foreground mb-1">{statusCounts.incorrect}</div>
               <div className="text-xs text-foreground font-bold uppercase">À revoir</div>
             </div>
@@ -451,7 +451,7 @@ export default function QuizViewer({ questions, studySubjectId, mode = "practice
               variant="default"
               size="lg"
               onClick={() => handleRestart(false)}
-              className="h-14 px-8 text-sm font-black uppercase rounded-xl bg-card text-foreground border-2 border-border hover:bg-muted shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] hover:translate-y-[2px] active:translate-y-[4px] active:shadow-none transition-all"
+              className="h-14 px-8 text-sm font-black uppercase rounded-xl bg-card text-foreground border-2 border-border hover:bg-muted shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)] hover:translate-y-[2px] active:translate-y-[4px] active:shadow-none transition-all"
             >
               <RotateCcw className="mr-2 h-5 w-5" />
               Tout recommencer
@@ -460,7 +460,7 @@ export default function QuizViewer({ questions, studySubjectId, mode = "practice
               <Button
                 size="lg"
                 onClick={() => handleRestart(true)}
-                className="h-14 px-8 text-sm font-black uppercase rounded-xl bg-foreground text-background hover:bg-primary border-2 border-border shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] hover:translate-y-[2px] active:translate-y-[4px] active:shadow-none transition-all"
+                className="h-14 px-8 text-sm font-black uppercase rounded-xl bg-foreground text-background hover:bg-primary border-2 border-border shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)] hover:translate-y-[2px] active:translate-y-[4px] active:shadow-none transition-all"
               >
                 <Target className="mr-2 h-5 w-5" />
                 Revoir les erreurs
@@ -485,7 +485,7 @@ export default function QuizViewer({ questions, studySubjectId, mode = "practice
   return (
     <div className="h-full flex flex-col p-4 md:p-8 font-sans overflow-hidden">
       {/* Container Principal style QuizHub */}
-      <div className="w-full max-w-5xl mx-auto h-full flex flex-col bg-background border-2 border-border rounded-3xl overflow-hidden shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)]">
+      <div className="w-full max-w-5xl mx-auto h-full flex flex-col bg-background border-2 border-border rounded-3xl overflow-hidden shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,0.15)]">
 
         {/* Header */}
         <div className="p-6 md:p-8 border-b-2 border-border flex items-center justify-between bg-card shrink-0">
@@ -504,8 +504,8 @@ export default function QuizViewer({ questions, studySubjectId, mode = "practice
             <span className={cn(
               "hidden md:inline-flex px-2 py-0.5 rounded-md text-[10px] font-black uppercase border-2 border-border ml-2",
               mode === "adaptive" 
-                ? "bg-[#FBCFE8] text-foreground" 
-                : "bg-[#BBF7D0] text-foreground"
+                ? "bg-[#FBCFE8] dark:bg-pink-500/20 text-foreground" 
+                : "bg-[#BBF7D0] dark:bg-emerald-500/20 text-foreground"
             )}>
               {mode === "adaptive" ? "Mode Adaptatif" : "Mode Pratique"}
             </span>
@@ -617,7 +617,7 @@ export default function QuizViewer({ questions, studySubjectId, mode = "practice
                       animate={{ height: "auto", opacity: 1 }}
                       className="w-full max-w-4xl mt-8 pt-6 border-t-2 border-border/10"
                     >
-                      <div className="bg-[#BAE6FD] dark:bg-sky-950/30 border-2 border-border rounded-2xl p-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)]">
+                      <div className="bg-[#BAE6FD] dark:bg-sky-950/30 border-2 border-border rounded-2xl p-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)]">
                         <div className="flex items-center gap-2 mb-2 font-black uppercase text-sm text-foreground">
                           <Sparkles className="h-4 w-4" /> Explication
                         </div>
@@ -657,14 +657,14 @@ export default function QuizViewer({ questions, studySubjectId, mode = "practice
               <Button
                 onClick={handleReveal}
                 disabled={selectedOption === null}
-                className="h-14 px-10 rounded-xl border-2 border-border bg-[#FCD34D] text-foreground hover:bg-[#FBBF24] text-xl font-bold shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] hover:translate-y-[2px] active:translate-y-[4px] active:shadow-none transition-all disabled:opacity-50 disabled:shadow-none disabled:translate-y-[4px]"
+                className="h-14 px-10 rounded-xl border-2 border-border bg-[#FCD34D] text-foreground hover:bg-[#FBBF24] text-xl font-bold shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)] hover:translate-y-[2px] active:translate-y-[4px] active:shadow-none transition-all disabled:opacity-50 disabled:shadow-none disabled:translate-y-[4px]"
               >
                 Vérifier la Réponse
               </Button>
             ) : (
               <Button
                 onClick={handleNext}
-                className="h-14 px-10 rounded-xl border-2 border-border bg-foreground text-background hover:bg-primary text-xl font-bold shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] hover:translate-y-[2px] active:translate-y-[4px] active:shadow-none transition-all"
+                className="h-14 px-10 rounded-xl border-2 border-border bg-foreground text-background hover:bg-primary text-xl font-bold shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)] hover:translate-y-[2px] active:translate-y-[4px] active:shadow-none transition-all"
               >
                 {currentIndex < prioritizedQuestions.length - 1 ? "Question Suivante" : "Terminer le Quiz"} <ArrowRight className="ml-3 h-6 w-6" strokeWidth={3} />
               </Button>

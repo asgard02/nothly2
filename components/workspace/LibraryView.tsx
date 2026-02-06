@@ -97,14 +97,14 @@ export function LibraryView({ onSelectSubject }: LibraryViewProps) {
     return date.toLocaleDateString("fr-FR", { day: "numeric", month: "short" })
   }
 
-  const subjectColors = ["bg-[#BAE6FD]", "bg-[#FBCFE8]", "bg-[#BBF7D0]", "bg-[#FDE68A]", "bg-[#DDD6FE]"]
+  const subjectColors = ["bg-[#BAE6FD] dark:bg-sky-500/20", "bg-[#FBCFE8] dark:bg-pink-500/20", "bg-[#BBF7D0] dark:bg-emerald-500/20", "bg-[#FDE68A] dark:bg-amber-500/20", "bg-[#DDD6FE] dark:bg-violet-500/20"]
 
   return (
     <div className="h-full flex flex-col relative overflow-hidden bg-transparent">
 
       {/* Search Header Floating */}
       <div className="flex-shrink-0 px-6 pt-6 pb-2 z-20">
-        <div className="rounded-3xl bg-card border-2 border-border p-6 flex flex-col md:flex-row items-center justify-between shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)] gap-4">
+        <div className="rounded-3xl bg-card border-2 border-border p-6 flex flex-col md:flex-row items-center justify-between shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,0.15)] gap-4">
           <div className="px-2">
             <h1 className="text-3xl font-black tracking-tight text-foreground mb-1 uppercase">
               {t("title")}
@@ -123,14 +123,14 @@ export function LibraryView({ onSelectSubject }: LibraryViewProps) {
                 placeholder={t("searchPlaceholder")}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 text-sm font-bold rounded-xl border-2 border-border bg-card focus:outline-none focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:focus:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] transition-all placeholder:text-muted-foreground text-foreground placeholder:font-medium placeholder:uppercase"
+                className="w-full pl-10 pr-4 py-3 text-sm font-bold rounded-xl border-2 border-border bg-card focus:outline-none focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:focus:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)] transition-all placeholder:text-muted-foreground text-foreground placeholder:font-medium placeholder:uppercase"
               />
             </div>
 
             <Button
               onClick={() => setIsCreateDialogOpen(true)}
               size="sm"
-              className="h-12 rounded-xl px-6 bg-foreground text-background hover:bg-foreground/90 border-2 border-border shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] hover:translate-y-[2px] active:translate-y-[4px] active:shadow-none transition-all font-black uppercase"
+              className="h-12 rounded-xl px-6 bg-foreground text-background hover:bg-foreground/90 border-2 border-border shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)] hover:translate-y-[2px] active:translate-y-[4px] active:shadow-none transition-all font-black uppercase"
             >
               <Plus className="h-4 w-4 mr-2" strokeWidth={3} />
               {t("newCollection")}
@@ -143,7 +143,7 @@ export function LibraryView({ onSelectSubject }: LibraryViewProps) {
       <div className="relative z-10 flex-1 overflow-y-auto p-6 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-slate-700/50">
         {filteredSubjects.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full relative z-10 px-4">
-            <div className="relative z-10 flex flex-col items-center text-center w-full max-w-4xl mx-auto p-8 md:p-16 rounded-[2.5rem] border-2 border-border bg-card shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] dark:shadow-[12px_12px_0px_0px_rgba(255,255,255,1)] animate-in fade-in zoom-in-95 duration-500">
+            <div className="relative z-10 flex flex-col items-center text-center w-full max-w-4xl mx-auto p-8 md:p-16 rounded-[2.5rem] border-2 border-border bg-card shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] dark:shadow-[12px_12px_0px_0px_rgba(255,255,255,0.15)] animate-in fade-in zoom-in-95 duration-500">
 
               <h2 className="text-4xl md:text-6xl font-black tracking-tight text-foreground mb-6 uppercase">
                 Turn your notes <br className="hidden md:block" /> into <span className="text-primary underline decoration-4 underline-offset-4">Grades</span>
@@ -157,7 +157,7 @@ export function LibraryView({ onSelectSubject }: LibraryViewProps) {
               <div className="flex flex-col md:flex-row items-center justify-center gap-8 md:gap-12 mb-16 w-full">
                 {/* Step 1 */}
                 <div className="flex flex-col items-center gap-4 group">
-                  <div className="w-20 h-20 rounded-2xl bg-[#BAE6FD] border-2 border-border flex items-center justify-center shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] group-hover:-translate-y-1 transition-transform duration-300">
+                  <div className="w-20 h-20 rounded-2xl bg-[#BAE6FD] dark:bg-sky-500/20 border-2 border-border flex items-center justify-center shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)] group-hover:-translate-y-1 transition-transform duration-300">
                     <FileText className="h-8 w-8 text-foreground" strokeWidth={2.5} />
                   </div>
                   <span className="font-black text-foreground uppercase text-sm">Import PDF</span>
@@ -167,7 +167,7 @@ export function LibraryView({ onSelectSubject }: LibraryViewProps) {
 
                 {/* Step 2 */}
                 <div className="flex flex-col items-center gap-4 group">
-                  <div className="w-20 h-20 rounded-2xl bg-[#FBCFE8] border-2 border-border flex items-center justify-center shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] group-hover:-translate-y-1 transition-transform duration-300">
+                  <div className="w-20 h-20 rounded-2xl bg-[#FBCFE8] dark:bg-pink-500/20 border-2 border-border flex items-center justify-center shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)] group-hover:-translate-y-1 transition-transform duration-300">
                     <Sparkles className="h-8 w-8 text-foreground" strokeWidth={2.5} />
                   </div>
                   <span className="font-black text-foreground uppercase text-sm">AI Processing</span>
@@ -177,7 +177,7 @@ export function LibraryView({ onSelectSubject }: LibraryViewProps) {
 
                 {/* Step 3 */}
                 <div className="flex flex-col items-center gap-4 group">
-                  <div className="w-20 h-20 rounded-2xl bg-[#BBF7D0] border-2 border-border flex items-center justify-center shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] group-hover:-translate-y-1 transition-transform duration-300">
+                  <div className="w-20 h-20 rounded-2xl bg-[#BBF7D0] dark:bg-emerald-500/20 border-2 border-border flex items-center justify-center shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)] group-hover:-translate-y-1 transition-transform duration-300">
                     <GraduationCap className="h-8 w-8 text-foreground" strokeWidth={2.5} />
                   </div>
                   <span className="font-black text-foreground uppercase text-sm">Master it</span>
@@ -265,7 +265,7 @@ const SubjectCard = React.memo(function SubjectCard({ subject, index, color, onC
         className={cn(
           "h-full min-h-[180px] rounded-2xl border-2 border-border",
           "relative overflow-hidden transition-all duration-300",
-          "hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)] hover:-translate-y-2",
+          "hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[8px_8px_0px_0px_rgba(255,255,255,0.15)] hover:-translate-y-2",
           color
         )}
       >

@@ -181,6 +181,8 @@
     "Profile": {
       "title": "Profil",
       "description": "Gérez vos informations personnelles",
+      "unknownUser": "Utilisateur",
+      "notAvailable": "Non disponible",
       "memberSince": "Membre depuis {date}",
       "notes": "Notes",
       "flashcards": "Flashcards",
@@ -217,6 +219,10 @@
       "lightDesc": "Thème lumineux",
       "dark": "Sombre",
       "darkDesc": "Repose vos yeux",
+      "darkMode": "Mode Sombre",
+      "lightMode": "Mode Clair",
+      "darkActive": "Le thème sombre est actif",
+      "lightActive": "Le thème clair est actif",
       "animations": "Animations",
       "enableAnimations": "Activer les animations",
       "enableAnimationsDesc": "Transitions et effets visuels fluides",
@@ -254,7 +260,8 @@
       "markdownExport": "Export Markdown",
       "cloudSync": "Sync cloud",
       "unlimitedNotes": "Notes illimitées",
-      "unlimitedAI": "IA illimitée",
+      "unlimitedAI": "Génération IA illimitée",
+      "unlimitedQuiz": "Quiz & Flashcards illimités",
       "prioritySupport": "Support prioritaire",
       "earlyAccess": "Accès anticipé",
       "aiCredits": "Crédits IA",
@@ -266,7 +273,11 @@
       "viewPlans": "Voir les plans",
       "proMember": "Membre Pro",
       "proMemberDesc": "Vous profitez de toutes les fonctionnalités premium de Nothly. Merci pour votre soutien ! 🎉",
-      "activeSubscription": "Abonnement actif"
+      "activeSubscription": "Abonnement actif",
+      "betaPublic": "Bêta Publique",
+      "betaDesc": "Accès illimité pendant la période de lancement.",
+      "betaTitle": "Profitez de la Bêta !",
+      "betaMessage": "Nous sommes en phase de lancement. Toutes les fonctionnalités Premium sont gratuites pour vous permettre de tester l'application à fond. N'hésitez pas à nous faire vos retours !"
     },
     "Security": {
       "title": "Sécurité",
@@ -311,6 +322,8 @@
       "title": "Notifications",
       "description": "Gérez vos préférences de notifications",
       "saved": "Préférences enregistrées",
+      "comingSoon": "Bientôt disponible",
+      "comingSoonDesc": "Les notifications seront activées dans une prochaine mise à jour. Voici un aperçu des préférences que vous pourrez configurer.",
       "essential": "Notifications essentielles",
       "emailNotifs": "Notifications par email",
       "emailNotifsDesc": "Recevez des emails pour les événements importants",
@@ -352,6 +365,19 @@
       "exportError": "Erreur lors de l'export",
       "clearCacheConfirm": "Voulez-vous vraiment vider le cache ? Cela peut améliorer les performances.",
       "clearCacheSuccess": "Cache vidé avec succès"
+    },
+    "About": {
+      "title": "À propos",
+      "description": "Découvrez Nothly",
+      "appDescription": "Nothly est une application de prise de notes intelligente avec intelligence artificielle intégrée. Créez, organisez et transformez vos notes en outils d'apprentissage efficaces grâce à l'IA.",
+      "website": "Site web",
+      "websiteDesc": "Visitez notre site officiel",
+      "sourceCode": "Code source et contributions",
+      "technologies": "Technologies",
+      "credits": "Crédits",
+      "icons": "Icônes",
+      "ai": "IA",
+      "infrastructure": "Infrastructure"
     }
   },
   "MentionInput": {

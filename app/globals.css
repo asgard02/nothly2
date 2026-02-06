@@ -36,34 +36,34 @@
   }
 
   .dark {
-    /* Mode sombre avec style brutalist conservé */
-    --background: 240 5% 10%; /* #18181B Dark */
-    --foreground: 46 65% 94%; /* #FDF6E3 Cream */
+    /* Mode sombre avec style brutalist — palette raffinée */
+    --background: 240 8% 6%; /* Deep dark with subtle blue tint */
+    --foreground: 40 30% 92%; /* Warm cream — easy on the eyes */
 
-    --card: 240 5% 15%; /* Dark card */
-    --card-foreground: 46 65% 94%;
+    --card: 240 6% 11%; /* Clearly separated from bg */
+    --card-foreground: 40 30% 92%;
 
-    --popover: 240 5% 15%;
-    --popover-foreground: 46 65% 94%;
+    --popover: 240 6% 13%;
+    --popover-foreground: 40 30% 92%;
 
-    --primary: 260 85% 65%; /* #8B5CF6 Violet - identique */
+    --primary: 260 80% 68%; /* Violet — slightly brighter for dark bg */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 330 85% 70%; /* #F472B6 Pink - identique */
-    --secondary-foreground: 46 65% 94%;
+    --secondary: 330 75% 72%; /* Pink — slightly brighter for dark bg */
+    --secondary-foreground: 40 30% 92%;
 
-    --muted: 240 5% 20%;
-    --muted-foreground: 46 65% 80%;
+    --muted: 240 6% 16%; /* Visible muted surfaces */
+    --muted-foreground: 240 10% 60%; /* Readable muted text */
 
-    --accent: 45 95% 55%; /* #FBBF24 Yellow - identique */
-    --accent-foreground: 240 5% 10%;
+    --accent: 45 90% 58%; /* Yellow — warm & readable */
+    --accent-foreground: 240 8% 6%;
 
-    --destructive: 0 85% 60%;
+    --destructive: 0 80% 58%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 100%; /* White borders pour contraste */
-    --input: 0 0% 100%;
-    --ring: 0 0% 100%;
+    --border: 240 8% 26%; /* Soft gray borders — not pure white */
+    --input: 240 8% 26%;
+    --ring: 260 80% 68%; /* Matches primary for focus rings */
   }
 }
 
@@ -74,28 +74,31 @@
   html {
     @apply bg-background;
   }
-  html.dark {
-    @apply bg-[#18181B];
-  }
   body {
     @apply bg-background text-foreground antialiased font-medium;
     min-height: 100vh;
   }
-  body.dark {
-    @apply bg-[#18181B];
-  }
 }
 
 @layer utilities {
-  /* Hard Shadows */
+  /* Hard Shadows — auto dark mode */
   .shadow-neo {
     box-shadow: 4px 4px 0px 0px rgba(0,0,0,1);
+  }
+  .dark .shadow-neo {
+    box-shadow: 4px 4px 0px 0px rgba(255,255,255,0.15);
   }
   .shadow-neo-sm {
     box-shadow: 2px 2px 0px 0px rgba(0,0,0,1);
   }
+  .dark .shadow-neo-sm {
+    box-shadow: 2px 2px 0px 0px rgba(255,255,255,0.15);
+  }
   .shadow-neo-lg {
     box-shadow: 6px 6px 0px 0px rgba(0,0,0,1);
+  }
+  .dark .shadow-neo-lg {
+    box-shadow: 6px 6px 0px 0px rgba(255,255,255,0.15);
   }
   
   /* Interactive Neo Elements */
@@ -121,27 +124,43 @@
     transform: rotateY(180deg);
   }
 
-  /* Specific background colors for map usage */
+  /* Specific background colors for map usage — with dark mode */
   .bg-neo-violet { background-color: #DDD6FE; }
   .bg-neo-yellow { background-color: #FCD34D; }
   .bg-neo-pink { background-color: #FBCFE8; }
   .bg-neo-blue { background-color: #BAE6FD; }
   .bg-neo-green { background-color: #BBF7D0; }
+
+  .dark .bg-neo-violet { background-color: rgba(139, 92, 246, 0.18); }
+  .dark .bg-neo-yellow { background-color: rgba(251, 191, 36, 0.18); }
+  .dark .bg-neo-pink { background-color: rgba(244, 114, 182, 0.18); }
+  .dark .bg-neo-blue { background-color: rgba(56, 189, 248, 0.18); }
+  .dark .bg-neo-green { background-color: rgba(52, 211, 153, 0.18); }
 }
 
-/* Force light theme styles for login page inputs */
+/* Login page input styles */
 @layer components {
-  /* Target inputs within the login page container */
   .login-page input[type="email"],
   .login-page input[type="password"],
   .login-page input[type="text"] {
     background-color: white !important;
     color: black !important;
   }
-  
+  .dark .login-page input[type="email"],
+  .dark .login-page input[type="password"],
+  .dark .login-page input[type="text"] {
+    background-color: hsl(240 6% 13%) !important;
+    color: hsl(40 30% 92%) !important;
+  }
+
   .login-page input[type="email"]::placeholder,
   .login-page input[type="password"]::placeholder,
   .login-page input[type="text"]::placeholder {
-    color: #6B7280 !important; /* gray-500 */
+    color: #6B7280 !important;
+  }
+  .dark .login-page input[type="email"]::placeholder,
+  .dark .login-page input[type="password"]::placeholder,
+  .dark .login-page input[type="text"]::placeholder {
+    color: #9CA3AF !important;
   }
 }

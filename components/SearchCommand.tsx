@@ -142,14 +142,14 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
   const getTypeColor = (type: SearchResultType) => {
     switch (type) {
       case "document":
-        return "bg-[#BAE6FD]"
+        return "bg-[#BAE6FD] dark:bg-sky-500/20"
       case "flashcard":
-        return "bg-[#FBCFE8]"
+        return "bg-[#FBCFE8] dark:bg-pink-500/20"
       case "quiz":
-        return "bg-[#BBF7D0]"
+        return "bg-[#BBF7D0] dark:bg-emerald-500/20"
       case "collection":
       case "subject":
-        return "bg-[#FDE68A]"
+        return "bg-[#FDE68A] dark:bg-amber-500/20"
       default:
         return "bg-card"
     }
@@ -183,7 +183,7 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
             exit={{ opacity: 0, scale: 0.95, y: -20 }}
             className="fixed left-1/2 top-20 z-50 w-full max-w-2xl -translate-x-1/2"
           >
-            <div className="bg-card border-4 border-border shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)] rounded-2xl overflow-hidden">
+            <div className="bg-card border-4 border-border shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,0.15)] rounded-2xl overflow-hidden">
               {/* Header */}
               <div className="px-6 py-4 border-b-4 border-border bg-primary flex items-center gap-4">
                 <div className="relative flex-1">
@@ -194,7 +194,7 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                     placeholder={t("placeholder")}
-                    className="w-full h-14 pl-12 pr-12 bg-card border-4 border-border rounded-xl font-black uppercase text-foreground placeholder:text-muted-foreground focus:outline-none focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:focus:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] focus:-translate-y-1 transition-all"
+                    className="w-full h-14 pl-12 pr-12 bg-card border-4 border-border rounded-xl font-black uppercase text-foreground placeholder:text-muted-foreground focus:outline-none focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:focus:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)] focus:-translate-y-1 transition-all"
                   />
                   {query && (
                     <button
@@ -207,7 +207,7 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
                 </div>
                 <button
                   onClick={() => onOpenChange(false)}
-                  className="h-14 w-14 bg-card border-4 border-border rounded-xl flex items-center justify-center hover:bg-muted transition-colors shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)] active:translate-y-[4px] active:shadow-none"
+                  className="h-14 w-14 bg-card border-4 border-border rounded-xl flex items-center justify-center hover:bg-muted transition-colors shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.15)] active:translate-y-[4px] active:shadow-none"
                 >
                   <X className="h-5 w-5 text-foreground" strokeWidth={3} />
                 </button>
@@ -222,8 +222,8 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
                     className={cn(
                       "px-4 py-2 rounded-lg border-2 border-border font-black uppercase text-sm whitespace-nowrap transition-all",
                       selectedType === filter.value
-                        ? "bg-foreground text-background shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)]"
-                        : "bg-card text-foreground hover:bg-muted shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)] hover:translate-y-[2px] hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[1px_1px_0px_0px_rgba(255,255,255,1)] active:translate-y-[4px] active:shadow-none"
+                        ? "bg-foreground text-background shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)]"
+                        : "bg-card text-foreground hover:bg-muted shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.15)] hover:translate-y-[2px] hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[1px_1px_0px_0px_rgba(255,255,255,0.15)] active:translate-y-[4px] active:shadow-none"
                     )}
                   >
                     {filter.label}
@@ -257,13 +257,13 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
                         className={cn(
                           "w-full p-4 rounded-xl border-2 border-border mb-2 text-left transition-all flex items-center gap-4",
                           index === selectedIndex
-                            ? "bg-accent shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] -translate-y-1"
-                            : "bg-card hover:bg-muted shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)] hover:translate-y-[2px] hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[1px_1px_0px_0px_rgba(255,255,255,1)]"
+                            ? "bg-accent shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)] -translate-y-1"
+                            : "bg-card hover:bg-muted shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.15)] hover:translate-y-[2px] hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[1px_1px_0px_0px_rgba(255,255,255,0.15)]"
                         )}
                       >
                         <div
                           className={cn(
-                            "h-12 w-12 rounded-xl border-2 border-border flex items-center justify-center shrink-0 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)]",
+                            "h-12 w-12 rounded-xl border-2 border-border flex items-center justify-center shrink-0 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.15)]",
                             getTypeColor(result.type)
                           )}
                         >

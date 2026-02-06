@@ -77,7 +77,7 @@ export function GenerationOverlay({ isVisible, currentStep, onClose }: Generatio
                     exit={{ opacity: 0, y: 20, scale: 0.9 }}
                     className="fixed bottom-6 right-6 z-50 w-96"
                 >
-                    <div className="bg-card border-2 border-border shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:shadow-[6px_6px_0px_0px_rgba(255,255,255,1)] rounded-xl overflow-hidden">
+                    <div className="bg-card border-2 border-border shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:shadow-[6px_6px_0px_0px_rgba(255,255,255,0.15)] rounded-xl overflow-hidden">
                         {/* Header Compact */}
                         <div className={cn(
                             "px-4 py-3 border-b-2 border-border flex items-center justify-between",
@@ -115,7 +115,7 @@ export function GenerationOverlay({ isVisible, currentStep, onClose }: Generatio
                                     className="flex items-start gap-4"
                                 >
                                     <div className={cn(
-                                        "w-12 h-12 rounded-xl flex items-center justify-center border-2 border-border shrink-0 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)]",
+                                        "w-12 h-12 rounded-xl flex items-center justify-center border-2 border-border shrink-0 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.15)]",
                                         isComplete
                                             ? "bg-emerald-200 dark:bg-emerald-900/30"
                                             : "bg-indigo-200 dark:bg-indigo-900/30"
@@ -152,7 +152,7 @@ export function GenerationOverlay({ isVisible, currentStep, onClose }: Generatio
                                     initial={{ opacity: 0, y: 10 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     onClick={onClose}
-                                    className="mt-5 w-full py-2.5 rounded-lg bg-foreground text-background text-sm font-black uppercase tracking-wide border-2 border-border shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] hover:translate-y-[2px] hover:shadow-none transition-all active:translate-y-[4px]"
+                                    className="mt-5 w-full py-2.5 rounded-lg bg-foreground text-background text-sm font-black uppercase tracking-wide border-2 border-border shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)] hover:translate-y-[2px] hover:shadow-none transition-all active:translate-y-[4px]"
                                 >
                                     {t("openTab")}
                                 </motion.button>

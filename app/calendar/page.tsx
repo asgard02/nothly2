@@ -215,9 +215,9 @@ export default function CalendarPage() {
             case "exam":
                 return "bg-[#F472B6]"
             case "study":
-                return "bg-[#BAE6FD]"
+                return "bg-[#BAE6FD] dark:bg-sky-500/20"
             case "deadline":
-                return "bg-[#FDE68A]"
+                return "bg-[#FDE68A] dark:bg-amber-500/20"
             default:
                 return "bg-gray-200"
         }
@@ -358,19 +358,19 @@ export default function CalendarPage() {
         <div className="flex h-screen bg-background">
             <Sidebar />
             <MainContent className="p-4">
-                <div className="h-full bg-card border-2 border-border rounded-3xl shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)] overflow-hidden flex flex-col">
+                <div className="h-full bg-card border-2 border-border rounded-3xl shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,0.15)] overflow-hidden flex flex-col">
                     {/* Header */}
                     <header className="flex items-center justify-between px-8 py-5 border-b-2 border-border">
                         <div className="flex items-center gap-4">
                             {view === "day" && (
                                 <button
                                     onClick={() => setView("month")}
-                                    className="p-2.5 rounded-xl border-2 border-border bg-card hover:bg-[#BAE6FD] hover:-translate-y-0.5 transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)]"
+                                    className="p-2.5 rounded-xl border-2 border-border bg-card hover:bg-[#BAE6FD] dark:hover:bg-sky-500/20 hover:-translate-y-0.5 transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.15)]"
                                 >
                                     <ArrowLeft className="h-4 w-4 text-foreground" strokeWidth={2.5} />
                                 </button>
                             )}
-                            <div className="p-2.5 rounded-xl bg-[#BBF7D0] border-2 border-border shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)]">
+                            <div className="p-2.5 rounded-xl bg-[#BBF7D0] dark:bg-emerald-500/20 border-2 border-border shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.15)]">
                                 <CalendarIcon className="h-5 w-5 text-foreground" strokeWidth={2.5} />
                             </div>
                             <div>
@@ -389,7 +389,7 @@ export default function CalendarPage() {
                         <div className="flex items-center gap-3">
                             <button
                                 onClick={() => setIsGenerateOpen(true)}
-                                className="flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 border-border bg-[#FBCFE8] text-foreground hover:-translate-y-0.5 transition-all font-bold text-sm shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)] hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[3px_3px_0px_0px_rgba(255,255,255,1)]"
+                                className="flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 border-border bg-[#FBCFE8] dark:bg-pink-500/20 text-foreground hover:-translate-y-0.5 transition-all font-bold text-sm shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.15)] hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[3px_3px_0px_0px_rgba(255,255,255,0.15)]"
                             >
                                 <Wand2 className="h-4 w-4" strokeWidth={2.5} />
                                 {t("generatePlan")}
@@ -399,7 +399,7 @@ export default function CalendarPage() {
 
                             <button
                                 onClick={goToToday}
-                                className="px-4 py-2.5 text-sm font-bold rounded-xl border-2 border-border bg-card text-foreground hover:bg-accent hover:-translate-y-0.5 transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)]"
+                                className="px-4 py-2.5 text-sm font-bold rounded-xl border-2 border-border bg-card text-foreground hover:bg-accent hover:-translate-y-0.5 transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.15)]"
                             >
                                 {t("today")}
                             </button>
@@ -407,11 +407,11 @@ export default function CalendarPage() {
                             <div className="flex items-center gap-1.5">
                                 <button
                                     onClick={prevPeriod}
-                                    className="p-2.5 rounded-xl border-2 border-border bg-card hover:bg-[#BAE6FD] hover:-translate-y-0.5 transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)]"
+                                    className="p-2.5 rounded-xl border-2 border-border bg-card hover:bg-[#BAE6FD] dark:hover:bg-sky-500/20 hover:-translate-y-0.5 transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.15)]"
                                 >
                                     <ChevronLeft className="h-4 w-4 text-foreground" strokeWidth={2.5} />
                                 </button>
-                                <div className="px-4 py-2.5 border-2 border-border bg-card rounded-xl shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)] min-w-[140px] text-center">
+                                <div className="px-4 py-2.5 border-2 border-border bg-card rounded-xl shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.15)] min-w-[140px] text-center">
                                     <span suppressHydrationWarning className="text-sm font-bold text-foreground capitalize">
                                         {view === "month"
                                             ? format(currentDate, "MMMM yyyy", { locale: dateLocale })
@@ -421,7 +421,7 @@ export default function CalendarPage() {
                                 </div>
                                 <button
                                     onClick={nextPeriod}
-                                    className="p-2.5 rounded-xl border-2 border-border bg-card hover:bg-[#BAE6FD] hover:-translate-y-0.5 transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)]"
+                                    className="p-2.5 rounded-xl border-2 border-border bg-card hover:bg-[#BAE6FD] dark:hover:bg-sky-500/20 hover:-translate-y-0.5 transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.15)]"
                                 >
                                     <ChevronRight className="h-4 w-4 text-foreground" strokeWidth={2.5} />
                                 </button>
@@ -429,7 +429,7 @@ export default function CalendarPage() {
 
                             <button
                                 onClick={() => setIsAddEventOpen(true)}
-                                className="flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 border-border bg-primary text-primary-foreground hover:bg-primary/90 hover:-translate-y-0.5 transition-all font-bold text-sm shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)] hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[3px_3px_0px_0px_rgba(255,255,255,1)]"
+                                className="flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 border-border bg-primary text-primary-foreground hover:bg-primary/90 hover:-translate-y-0.5 transition-all font-bold text-sm shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.15)] hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[3px_3px_0px_0px_rgba(255,255,255,0.15)]"
                             >
                                 <Plus className="h-4 w-4" strokeWidth={2.5} />
                                 {t("newEvent")}
@@ -475,10 +475,10 @@ export default function CalendarPage() {
                                                     className={cn(
                                                         "relative flex flex-col p-3 rounded-2xl border-2 transition-all cursor-pointer overflow-hidden group",
                                                         isSelected
-                                                            ? "border-border bg-accent/40 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] dark:shadow-[3px_3px_0px_0px_rgba(255,255,255,1)] -translate-y-0.5"
+                                                            ? "border-border bg-accent/40 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] dark:shadow-[3px_3px_0px_0px_rgba(255,255,255,0.15)] -translate-y-0.5"
                                                             : isTodayDate
-                                                                ? "border-primary bg-primary/5 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)] hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[3px_3px_0px_0px_rgba(255,255,255,1)] hover:-translate-y-0.5"
-                                                                : "border-border/40 bg-card hover:border-border hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)] hover:-translate-y-0.5",
+                                                                ? "border-primary bg-primary/5 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.15)] hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[3px_3px_0px_0px_rgba(255,255,255,0.15)] hover:-translate-y-0.5"
+                                                                : "border-border/40 bg-card hover:border-border hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.15)] hover:-translate-y-0.5",
                                                         !isCurrentMonth && "opacity-35"
                                                     )}
                                                 >
@@ -500,8 +500,8 @@ export default function CalendarPage() {
                                                                 dayEvents.some(e => e.type === "exam")
                                                                     ? "bg-[#F472B6] text-foreground border-border"
                                                                     : dayEvents.some(e => e.type === "deadline")
-                                                                        ? "bg-[#FDE68A] text-foreground border-border"
-                                                                        : "bg-[#BAE6FD] text-foreground border-border"
+                                                                        ? "bg-[#FDE68A] dark:bg-amber-500/20 text-foreground border-border"
+                                                                        : "bg-[#BAE6FD] dark:bg-sky-500/20 text-foreground border-border"
                                                             )}>
                                                                 {dayEvents.length}
                                                             </span>
@@ -535,7 +535,7 @@ export default function CalendarPage() {
                             ) : (
                                 /* Day View */
                                 <div className="h-full overflow-y-auto p-5">
-                                    <div className="max-w-5xl mx-auto bg-card rounded-2xl border-2 border-border shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] overflow-hidden">
+                                    <div className="max-w-5xl mx-auto bg-card rounded-2xl border-2 border-border shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)] overflow-hidden">
                                         <div className="relative min-h-[1440px]">
                                             {hours.map((hour) => (
                                                 <div key={hour} className="flex h-[60px] border-b border-border/20 group hover:bg-muted/30 transition-colors">
@@ -564,7 +564,7 @@ export default function CalendarPage() {
                                                         className={cn(
                                                             "absolute left-24 right-4 rounded-xl p-3 border-2 border-border cursor-pointer hover:-translate-y-0.5 transition-all overflow-hidden",
                                                             event.color,
-                                                            "shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)] hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[3px_3px_0px_0px_rgba(255,255,255,1)]"
+                                                            "shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.15)] hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[3px_3px_0px_0px_rgba(255,255,255,0.15)]"
                                                         )}
                                                         style={{
                                                             top: `${top}px`,
@@ -618,7 +618,7 @@ export default function CalendarPage() {
                             {/* Todo Header */}
                             <div className="px-5 pt-5 pb-3">
                                 <div className="flex items-center gap-3 mb-1">
-                                    <div className="p-2 rounded-xl bg-[#DDD6FE] border-2 border-border shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)]">
+                                    <div className="p-2 rounded-xl bg-[#DDD6FE] dark:bg-violet-500/20 border-2 border-border shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.15)]">
                                         <ListChecks className="h-4 w-4 text-foreground" strokeWidth={2.5} />
                                     </div>
                                     <h3 className="text-base font-black text-foreground tracking-tight">{t("todoTitle")}</h3>
@@ -636,7 +636,7 @@ export default function CalendarPage() {
                                         </div>
                                         <div className="h-2 bg-border/30 rounded-full overflow-hidden">
                                             <div
-                                                className="h-full bg-[#BBF7D0] rounded-full transition-all duration-500"
+                                                className="h-full bg-[#BBF7D0] dark:bg-emerald-500/20 rounded-full transition-all duration-500"
                                                 style={{ width: `${totalItems > 0 ? (completedItems / totalItems) * 100 : 0}%` }}
                                             />
                                         </div>
@@ -662,11 +662,11 @@ export default function CalendarPage() {
                                                     key={`event-${event.id}`}
                                                     initial={{ opacity: 0, x: 10 }}
                                                     animate={{ opacity: 1, x: 0 }}
-                                                    className="group flex items-start gap-3 p-3 rounded-xl border-2 border-border bg-card shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)] transition-all"
+                                                    className="group flex items-start gap-3 p-3 rounded-xl border-2 border-border bg-card shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.15)] transition-all"
                                                 >
                                                     <button
                                                         onClick={() => handleCompleteEvent(event.id)}
-                                                        className="mt-0.5 flex-shrink-0 w-5 h-5 rounded-md border-2 border-border hover:bg-[#BBF7D0] flex items-center justify-center transition-all"
+                                                        className="mt-0.5 flex-shrink-0 w-5 h-5 rounded-md border-2 border-border hover:bg-[#BBF7D0] dark:hover:bg-emerald-500/20 flex items-center justify-center transition-all"
                                                         title={t("todoEventDone")}
                                                     >
                                                     </button>
@@ -703,7 +703,7 @@ export default function CalendarPage() {
                                         <button
                                             type="button"
                                             onClick={() => setIsAddTodoOpen(true)}
-                                            className="w-full flex items-center gap-2 h-10 px-3 border-2 border-dashed border-border/60 rounded-xl text-sm font-medium text-muted-foreground bg-card/50 hover:border-border hover:bg-card hover:text-foreground hover:-translate-y-0.5 transition-all hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)]"
+                                            className="w-full flex items-center gap-2 h-10 px-3 border-2 border-dashed border-border/60 rounded-xl text-sm font-medium text-muted-foreground bg-card/50 hover:border-border hover:bg-card hover:text-foreground hover:-translate-y-0.5 transition-all hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.15)]"
                                         >
                                             <Plus className="h-4 w-4" strokeWidth={2.5} />
                                             {t("todoPlaceholder")}
@@ -724,7 +724,7 @@ export default function CalendarPage() {
                                                         "group flex items-start gap-3 p-3 rounded-xl border-2 transition-all",
                                                         todo.completed
                                                             ? "border-border/30 bg-muted/30"
-                                                            : "border-border bg-card shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)]"
+                                                            : "border-border bg-card shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.15)]"
                                                     )}
                                                 >
                                                     <button
@@ -732,7 +732,7 @@ export default function CalendarPage() {
                                                         className={cn(
                                                             "mt-0.5 flex-shrink-0 w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all",
                                                             todo.completed
-                                                                ? "bg-[#BBF7D0] border-border"
+                                                                ? "bg-[#BBF7D0] dark:bg-emerald-500/20 border-border"
                                                                 : "border-border hover:bg-muted"
                                                         )}
                                                     >
@@ -774,7 +774,7 @@ export default function CalendarPage() {
 
                 {/* Modal Ajout Événement */}
                 <Dialog open={isAddEventOpen} onOpenChange={setIsAddEventOpen}>
-                    <DialogContent className="sm:max-w-md border-2 border-border rounded-2xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] bg-card">
+                    <DialogContent className="sm:max-w-md border-2 border-border rounded-2xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)] bg-card">
                         <DialogHeader>
                             <DialogTitle className="text-lg font-black text-foreground">{t("dialogAddTitle")}</DialogTitle>
                         </DialogHeader>
@@ -785,7 +785,7 @@ export default function CalendarPage() {
                                     placeholder={t("placeholderTitle")}
                                     value={newEventTitle}
                                     onChange={(e) => setNewEventTitle(e.target.value)}
-                                    className="border-2 border-border rounded-xl shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)]"
+                                    className="border-2 border-border rounded-xl shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.15)]"
                                 />
                             </div>
                             <div className="grid grid-cols-2 gap-4">
@@ -795,7 +795,7 @@ export default function CalendarPage() {
                                         type="time"
                                         value={newEventTime}
                                         onChange={(e) => setNewEventTime(e.target.value)}
-                                        className="border-2 border-border rounded-xl shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)]"
+                                        className="border-2 border-border rounded-xl shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.15)]"
                                     />
                                 </div>
                                 <div className="space-y-2">
@@ -807,7 +807,7 @@ export default function CalendarPage() {
                                         value={newEventDuration}
                                         onChange={(e) => setNewEventDuration(e.target.value)}
                                         disabled={newEventType === "deadline"}
-                                        className="border-2 border-border rounded-xl shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)]"
+                                        className="border-2 border-border rounded-xl shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.15)]"
                                     />
                                 </div>
                             </div>
@@ -816,8 +816,8 @@ export default function CalendarPage() {
                                 <div className="flex gap-2">
                                     {[
                                         { id: "exam", label: t("typeExam"), color: "bg-[#F472B6]" },
-                                        { id: "study", label: t("typeStudy"), color: "bg-[#BAE6FD]" },
-                                        { id: "deadline", label: t("typeDeadline"), color: "bg-[#FDE68A]" }
+                                        { id: "study", label: t("typeStudy"), color: "bg-[#BAE6FD] dark:bg-sky-500/20" },
+                                        { id: "deadline", label: t("typeDeadline"), color: "bg-[#FDE68A] dark:bg-amber-500/20" }
                                     ].map((type) => (
                                         <button
                                             key={type.id}
@@ -825,8 +825,8 @@ export default function CalendarPage() {
                                             className={cn(
                                                 "flex-1 px-3 py-2.5 rounded-xl text-xs font-black border-2 transition-all",
                                                 newEventType === type.id
-                                                    ? `border-border ${type.color} shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)] -translate-y-0.5`
-                                                    : "border-border bg-card hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)] hover:-translate-y-0.5"
+                                                    ? `border-border ${type.color} shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.15)] -translate-y-0.5`
+                                                    : "border-border bg-card hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.15)] hover:-translate-y-0.5"
                                             )}
                                         >
                                             {type.label}
@@ -836,7 +836,7 @@ export default function CalendarPage() {
                             </div>
                             <div className="space-y-2">
                                 <label className="text-sm font-bold text-foreground">{t("labelDate")}</label>
-                                <div className="px-4 py-2.5 rounded-xl border-2 border-border bg-muted text-sm font-semibold text-foreground capitalize shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)]">
+                                <div className="px-4 py-2.5 rounded-xl border-2 border-border bg-muted text-sm font-semibold text-foreground capitalize shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.15)]">
                                     {format(selectedDate, "EEEE d MMMM yyyy", { locale: dateLocale })}
                                 </div>
                             </div>
@@ -845,14 +845,14 @@ export default function CalendarPage() {
                             <Button
                                 variant="outline"
                                 onClick={() => setIsAddEventOpen(false)}
-                                className="border-2 border-border rounded-xl font-bold shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)] hover:-translate-y-0.5"
+                                className="border-2 border-border rounded-xl font-bold shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.15)] hover:-translate-y-0.5"
                             >
                                 {t("cancel")}
                             </Button>
                             <Button
                                 onClick={handleAddEvent}
                                 disabled={!newEventTitle.trim()}
-                                className="border-2 border-border rounded-xl bg-primary text-primary-foreground font-bold shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)] hover:-translate-y-0.5 hover:bg-primary/90"
+                                className="border-2 border-border rounded-xl bg-primary text-primary-foreground font-bold shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.15)] hover:-translate-y-0.5 hover:bg-primary/90"
                             >
                                 {t("add")}
                             </Button>
@@ -862,7 +862,7 @@ export default function CalendarPage() {
 
                 {/* Modal Génération IA */}
                 <Dialog open={isGenerateOpen} onOpenChange={setIsGenerateOpen}>
-                    <DialogContent className="sm:max-w-md border-2 border-border rounded-2xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] bg-card">
+                    <DialogContent className="sm:max-w-md border-2 border-border rounded-2xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)] bg-card">
                         <DialogHeader>
                             <DialogTitle className="flex items-center gap-2 text-lg font-black text-foreground">
                                 <Sparkles className="h-5 w-5 text-secondary" strokeWidth={2.5} />
@@ -876,7 +876,7 @@ export default function CalendarPage() {
                             <div className="space-y-2">
                                 <label className="text-sm font-bold text-foreground">{t("labelCollection")}</label>
                                 <select
-                                    className="w-full px-4 py-2.5 rounded-xl border-2 border-border bg-card text-sm font-semibold text-foreground shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)]"
+                                    className="w-full px-4 py-2.5 rounded-xl border-2 border-border bg-card text-sm font-semibold text-foreground shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.15)]"
                                     value={selectedSubjectId}
                                     onChange={(e) => setSelectedSubjectId(e.target.value)}
                                 >
@@ -893,7 +893,7 @@ export default function CalendarPage() {
                                         type="date"
                                         value={planStartDate}
                                         onChange={(e) => setPlanStartDate(e.target.value)}
-                                        className="border-2 border-border rounded-xl shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)]"
+                                        className="border-2 border-border rounded-xl shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.15)]"
                                     />
                                 </div>
                                 <div className="space-y-2">
@@ -902,7 +902,7 @@ export default function CalendarPage() {
                                         type="date"
                                         value={planEndDate}
                                         onChange={(e) => setPlanEndDate(e.target.value)}
-                                        className="border-2 border-border rounded-xl shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)]"
+                                        className="border-2 border-border rounded-xl shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.15)]"
                                     />
                                 </div>
                             </div>
@@ -916,8 +916,8 @@ export default function CalendarPage() {
                                             className={cn(
                                                 "flex-1 px-3 py-2.5 rounded-xl text-xs font-black border-2 transition-all",
                                                 planIntensity === level
-                                                    ? "border-border bg-[#BAE6FD] shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)] -translate-y-0.5"
-                                                    : "border-border bg-card hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)] hover:-translate-y-0.5"
+                                                    ? "border-border bg-[#BAE6FD] dark:bg-sky-500/20 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.15)] -translate-y-0.5"
+                                                    : "border-border bg-card hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.15)] hover:-translate-y-0.5"
                                             )}
                                         >
                                             {level}
@@ -934,7 +934,7 @@ export default function CalendarPage() {
                                             type="time"
                                             value={studyHourStart}
                                             onChange={(e) => setStudyHourStart(e.target.value)}
-                                            className="border-2 border-border rounded-xl shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)]"
+                                            className="border-2 border-border rounded-xl shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.15)]"
                                         />
                                     </div>
                                     <div className="flex-1 flex items-center gap-2">
@@ -943,7 +943,7 @@ export default function CalendarPage() {
                                             type="time"
                                             value={studyHourEnd}
                                             onChange={(e) => setStudyHourEnd(e.target.value)}
-                                            className="border-2 border-border rounded-xl shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)]"
+                                            className="border-2 border-border rounded-xl shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.15)]"
                                         />
                                     </div>
                                 </div>
@@ -953,14 +953,14 @@ export default function CalendarPage() {
                             <Button
                                 variant="outline"
                                 onClick={() => setIsGenerateOpen(false)}
-                                className="border-2 border-border rounded-xl font-bold shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)] hover:-translate-y-0.5"
+                                className="border-2 border-border rounded-xl font-bold shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.15)] hover:-translate-y-0.5"
                             >
                                 {t("cancel")}
                             </Button>
                             <Button
                                 onClick={handleGeneratePlan}
                                 disabled={!selectedSubjectId || isGenerating}
-                                className="border-2 border-border rounded-xl bg-secondary text-secondary-foreground font-bold shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)] hover:-translate-y-0.5"
+                                className="border-2 border-border rounded-xl bg-secondary text-secondary-foreground font-bold shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.15)] hover:-translate-y-0.5"
                             >
                                 {isGenerating ? (
                                     <>
@@ -982,7 +982,7 @@ export default function CalendarPage() {
                     setIsAddTodoOpen(open)
                     if (!open) setNewTodoText("")
                 }}>
-                    <DialogContent className="sm:max-w-sm border-2 border-border rounded-2xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] bg-card">
+                    <DialogContent className="sm:max-w-sm border-2 border-border rounded-2xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)] bg-card">
                         <DialogHeader>
                             <DialogTitle className="flex items-center gap-2 text-lg font-black text-foreground">
                                 <ListChecks className="h-5 w-5 text-[#DDD6FE]" strokeWidth={2.5} />
@@ -1006,12 +1006,12 @@ export default function CalendarPage() {
                                         }
                                     }}
                                     autoFocus
-                                    className="border-2 border-border rounded-xl shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)]"
+                                    className="border-2 border-border rounded-xl shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.15)]"
                                 />
                             </div>
                             <div className="space-y-2">
                                 <label className="text-sm font-bold text-foreground">{t("labelDate")}</label>
-                                <div className="px-4 py-2.5 rounded-xl border-2 border-border bg-muted text-sm font-semibold text-foreground capitalize shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)]">
+                                <div className="px-4 py-2.5 rounded-xl border-2 border-border bg-muted text-sm font-semibold text-foreground capitalize shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.15)]">
                                     {format(selectedDate, "EEEE d MMMM yyyy", { locale: dateLocale })}
                                 </div>
                             </div>
@@ -1023,14 +1023,14 @@ export default function CalendarPage() {
                                     setIsAddTodoOpen(false)
                                     setNewTodoText("")
                                 }}
-                                className="border-2 border-border rounded-xl font-bold shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)] hover:-translate-y-0.5"
+                                className="border-2 border-border rounded-xl font-bold shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.15)] hover:-translate-y-0.5"
                             >
                                 {t("cancel")}
                             </Button>
                             <Button
                                 onClick={handleAddTodo}
                                 disabled={!newTodoText.trim() || isAddingTodo}
-                                className="border-2 border-border rounded-xl bg-[#BBF7D0] text-foreground font-bold shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)] hover:-translate-y-0.5 hover:bg-[#A7F3D0]"
+                                className="border-2 border-border rounded-xl bg-[#BBF7D0] dark:bg-emerald-500/20 text-foreground font-bold shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.15)] hover:-translate-y-0.5 hover:bg-[#A7F3D0]"
                             >
                                 {isAddingTodo ? (
                                     <>

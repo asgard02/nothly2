@@ -28,7 +28,7 @@ function WelcomeScreen({ onStart, onSkip }: { onStart: () => void; onSkip: () =>
                 exit={{ scale: 0.9, opacity: 0 }}
                 className="relative w-full max-w-lg"
             >
-                <div className="bg-card border-4 border-border rounded-3xl shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] dark:shadow-[12px_12px_0px_0px_rgba(255,255,255,1)] overflow-hidden">
+                <div className="bg-card border-4 border-border rounded-3xl shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] dark:shadow-[12px_12px_0px_0px_rgba(255,255,255,0.15)] overflow-hidden">
                     {/* Top accent */}
                     <div className="h-3 bg-gradient-to-r from-[#BAE6FD] via-[#FBCFE8] to-[#BBF7D0]" />
                     
@@ -39,13 +39,13 @@ function WelcomeScreen({ onStart, onSkip }: { onStart: () => void; onSkip: () =>
                             transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
                             className="mb-6"
                         >
-                            <div className="w-24 h-24 mx-auto bg-[#BAE6FD] border-4 border-border rounded-full flex items-center justify-center shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:shadow-[6px_6px_0px_0px_rgba(255,255,255,1)]">
+                            <div className="w-24 h-24 mx-auto bg-[#BAE6FD] dark:bg-sky-500/20 border-4 border-border rounded-full flex items-center justify-center shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:shadow-[6px_6px_0px_0px_rgba(255,255,255,0.15)]">
                                 <span className="text-5xl font-black italic tracking-tighter">n.</span>
                             </div>
                         </motion.div>
                         
                         {/* Badge */}
-                        <div className="inline-flex items-center gap-2 bg-accent border-2 border-border px-4 py-2 rounded-full shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] dark:shadow-[3px_3px_0px_0px_rgba(255,255,255,1)] mb-6">
+                        <div className="inline-flex items-center gap-2 bg-accent border-2 border-border px-4 py-2 rounded-full shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] dark:shadow-[3px_3px_0px_0px_rgba(255,255,255,0.15)] mb-6">
                             <Sparkles className="w-4 h-4 text-primary" fill="currentColor" />
                             <span className="font-bold text-sm uppercase">{t("welcomeBadge")}</span>
                         </div>
@@ -71,7 +71,7 @@ function WelcomeScreen({ onStart, onSkip }: { onStart: () => void; onSkip: () =>
                         <div className="flex flex-col gap-3">
                             <Button
                                 onClick={onStart}
-                                className="w-full h-14 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-black text-lg uppercase border-2 border-border shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)] hover:translate-y-[2px] transition-all"
+                                className="w-full h-14 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-black text-lg uppercase border-2 border-border shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.15)] hover:translate-y-[2px] transition-all"
                             >
                                 {t("startTutorial")}
                                 <ArrowRight className="ml-2 h-5 w-5" strokeWidth={3} />
@@ -104,7 +104,7 @@ function CompletionScreen({ onClose }: { onClose: () => void }) {
                 exit={{ scale: 0.9, opacity: 0 }}
                 className="relative w-full max-w-lg"
             >
-                <div className="bg-card border-4 border-border rounded-3xl shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] dark:shadow-[12px_12px_0px_0px_rgba(255,255,255,1)] overflow-hidden">
+                <div className="bg-card border-4 border-border rounded-3xl shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] dark:shadow-[12px_12px_0px_0px_rgba(255,255,255,0.15)] overflow-hidden">
                     {/* Top accent */}
                     <div className="h-3 bg-gradient-to-r from-[#BBF7D0] via-[#FDE68A] to-[#BAE6FD]" />
                     
@@ -116,7 +116,7 @@ function CompletionScreen({ onClose }: { onClose: () => void }) {
                             transition={{ type: "spring", bounce: 0.5 }}
                             className="mb-6"
                         >
-                            <div className="w-24 h-24 mx-auto bg-[#BBF7D0] border-4 border-border rounded-full flex items-center justify-center shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:shadow-[6px_6px_0px_0px_rgba(255,255,255,1)]">
+                            <div className="w-24 h-24 mx-auto bg-[#BBF7D0] dark:bg-emerald-500/20 border-4 border-border rounded-full flex items-center justify-center shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:shadow-[6px_6px_0px_0px_rgba(255,255,255,0.15)]">
                                 <Check className="w-12 h-12 text-foreground" strokeWidth={3} />
                             </div>
                         </motion.div>
@@ -134,7 +134,7 @@ function CompletionScreen({ onClose }: { onClose: () => void }) {
                         {/* Action */}
                         <Button
                             onClick={onClose}
-                            className="w-full h-14 rounded-xl bg-[#BBF7D0] hover:bg-[#BBF7D0]/90 text-foreground font-black text-lg uppercase border-2 border-border shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)] hover:translate-y-[2px] transition-all"
+                            className="w-full h-14 rounded-xl bg-[#BBF7D0] dark:bg-emerald-500/20 hover:bg-[#BBF7D0]/90 text-foreground font-black text-lg uppercase border-2 border-border shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.15)] hover:translate-y-[2px] transition-all"
                         >
                             {t("letsGo")}
                             <Sparkles className="ml-2 h-5 w-5" fill="currentColor" />
@@ -158,7 +158,7 @@ function NoStepsScreen({ onClose }: { onClose: () => void }) {
                 exit={{ scale: 0.9, opacity: 0 }}
                 className="relative w-full max-w-md"
             >
-                <div className="bg-card border-4 border-border rounded-2xl shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)] p-8 text-center">
+                <div className="bg-card border-4 border-border rounded-2xl shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,0.15)] p-8 text-center">
                     <p className="text-lg font-bold mb-4">{t("noStepsForPage")}</p>
                     <p className="text-sm text-muted-foreground mb-6">{t("noStepsHint")}</p>
                     <Button onClick={onClose} className="font-bold">
@@ -196,7 +196,7 @@ function WrongPageScreen({
                 exit={{ scale: 0.9, opacity: 0 }}
                 className="relative w-full max-w-md"
             >
-                <div className="bg-card border-4 border-border rounded-2xl shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)] p-8 text-center">
+                <div className="bg-card border-4 border-border rounded-2xl shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,0.15)] p-8 text-center">
                     <p className="text-lg font-bold mb-4">{t("continueTutorialTitle")}</p>
                     <p className="text-sm text-muted-foreground mb-6">{t("continueTutorialDesc")}</p>
                     <div className="flex flex-col gap-3">

@@ -43,7 +43,7 @@ export default function SingleSubjectPage({ params }: { params: { id: string } }
     if (!subject) {
         return (
             <div className="flex flex-1 min-h-full items-center justify-center p-6 bg-background">
-                <div className="max-w-md w-full text-center rounded-2xl border-2 border-border bg-card p-8 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:shadow-[6px_6px_0px_0px_rgba(255,255,255,1)]">
+                <div className="max-w-md w-full text-center rounded-2xl border-2 border-border bg-card p-8 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:shadow-[6px_6px_0px_0px_rgba(255,255,255,0.15)]">
                     <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-muted mb-4">
                         <FileQuestion className="h-8 w-8 text-muted-foreground" />
                     </div>

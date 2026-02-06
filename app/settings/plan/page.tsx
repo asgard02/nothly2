@@ -19,7 +19,7 @@ export default function PlanSettingsPage() {
       </div>
 
       {/* Plan actuel */}
-      <div className="bg-card border-2 border-border rounded-xl shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)] p-6 mb-6">
+      <div className="bg-card border-2 border-border rounded-xl shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,0.15)] p-6 mb-6">
         <div className="flex items-center gap-3 mb-6">
           <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center border-2 border-border">
             <CreditCard className="h-5 w-5 text-primary" />
@@ -33,14 +33,14 @@ export default function PlanSettingsPage() {
           <div>
             <div className="flex items-center gap-3 mb-2">
               <span className="text-2xl font-black text-foreground uppercase">
-                Bêta Publique
+                {t("betaPublic")}
               </span>
               <span className="px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-black uppercase tracking-wider border-2 border-primary/30">
-                Gratuit
+                {t("free")}
               </span>
             </div>
             <p className="text-sm text-muted-foreground font-medium">
-              Accès illimité pendant la période de lancement.
+              {t("betaDesc")}
             </p>
           </div>
         </div>
@@ -51,19 +51,19 @@ export default function PlanSettingsPage() {
           <div className="grid grid-cols-2 gap-3">
             <div className="flex items-center gap-2 text-sm text-muted-foreground font-medium">
               <CheckCircle className="h-4 w-4 text-emerald-500" />
-              <span>Notes illimitées</span>
+              <span>{t("unlimitedNotes")}</span>
             </div>
             <div className="flex items-center gap-2 text-sm text-muted-foreground font-medium">
               <CheckCircle className="h-4 w-4 text-emerald-500" />
-              <span>Génération IA illimitée</span>
+              <span>{t("unlimitedAI")}</span>
             </div>
             <div className="flex items-center gap-2 text-sm text-muted-foreground font-medium">
               <CheckCircle className="h-4 w-4 text-emerald-500" />
-              <span>Quiz & Flashcards illimités</span>
+              <span>{t("unlimitedQuiz")}</span>
             </div>
             <div className="flex items-center gap-2 text-sm text-muted-foreground font-medium">
               <CheckCircle className="h-4 w-4 text-emerald-500" />
-              <span>Support prioritaire</span>
+              <span>{t("prioritySupport")}</span>
             </div>
           </div>
         </div>
@@ -73,10 +73,10 @@ export default function PlanSettingsPage() {
       <div className="bg-gradient-to-r from-purple-500/10 to-blue-500/10 border-2 border-purple-500/30 rounded-xl p-6 shadow-[4px_4px_0px_0px_rgba(139,92,246,0.3)]">
         <div className="flex items-center gap-3 mb-3">
           <Sparkles className="h-6 w-6 text-purple-500" />
-          <h3 className="text-lg font-black text-foreground uppercase">Profitez de la Bêta !</h3>
+          <h3 className="text-lg font-black text-foreground uppercase">{t("betaTitle")}</h3>
         </div>
         <p className="text-sm text-muted-foreground font-medium">
-          Nous sommes en phase de lancement. Toutes les fonctionnalités Premium sont gratuites pour vous permettre de tester l&#39;application à fond. N&#39;hésitez pas à nous faire vos retours !
+          {t("betaMessage")}
         </p>
       </div>
     </div>

@@ -206,7 +206,7 @@ export default function FlashcardViewer({ cards, onClose, studySubjectId }: Flas
 
     return (
       <div className="h-full w-full flex flex-col items-center justify-center p-6 bg-transparent max-w-3xl mx-auto">
-        <div className="w-full bg-card border-4 border-border shadow-[16px_16px_0px_0px_rgba(0,0,0,1)] dark:shadow-[16px_16px_0px_0px_rgba(255,255,255,1)] rounded-3xl p-8 md:p-12 relative overflow-hidden">
+        <div className="w-full bg-card border-4 border-border shadow-[16px_16px_0px_0px_rgba(0,0,0,1)] dark:shadow-[16px_16px_0px_0px_rgba(255,255,255,0.15)] rounded-3xl p-8 md:p-12 relative overflow-hidden">
           {/* Confetti ou déco */}
           <div className="absolute top-0 left-0 w-full h-4 bg-foreground" />
 
@@ -236,7 +236,7 @@ export default function FlashcardViewer({ cards, onClose, studySubjectId }: Flas
             {(difficultCount > 0 || mediumCount > 0) && (
               <button
                 onClick={handleRetryMissed}
-                className="w-full py-4 bg-foreground text-background text-lg font-black uppercase tracking-wider rounded-xl hover:bg-foreground/90 transition-colors shadow-[4px_4px_0px_0px_rgba(100,100,100,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] border-2 border-border active:translate-y-[2px] active:shadow-none flex items-center justify-center gap-3"
+                className="w-full py-4 bg-foreground text-background text-lg font-black uppercase tracking-wider rounded-xl hover:bg-foreground/90 transition-colors shadow-[4px_4px_0px_0px_rgba(100,100,100,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)] border-2 border-border active:translate-y-[2px] active:shadow-none flex items-center justify-center gap-3"
               >
                 <RotateCcw className="h-5 w-5" />
                 Réviser les erreurs ({difficultCount + mediumCount})
@@ -245,7 +245,7 @@ export default function FlashcardViewer({ cards, onClose, studySubjectId }: Flas
 
             <button
               onClick={onClose}
-              className="w-full py-4 bg-card text-foreground text-lg font-black uppercase tracking-wider rounded-xl hover:bg-muted transition-colors shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] border-2 border-border active:translate-y-[2px] active:shadow-none"
+              className="w-full py-4 bg-card text-foreground text-lg font-black uppercase tracking-wider rounded-xl hover:bg-muted transition-colors shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)] border-2 border-border active:translate-y-[2px] active:shadow-none"
             >
               Terminer pour aujourd'hui
             </button>
@@ -262,7 +262,7 @@ export default function FlashcardViewer({ cards, onClose, studySubjectId }: Flas
       <div className="w-full flex flex-col h-full">
         {/* Header avec mode et progression - Unified Toolbar */}
         <div className="w-full flex justify-center mb-8 px-4">
-          <div className="flex flex-wrap items-center justify-between gap-4 p-2 bg-card border-2 border-border rounded-2xl shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)] w-full max-w-4xl">
+          <div className="flex flex-wrap items-center justify-between gap-4 p-2 bg-card border-2 border-border rounded-2xl shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,0.15)] w-full max-w-4xl">
 
             {/* Gauche: Compteur + Mode */}
             <div className="flex items-center gap-3">
@@ -294,7 +294,7 @@ export default function FlashcardViewer({ cards, onClose, studySubjectId }: Flas
                   }}
                   className={cn(
                     "px-3 py-1.5 text-xs font-black uppercase rounded-lg transition-all flex items-center gap-1.5",
-                    mode === "smart" ? "bg-[#FBCFE8] text-foreground shadow-sm ring-1 ring-border/10" : "text-muted-foreground hover:text-foreground hover:bg-card/50"
+                    mode === "smart" ? "bg-[#FBCFE8] dark:bg-pink-500/20 text-foreground shadow-sm ring-1 ring-border/10" : "text-muted-foreground hover:text-foreground hover:bg-card/50"
                   )}
                 >
                   <Zap className="h-3.5 w-3.5" strokeWidth={2.5} />
@@ -309,7 +309,7 @@ export default function FlashcardViewer({ cards, onClose, studySubjectId }: Flas
               <div className={cn(
                 "hidden md:inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-black tracking-wide uppercase transition-colors border-2",
                 currentStat?.box
-                  ? "bg-[#BBF7D0] text-foreground border-border"
+                  ? "bg-[#BBF7D0] dark:bg-emerald-500/20 text-foreground border-border"
                   : "bg-muted text-muted-foreground border-transparent"
               )}>
                 <Brain className="h-4 w-4" strokeWidth={2.5} />
@@ -350,7 +350,7 @@ export default function FlashcardViewer({ cards, onClose, studySubjectId }: Flas
               }}>
               {/* Face avant (Question) */}
               <div
-                className="absolute inset-0 w-full h-full bg-background rounded-3xl border-4 border-border shadow-[16px_16px_0px_0px_rgba(0,0,0,1)] dark:shadow-[16px_16px_0px_0px_rgba(255,255,255,1)] flex flex-col overflow-hidden hover:-translate-y-2 hover:shadow-[20px_20px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[20px_20px_0px_0px_rgba(255,255,255,1)] transition-all duration-300"
+                className="absolute inset-0 w-full h-full bg-background rounded-3xl border-4 border-border shadow-[16px_16px_0px_0px_rgba(0,0,0,1)] dark:shadow-[16px_16px_0px_0px_rgba(255,255,255,0.15)] flex flex-col overflow-hidden hover:-translate-y-2 hover:shadow-[20px_20px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[20px_20px_0px_0px_rgba(255,255,255,0.15)] transition-all duration-300"
                 style={{
                   backfaceVisibility: 'hidden',
                   WebkitBackfaceVisibility: 'hidden',
@@ -371,7 +371,7 @@ export default function FlashcardViewer({ cards, onClose, studySubjectId }: Flas
 
                 {/* Badge Question */}
                 <div className="absolute top-8 left-8">
-                  <span className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-card text-foreground border-3 border-border text-xs font-black tracking-wider uppercase shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] dark:shadow-[3px_3px_0px_0px_rgba(255,255,255,1)]">
+                  <span className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-card text-foreground border-3 border-border text-xs font-black tracking-wider uppercase shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] dark:shadow-[3px_3px_0px_0px_rgba(255,255,255,0.15)]">
                     <span className="text-lg">❓</span>
                     Question
                   </span>
@@ -392,7 +392,7 @@ export default function FlashcardViewer({ cards, onClose, studySubjectId }: Flas
 
               {/* Face arrière (Réponse) - Pré-rotée de 180deg */}
               <div
-                className="absolute inset-0 w-full h-full bg-[#DDD6FE] rounded-3xl border-4 border-border shadow-[16px_16px_0px_0px_rgba(0,0,0,1)] dark:shadow-[16px_16px_0px_0px_rgba(255,255,255,1)] flex flex-col overflow-hidden"
+                className="absolute inset-0 w-full h-full bg-[#DDD6FE] dark:bg-violet-500/20 rounded-3xl border-4 border-border shadow-[16px_16px_0px_0px_rgba(0,0,0,1)] dark:shadow-[16px_16px_0px_0px_rgba(255,255,255,0.15)] flex flex-col overflow-hidden"
                 style={{
                   backfaceVisibility: 'hidden',
                   WebkitBackfaceVisibility: 'hidden',
@@ -404,7 +404,7 @@ export default function FlashcardViewer({ cards, onClose, studySubjectId }: Flas
 
                 {/* Badge Réponse */}
                 <div className="absolute top-8 left-8">
-                  <span className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-card text-foreground border-3 border-border text-xs font-black tracking-wider uppercase shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] dark:shadow-[3px_3px_0px_0px_rgba(255,255,255,1)]">
+                  <span className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-card text-foreground border-3 border-border text-xs font-black tracking-wider uppercase shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] dark:shadow-[3px_3px_0px_0px_rgba(255,255,255,0.15)]">
                     <span className="text-lg">💡</span>
                     Réponse
                   </span>
@@ -437,7 +437,7 @@ export default function FlashcardViewer({ cards, onClose, studySubjectId }: Flas
                     }}
                     className="flex flex-col items-center gap-3 group translate-y-2 hover:translate-y-0 transition-transform"
                   >
-                    <div className="w-full h-16 rounded-xl bg-[#CD3244] border-2 border-border shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] flex items-center justify-center group-hover:bg-red-600 transition-colors">
+                    <div className="w-full h-16 rounded-xl bg-[#CD3244] border-2 border-border shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)] flex items-center justify-center group-hover:bg-red-600 transition-colors">
                       <X className="h-8 w-8 text-white" strokeWidth={3} />
                     </div>
                     <span className="text-xs font-black uppercase text-muted-foreground group-hover:text-foreground">Difficile</span>
@@ -450,7 +450,7 @@ export default function FlashcardViewer({ cards, onClose, studySubjectId }: Flas
                     }}
                     className="flex flex-col items-center gap-3 group translate-y-2 hover:translate-y-0 transition-transform"
                   >
-                    <div className="w-full h-16 rounded-xl bg-[#F59E0B] border-2 border-border shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] flex items-center justify-center group-hover:bg-amber-500 transition-colors">
+                    <div className="w-full h-16 rounded-xl bg-[#F59E0B] border-2 border-border shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)] flex items-center justify-center group-hover:bg-amber-500 transition-colors">
                       <div className="text-2xl font-black text-white">~</div>
                     </div>
                     <span className="text-xs font-black uppercase text-muted-foreground group-hover:text-foreground">Moyen</span>
@@ -463,7 +463,7 @@ export default function FlashcardViewer({ cards, onClose, studySubjectId }: Flas
                     }}
                     className="flex flex-col items-center gap-3 group translate-y-2 hover:translate-y-0 transition-transform"
                   >
-                    <div className="w-full h-16 rounded-xl bg-[#10B981] border-2 border-border shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] flex items-center justify-center group-hover:bg-emerald-500 transition-colors">
+                    <div className="w-full h-16 rounded-xl bg-[#10B981] border-2 border-border shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)] flex items-center justify-center group-hover:bg-emerald-500 transition-colors">
                       <div className="text-2xl font-black text-white">✓</div>
                     </div>
                     <span className="text-xs font-black uppercase text-muted-foreground group-hover:text-foreground">Facile</span>

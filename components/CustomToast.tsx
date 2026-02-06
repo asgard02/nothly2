@@ -14,7 +14,7 @@ const CustomToastInner = ({ type, message }: CustomToastProps) => {
     const config = {
         success: {
             icon: Check,
-            bgColor: "bg-[#BBF7D0]",
+            bgColor: "bg-[#BBF7D0] dark:bg-emerald-500/20",
             iconBg: "bg-card",
             title: "Succès !",
         },
@@ -26,13 +26,13 @@ const CustomToastInner = ({ type, message }: CustomToastProps) => {
         },
         warning: {
             icon: AlertCircle,
-            bgColor: "bg-[#FDE68A]",
+            bgColor: "bg-[#FDE68A] dark:bg-amber-500/20",
             iconBg: "bg-card",
             title: "Attention",
         },
         info: {
             icon: Info,
-            bgColor: "bg-[#BAE6FD]",
+            bgColor: "bg-[#BAE6FD] dark:bg-sky-500/20",
             iconBg: "bg-card",
             title: "Info",
         },
@@ -41,8 +41,8 @@ const CustomToastInner = ({ type, message }: CustomToastProps) => {
     const { icon: Icon, bgColor, iconBg, title } = config[type]
 
     return (
-        <div className={`flex items-center gap-4 ${bgColor} border-2 border-border p-4 rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] w-full max-w-sm`}>
-            <div className={`h-10 w-10 ${iconBg} border-2 border-border rounded-lg flex items-center justify-center shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)] flex-shrink-0`}>
+        <div className={`flex items-center gap-4 ${bgColor} border-2 border-border p-4 rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)] w-full max-w-sm`}>
+            <div className={`h-10 w-10 ${iconBg} border-2 border-border rounded-lg flex items-center justify-center shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.15)] flex-shrink-0`}>
                 <Icon className="h-6 w-6 text-foreground" strokeWidth={3} />
             </div>
             <div className="flex-1 min-w-0">

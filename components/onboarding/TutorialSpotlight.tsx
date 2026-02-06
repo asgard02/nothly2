@@ -254,7 +254,7 @@ export function TutorialSpotlight({
     if (!targetRect && giveUpFinding) {
         return (
             <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm">
-                <div className="bg-card border-4 border-border rounded-2xl p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)] max-w-md text-center">
+                <div className="bg-card border-4 border-border rounded-2xl p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,0.15)] max-w-md text-center">
                     <p className="text-lg font-bold mb-4">{t("elementNotFound")}</p>
                     <div className="flex gap-3 justify-center">
                         <Button variant="outline" onClick={onSkip}>
@@ -276,7 +276,7 @@ export function TutorialSpotlight({
     if (!targetRect) {
         return (
             <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm">
-                <div className="bg-card border-4 border-border rounded-2xl p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)] max-w-md text-center">
+                <div className="bg-card border-4 border-border rounded-2xl p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,0.15)] max-w-md text-center">
                     <div className="flex flex-col items-center gap-4">
                         <div className="h-10 w-10 rounded-full border-4 border-primary border-t-transparent animate-spin" />
                         <p className="text-sm font-bold text-muted-foreground">{t("findingElement")}</p>
@@ -367,7 +367,7 @@ export function TutorialSpotlight({
                     className="absolute pointer-events-auto w-80"
                     style={tooltipPosition.style}
                 >
-                    <div className="bg-card border-4 border-border rounded-2xl shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)] overflow-hidden">
+                    <div className="bg-card border-4 border-border rounded-2xl shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,0.15)] overflow-hidden">
                         {/* Color accent bar */}
                         <div className="h-2 bg-gradient-to-r from-primary via-accent to-secondary" />
                         

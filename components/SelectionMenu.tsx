@@ -26,7 +26,7 @@ export default function SelectionMenu({ position, onAction, isLoading }: Selecti
         transform: "translateX(-50%)",
       }}
     >
-      <div className="bg-card border-2 border-border rounded-xl shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:shadow-[6px_6px_0px_0px_rgba(255,255,255,1)] p-2 flex gap-1 backdrop-blur-sm">
+      <div className="bg-card border-2 border-border rounded-xl shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:shadow-[6px_6px_0px_0px_rgba(255,255,255,0.15)] p-2 flex gap-1 backdrop-blur-sm">
         {isLoading ? (
           <div className="flex items-center gap-2 px-4 py-2 text-sm text-muted-foreground">
             <Loader2 className="h-4 w-4 animate-spin" />

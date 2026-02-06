@@ -49,7 +49,7 @@ export default function SubjectsPage() {
     }
 
     // Neo-Brutalism Colors for rotation
-    const colors = ["bg-[#FDE68A]", "bg-[#FBCFE8]", "bg-[#BAE6FD]", "bg-[#BBF7D0]", "bg-[#DDD6FE]"]
+    const colors = ["bg-[#FDE68A] dark:bg-amber-500/20", "bg-[#FBCFE8] dark:bg-pink-500/20", "bg-[#BAE6FD] dark:bg-sky-500/20", "bg-[#BBF7D0] dark:bg-emerald-500/20", "bg-[#DDD6FE] dark:bg-violet-500/20"]
 
     const filteredSubjects = subjects.filter((s: any) =>
         s.title.toLowerCase().includes(searchQuery.toLowerCase())
@@ -61,18 +61,18 @@ export default function SubjectsPage() {
             <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
                 <div>
                     <h1 className="text-6xl md:text-8xl font-black tracking-tighter text-foreground flex items-center gap-4">
-                        {t('title')} <span className="text-2xl md:text-4xl bg-[#FBCFE8] border-2 border-border rounded-full w-16 h-16 flex items-center justify-center shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] rotate-12 text-foreground">{subjects.length}</span>
+                        {t('title')} <span className="text-2xl md:text-4xl bg-[#FBCFE8] dark:bg-pink-500/20 border-2 border-border rounded-full w-16 h-16 flex items-center justify-center shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)] rotate-12 text-foreground">{subjects.length}</span>
                     </h1>
                 </div>
 
                 <div className="flex items-center gap-4 w-full md:w-auto">
                     <Input
                         placeholder={t('searchPlaceholder')}
-                        className="w-full md:w-64 border-2 border-border shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] focus:translate-x-[2px] focus:translate-y-[2px] focus:shadow-none transition-all uppercase font-bold"
+                        className="w-full md:w-64 border-2 border-border shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)] focus:translate-x-[2px] focus:translate-y-[2px] focus:shadow-none transition-all uppercase font-bold"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                     />
-                    <div className="hidden md:flex bg-card border-2 border-border rounded-xl p-1 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)]">
+                    <div className="hidden md:flex bg-card border-2 border-border rounded-xl p-1 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)]">
                         <button onClick={() => setViewMode('grid')} className={cn("p-2 rounded-lg transition-colors border-2 border-transparent", viewMode === 'grid' ? "bg-foreground text-background" : "hover:bg-muted text-foreground")}>
                             <LayoutGrid className="h-5 w-5" strokeWidth={2.5} />
                         </button>
@@ -86,7 +86,7 @@ export default function SubjectsPage() {
             {/* Loading State */}
             {isLoading && (
                 <div className="flex flex-col items-center justify-center py-24">
-                    <div className="bg-card border-2 border-border rounded-3xl p-12 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)]">
+                    <div className="bg-card border-2 border-border rounded-3xl p-12 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,0.15)]">
                         <div className="flex flex-col items-center gap-6">
                             <div className="relative">
                                 <div className="w-16 h-16 rounded-full border-4 border-border/10"></div>
@@ -103,13 +103,13 @@ export default function SubjectsPage() {
                 <div className="relative flex items-center justify-center min-h-[500px] px-4">
                     {/* Decorative Background Elements */}
                     <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                        <div className="absolute top-10 left-10 w-24 h-24 bg-[#FBCFE8] rounded-full border-2 border-border opacity-20 animate-pulse"></div>
-                        <div className="absolute bottom-10 right-10 w-32 h-32 bg-[#BAE6FD] rounded-full border-2 border-border opacity-20 animate-pulse" style={{ animationDelay: '1s' }}></div>
-                        <div className="absolute top-1/3 right-1/3 w-20 h-20 bg-[#BBF7D0] rounded-full border-2 border-border opacity-20 animate-pulse" style={{ animationDelay: '0.5s' }}></div>
+                        <div className="absolute top-10 left-10 w-24 h-24 bg-[#FBCFE8] dark:bg-pink-500/20 rounded-full border-2 border-border opacity-20 animate-pulse"></div>
+                        <div className="absolute bottom-10 right-10 w-32 h-32 bg-[#BAE6FD] dark:bg-sky-500/20 rounded-full border-2 border-border opacity-20 animate-pulse" style={{ animationDelay: '1s' }}></div>
+                        <div className="absolute top-1/3 right-1/3 w-20 h-20 bg-[#BBF7D0] dark:bg-emerald-500/20 rounded-full border-2 border-border opacity-20 animate-pulse" style={{ animationDelay: '0.5s' }}></div>
                     </div>
 
                     {/* Main Content - Horizontal Layout */}
-                    <div className="relative bg-card border-4 border-border rounded-3xl shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] dark:shadow-[12px_12px_0px_0px_rgba(255,255,255,1)] max-w-5xl w-full overflow-hidden">
+                    <div className="relative bg-card border-4 border-border rounded-3xl shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] dark:shadow-[12px_12px_0px_0px_rgba(255,255,255,0.15)] max-w-5xl w-full overflow-hidden">
                         {/* Top Accent Bar */}
                         <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-[#FBBF24] via-[#FBCFE8] to-[#BAE6FD]"></div>
 
@@ -117,8 +117,8 @@ export default function SubjectsPage() {
                             {/* Left Side - Icon */}
                             <div className="flex-shrink-0">
                                 <div className="relative">
-                                    <div className="absolute inset-0 bg-[#DDD6FE] rounded-full blur-2xl opacity-40 animate-pulse"></div>
-                                    <div className="relative bg-gradient-to-br from-[#DDD6FE] to-[#BAE6FD] p-10 rounded-3xl border-4 border-border shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:shadow-[6px_6px_0px_0px_rgba(255,255,255,1)] hover:scale-105 transition-transform duration-300">
+                                    <div className="absolute inset-0 bg-[#DDD6FE] dark:bg-violet-500/20 rounded-full blur-2xl opacity-40 animate-pulse"></div>
+                                    <div className="relative bg-gradient-to-br from-[#DDD6FE] to-[#BAE6FD] p-10 rounded-3xl border-4 border-border shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:shadow-[6px_6px_0px_0px_rgba(255,255,255,0.15)] hover:scale-105 transition-transform duration-300">
                                         <BookOpen className="h-20 w-20 text-foreground" strokeWidth={2.5} />
                                     </div>
                                 </div>
@@ -140,7 +140,7 @@ export default function SubjectsPage() {
                                 <Button
                                     onClick={() => setIsCreateSubjectOpen(true)}
                                     data-tutorial="create-subject-empty"
-                                    className="group h-14 px-8 rounded-xl border-4 border-border bg-accent hover:bg-accent/90 text-foreground text-lg font-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[6px_6px_0px_0px_rgba(255,255,255,1)] hover:-translate-y-0.5 transition-all duration-200 active:translate-y-1 active:shadow-none uppercase mb-6"
+                                    className="group h-14 px-8 rounded-xl border-4 border-border bg-accent hover:bg-accent/90 text-foreground text-lg font-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[6px_6px_0px_0px_rgba(255,255,255,0.15)] hover:-translate-y-0.5 transition-all duration-200 active:translate-y-1 active:shadow-none uppercase mb-6"
                                 >
                                     <Plus className="mr-2 h-6 w-6 group-hover:rotate-90 transition-transform duration-300" strokeWidth={3} />
                                     {t('createFirstSubject')}
@@ -156,7 +156,7 @@ export default function SubjectsPage() {
                                     ].map((tip, i) => (
                                         <div
                                             key={i}
-                                            className="flex items-center gap-1.5 px-3 py-1.5 bg-card border-2 border-border rounded-lg shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)] hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[3px_3px_0px_0px_rgba(255,255,255,1)] hover:-translate-y-0.5 transition-all"
+                                            className="flex items-center gap-1.5 px-3 py-1.5 bg-card border-2 border-border rounded-lg shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.15)] hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[3px_3px_0px_0px_rgba(255,255,255,0.15)] hover:-translate-y-0.5 transition-all"
                                         >
                                             <span className="text-base">{tip.icon}</span>
                                             <span className="text-xs font-bold text-foreground">{tip.text}</span>
@@ -180,7 +180,7 @@ export default function SubjectsPage() {
 
                         return (
                             <Link href={`/workspace/subjects/${subject.id}`} key={subject.id} data-tutorial="subject-card">
-                                <div className={cn("bg-card border-2 border-border rounded-3xl p-6 h-64 flex flex-col justify-between shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:shadow-[6px_6px_0px_0px_rgba(255,255,255,1)] hover:-translate-y-2 hover:shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[10px_10px_0px_0px_rgba(255,255,255,1)] transition-all duration-200 ease-out group relative overflow-hidden")}>
+                                <div className={cn("bg-card border-2 border-border rounded-3xl p-6 h-64 flex flex-col justify-between shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:shadow-[6px_6px_0px_0px_rgba(255,255,255,0.15)] hover:-translate-y-2 hover:shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[10px_10px_0px_0px_rgba(255,255,255,0.15)] transition-all duration-200 ease-out group relative overflow-hidden")}>
                                     {/* Decorative Blob */}
                                     <div className={cn("absolute -right-8 -top-8 w-32 h-32 rounded-full border-2 border-border opacity-100 transition-transform duration-300 group-hover:scale-110", color)}></div>
 
@@ -191,7 +191,7 @@ export default function SubjectsPage() {
                                                     {subject.created_at ? format.dateTime(new Date(subject.created_at), { dateStyle: 'medium' }) : t('noDate')}
                                                 </div>
                                                 {subject.is_favorite && (
-                                                    <div className="bg-accent text-foreground border-2 border-border p-1 rounded-lg shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)]">
+                                                    <div className="bg-accent text-foreground border-2 border-border p-1 rounded-lg shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.15)]">
                                                         <Star className="h-3 w-3" fill="currentColor" strokeWidth={2.5} />
                                                     </div>
                                                 )}
@@ -201,11 +201,11 @@ export default function SubjectsPage() {
                                                     e.preventDefault()
                                                     e.stopPropagation()
                                                 }}>
-                                                    <button className="h-8 w-8 flex items-center justify-center rounded-lg hover:bg-black/5 transition-colors focus:outline-none focus:ring-2 focus:ring-black">
+                                                    <button className="h-8 w-8 flex items-center justify-center rounded-lg hover:bg-black/5 dark:hover:bg-white/10 transition-colors focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white/30 text-black">
                                                         <MoreVertical className="h-5 w-5" strokeWidth={2.5} />
                                                     </button>
                                                 </DropdownMenuTrigger>
-                                                <DropdownMenuContent align="end" className="w-48 border-2 border-border shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] p-0 bg-card rounded-xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
+                                                <DropdownMenuContent align="end" className="w-48 border-2 border-border shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)] p-0 bg-card rounded-xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
                                                     <DropdownMenuItem
                                                         className="p-3 hover:bg-yellow-50 focus:bg-yellow-50 text-black font-bold uppercase cursor-pointer flex items-center gap-2"
                                                         onClick={(e) => {
@@ -249,7 +249,7 @@ export default function SubjectsPage() {
                     {/* Create New Card - Only show when there are existing subjects */}
                     {filteredSubjects.length > 0 && (
                         <button onClick={() => setIsCreateSubjectOpen(true)} data-tutorial="create-subject-card" className="border-4 border-dashed border-border/20 rounded-3xl p-6 h-64 flex flex-col items-center justify-center gap-4 hover:border-border hover:bg-muted/50 transition-all duration-200 ease-out group">
-                            <div className="h-16 w-16 rounded-full bg-[#BBF7D0] border-2 border-border flex items-center justify-center shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] group-hover:scale-110 transition-transform">
+                            <div className="h-16 w-16 rounded-full bg-[#BBF7D0] dark:bg-emerald-500/20 border-2 border-border flex items-center justify-center shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)] group-hover:scale-110 transition-transform">
                                 <Plus className="h-8 w-8 text-foreground" strokeWidth={3} />
                             </div>
                             <span className="font-black text-xl uppercase text-foreground">{t('createNew')}</span>
@@ -269,7 +269,7 @@ export default function SubjectsPage() {
 
                         return (
                             <Link href={`/workspace/subjects/${subject.id}`} key={subject.id}>
-                                <div className="bg-card border-2 border-border rounded-xl p-4 flex items-center justify-between shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[6px_6px_0px_0px_rgba(255,255,255,1)] transition-all duration-200 ease-out group">
+                                <div className="bg-card border-2 border-border rounded-xl p-4 flex items-center justify-between shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)] hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[6px_6px_0px_0px_rgba(255,255,255,0.15)] transition-all duration-200 ease-out group">
                                     <div className="flex items-center gap-4">
                                         <div className={cn("w-12 h-12 rounded-full border-2 border-border flex items-center justify-center font-black text-lg text-foreground", color)}>
                                             {subject.title.charAt(0).toUpperCase()}
@@ -278,7 +278,7 @@ export default function SubjectsPage() {
                                             <h3 className="font-black text-xl uppercase flex items-center gap-2 text-foreground">
                                                 {subject.title}
                                                 {subject.is_favorite && (
-                                                    <div className="bg-accent border-2 border-border p-1 rounded-full shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)]">
+                                                    <div className="bg-accent border-2 border-border p-1 rounded-full shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.15)]">
                                                         <Star className="h-2 w-2" fill="currentColor" strokeWidth={2.5} />
                                                     </div>
                                                 )}
@@ -292,11 +292,11 @@ export default function SubjectsPage() {
                                                 e.preventDefault()
                                                 e.stopPropagation()
                                             }}>
-                                                <button className="h-8 w-8 flex items-center justify-center rounded-lg hover:bg-muted transition-colors focus:outline-none focus:ring-2 focus:ring-border text-foreground">
+                                                <button className="h-8 w-8 flex items-center justify-center rounded-lg hover:bg-muted transition-colors focus:outline-none focus:ring-2 focus:ring-border text-black">
                                                     <MoreVertical className="h-5 w-5" strokeWidth={2.5} />
                                                 </button>
                                             </DropdownMenuTrigger>
-                                            <DropdownMenuContent align="end" className="w-48 border-2 border-border shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] p-0 bg-card rounded-xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
+                                            <DropdownMenuContent align="end" className="w-48 border-2 border-border shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)] p-0 bg-card rounded-xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
                                                 <DropdownMenuItem
                                                     className="p-3 hover:bg-accent/20 focus:bg-accent/20 text-foreground font-bold uppercase cursor-pointer flex items-center gap-2"
                                                     onClick={(e) => {

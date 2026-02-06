@@ -40,7 +40,7 @@ export default function DeleteConfirmationDialog({
             />
 
             {/* Dialog */}
-            <div className="relative bg-card border-2 border-border rounded-3xl shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)] p-8 max-w-md w-full animate-in fade-in zoom-in-95 duration-200">
+            <div className="relative bg-card border-2 border-border rounded-3xl shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,0.15)] p-8 max-w-md w-full animate-in fade-in zoom-in-95 duration-200">
                 {/* Close button */}
                 <button
                     onClick={onClose}
@@ -50,7 +50,7 @@ export default function DeleteConfirmationDialog({
                 </button>
 
                 {/* Icon */}
-                <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-[#FECACA] dark:bg-red-950/30 border-2 border-border shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] mx-auto mb-6 transform -rotate-3">
+                <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-[#FECACA] dark:bg-red-950/30 border-2 border-border shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)] mx-auto mb-6 transform -rotate-3">
                     <Trash2 className="h-8 w-8 text-foreground" strokeWidth={2.5} />
                 </div>
 
@@ -63,7 +63,7 @@ export default function DeleteConfirmationDialog({
                 <p className="text-muted-foreground font-bold text-center mb-8">
                     {description}{" "}
                     {itemTitle && (
-                        <span className="mt-2 px-3 py-1 bg-card border-2 border-border rounded-lg text-foreground font-black uppercase text-sm inline-block transform -rotate-1 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)]">
+                        <span className="mt-2 px-3 py-1 bg-card border-2 border-border rounded-lg text-foreground font-black uppercase text-sm inline-block transform -rotate-1 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.15)]">
                             {itemTitle}
                         </span>
                     )}
@@ -75,14 +75,14 @@ export default function DeleteConfirmationDialog({
                     <button
                         onClick={onClose}
                         disabled={isDeleting}
-                        className="flex-1 px-4 py-3 rounded-xl font-black uppercase text-foreground bg-card border-2 border-border shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] hover:translate-y-[2px] active:translate-y-[4px] active:shadow-none transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none disabled:translate-y-0"
+                        className="flex-1 px-4 py-3 rounded-xl font-black uppercase text-foreground bg-card border-2 border-border shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)] hover:translate-y-[2px] active:translate-y-[4px] active:shadow-none transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none disabled:translate-y-0"
                     >
                         Annuler
                     </button>
                     <button
                         onClick={onConfirm}
                         disabled={isDeleting}
-                        className="flex-1 px-4 py-3 rounded-xl font-black uppercase text-destructive-foreground bg-destructive hover:bg-destructive/90 border-2 border-border shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] hover:translate-y-[2px] active:translate-y-[4px] active:shadow-none transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none disabled:translate-y-0 flex items-center justify-center gap-2"
+                        className="flex-1 px-4 py-3 rounded-xl font-black uppercase text-destructive-foreground bg-destructive hover:bg-destructive/90 border-2 border-border shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)] hover:translate-y-[2px] active:translate-y-[4px] active:shadow-none transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none disabled:translate-y-0 flex items-center justify-center gap-2"
                     >
                         {isDeleting ? (
                             <>

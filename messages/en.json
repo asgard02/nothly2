@@ -181,6 +181,8 @@
     "Profile": {
       "title": "Profile",
       "description": "Manage your personal information",
+      "unknownUser": "User",
+      "notAvailable": "Not available",
       "memberSince": "Member since {date}",
       "notes": "Notes",
       "flashcards": "Flashcards",
@@ -208,6 +210,10 @@
       "lightDesc": "Bright theme",
       "dark": "Dark",
       "darkDesc": "Easy on the eyes",
+      "darkMode": "Dark Mode",
+      "lightMode": "Light Mode",
+      "darkActive": "Dark theme is active",
+      "lightActive": "Light theme is active",
       "animations": "Animations",
       "enableAnimations": "Enable animations",
       "enableAnimationsDesc": "Smooth transitions and visual effects",
@@ -245,7 +251,8 @@
       "markdownExport": "Markdown Export",
       "cloudSync": "Cloud Sync",
       "unlimitedNotes": "Unlimited notes",
-      "unlimitedAI": "Unlimited AI",
+      "unlimitedAI": "Unlimited AI generation",
+      "unlimitedQuiz": "Unlimited Quizzes & Flashcards",
       "prioritySupport": "Priority support",
       "earlyAccess": "Early access",
       "aiCredits": "AI Credits",
@@ -257,7 +264,11 @@
       "viewPlans": "View plans",
       "proMember": "Pro Member",
       "proMemberDesc": "You enjoy all premium features of Nothly. Thanks for your support! 🎉",
-      "activeSubscription": "Active subscription"
+      "activeSubscription": "Active subscription",
+      "betaPublic": "Public Beta",
+      "betaDesc": "Unlimited access during the launch period.",
+      "betaTitle": "Enjoy the Beta!",
+      "betaMessage": "We are in the launch phase. All Premium features are free so you can fully test the application. Don't hesitate to share your feedback!"
     },
     "Security": {
       "title": "Security",
@@ -302,6 +313,8 @@
       "title": "Notifications",
       "description": "Manage your notification preferences",
       "saved": "Preferences saved",
+      "comingSoon": "Coming Soon",
+      "comingSoonDesc": "Notifications will be enabled in a future update. Here is a preview of the preferences you will be able to configure.",
       "essential": "Essential Notifications",
       "emailNotifs": "Email notifications",
       "emailNotifsDesc": "Receive emails for important events",
@@ -343,6 +356,19 @@
       "exportError": "Error during export",
       "clearCacheConfirm": "Do you really want to clear the cache? This may improve performance.",
       "clearCacheSuccess": "Cache cleared successfully"
+    },
+    "About": {
+      "title": "About",
+      "description": "Discover Nothly",
+      "appDescription": "Nothly is a smart note-taking application with built-in artificial intelligence. Create, organize and transform your notes into effective learning tools powered by AI.",
+      "website": "Website",
+      "websiteDesc": "Visit our official website",
+      "sourceCode": "Source code and contributions",
+      "technologies": "Technologies",
+      "credits": "Credits",
+      "icons": "Icons",
+      "ai": "AI",
+      "infrastructure": "Infrastructure"
     }
   },
   "MentionInput": {

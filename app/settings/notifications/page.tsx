@@ -48,9 +48,9 @@ export default function NotificationsPage() {
             <div className="mb-6 bg-accent/20 border-2 border-accent/40 rounded-xl p-5 flex items-start gap-3">
                 <Bell className="h-5 w-5 text-accent-foreground mt-0.5 flex-shrink-0" />
                 <div>
-                    <p className="font-black text-foreground text-sm uppercase mb-1">Bientôt disponible</p>
+                    <p className="font-black text-foreground text-sm uppercase mb-1">{t("comingSoon")}</p>
                     <p className="text-sm text-muted-foreground font-medium">
-                        Les notifications seront activées dans une prochaine mise à jour. Voici un aperçu des préférences que vous pourrez configurer.
+                        {t("comingSoonDesc")}
                     </p>
                 </div>
             </div>
@@ -60,7 +60,7 @@ export default function NotificationsPage() {
                 {sections.map((section) => {
                     const SectionIcon = section.icon
                     return (
-                        <div key={section.title} className="bg-card border-2 border-border rounded-xl shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)] p-6">
+                        <div key={section.title} className="bg-card border-2 border-border rounded-xl shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,0.15)] p-6">
                             <div className="flex items-center gap-3 mb-6">
                                 <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center border-2 border-border">
                                     <SectionIcon className="h-5 w-5 text-primary" />

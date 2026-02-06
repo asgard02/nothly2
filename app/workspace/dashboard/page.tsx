@@ -77,18 +77,18 @@ export default function DashboardPage() {
 
     // Colorful stats with rotated decorative shadows
     const stats = [
-        { label: t("docsAdded"), value: totalDocsCount.toString(), icon: FileText, color: "bg-[#BAE6FD]", shadow: "shadow-[4px_4px_0px_0px_#7DD3FC]" },
-        { label: t("subjects"), value: activeSubjectsCount.toString(), icon: BookOpen, color: "bg-[#FBCFE8]", shadow: "shadow-[4px_4px_0px_0px_#F9A8D4]" },
-        { label: t("streak"), value: `${dayStreak} ${t("days")}`, icon: Sparkles, color: "bg-[#BBF7D0]", shadow: "shadow-[4px_4px_0px_0px_#86EFAC]" },
+        { label: t("docsAdded"), value: totalDocsCount.toString(), icon: FileText, color: "bg-[#BAE6FD] dark:bg-sky-950/40", shadow: "shadow-[4px_4px_0px_0px_#7DD3FC] dark:shadow-[4px_4px_0px_0px_rgba(56,189,248,0.3)]" },
+        { label: t("subjects"), value: activeSubjectsCount.toString(), icon: BookOpen, color: "bg-[#FBCFE8] dark:bg-pink-950/40", shadow: "shadow-[4px_4px_0px_0px_#F9A8D4] dark:shadow-[4px_4px_0px_0px_rgba(244,114,182,0.3)]" },
+        { label: t("streak"), value: `${dayStreak} ${t("days")}`, icon: Sparkles, color: "bg-[#BBF7D0] dark:bg-emerald-950/40", shadow: "shadow-[4px_4px_0px_0px_#86EFAC] dark:shadow-[4px_4px_0px_0px_rgba(52,211,153,0.3)]" },
     ]
 
     return (
         <div className="h-full p-8 md:p-12 font-sans overflow-y-auto pb-32">
 
             {/* Pop Greeting Banner */}
-            <header className="mb-12 bg-card border-2 border-border rounded-3xl p-8 md:p-12 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)] relative overflow-hidden group">
-                <div className="absolute top-0 right-0 w-64 h-64 bg-[#DDD6FE] rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2 opacity-50"></div>
-                <div className="absolute bottom-0 left-0 w-48 h-48 bg-[#FDE68A] rounded-full blur-[60px] translate-y-1/2 -translate-x-1/2 opacity-50"></div>
+            <header className="mb-12 bg-card border-2 border-border rounded-3xl p-8 md:p-12 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,0.15)] relative overflow-hidden group">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-[#DDD6FE] dark:bg-violet-500/10 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2 opacity-50"></div>
+                <div className="absolute bottom-0 left-0 w-48 h-48 bg-[#FDE68A] dark:bg-amber-500/10 rounded-full blur-[60px] translate-y-1/2 -translate-x-1/2 opacity-50"></div>
 
                 <div className="relative z-10 flex flex-col md:flex-row items-start md:items-end justify-between gap-6">
                     <div>
@@ -102,7 +102,7 @@ export default function DashboardPage() {
                             {loadingUser ? (
                                 <span className="h-12 w-40 bg-muted animate-pulse rounded-xl border-2 border-transparent -rotate-2 inline-block" />
                             ) : (
-                                <span className="bg-[#fdba74] px-4 rounded-xl border-2 border-border shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] -rotate-2 inline-block text-foreground">
+                                <span className="bg-[#fdba74] dark:bg-orange-500/25 px-4 rounded-xl border-2 border-border shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)] -rotate-2 inline-block text-foreground">
                                     {userName}
                                 </span>
                             )}
@@ -118,7 +118,7 @@ export default function DashboardPage() {
                         onClick={() => {
                             window.dispatchEvent(new KeyboardEvent("keydown", { key: "k", metaKey: true, bubbles: true }))
                         }}
-                        className="hidden md:flex items-center gap-2 bg-[#DDD6FE] px-5 py-3 rounded-xl border-2 border-border shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] rotate-2 hover:rotate-0 hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[6px_6px_0px_0px_rgba(255,255,255,1)] transition-all duration-300 cursor-pointer group"
+                        className="hidden md:flex items-center gap-2 bg-[#DDD6FE] dark:bg-violet-500/20 px-5 py-3 rounded-xl border-2 border-border shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)] rotate-2 hover:rotate-0 hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[6px_6px_0px_0px_rgba(255,255,255,0.15)] transition-all duration-300 cursor-pointer group"
                     >
                         <Search className="h-4 w-4 text-foreground group-hover:scale-110 transition-transform" strokeWidth={2.5} />
                         <span className="text-sm font-black uppercase text-foreground tracking-wide">{t("searchLabel")}</span>
@@ -132,9 +132,9 @@ export default function DashboardPage() {
             {/* Stats Row */}
             <section className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
                 {stats.map((stat, i) => (
-                    <div key={i} className={cn("p-6 rounded-2xl border-2 border-border flex flex-col justify-between h-40 transition-transform hover:-translate-y-2 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[6px_6px_0px_0px_rgba(255,255,255,1)]", stat.color, "shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)]")}>
+                    <div key={i} className={cn("p-6 rounded-2xl border-2 border-border flex flex-col justify-between h-40 transition-transform hover:-translate-y-2 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[6px_6px_0px_0px_rgba(255,255,255,0.15)]", stat.color, "shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)]")}>
                         <div className="flex justify-between items-start">
-                            <div className="p-3 bg-card rounded-xl border-2 border-border shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)]">
+                            <div className="p-3 bg-card rounded-xl border-2 border-border shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.15)]">
                                 <stat.icon className="h-6 w-6 text-foreground" strokeWidth={2.5} />
                             </div>
                         </div>
@@ -152,7 +152,7 @@ export default function DashboardPage() {
                 <div className="lg:col-span-2 space-y-12">
 
                     {/* Subjects Carousel */}
-                    <div className="bg-card border-2 border-border rounded-3xl p-8 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:shadow-[6px_6px_0px_0px_rgba(255,255,255,1)]">
+                    <div className="bg-card border-2 border-border rounded-3xl p-8 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:shadow-[6px_6px_0px_0px_rgba(255,255,255,0.15)]">
                         <div className="flex items-center justify-between mb-8">
                             <h2 className="text-2xl font-black uppercase tracking-tight flex items-center gap-3 text-foreground">
                                 <BookOpen className="h-6 w-6 fill-foreground" strokeWidth={2.5} />
@@ -167,13 +167,13 @@ export default function DashboardPage() {
                                     .sort((a: any, b: any) => new Date(b.last_active || 0).getTime() - new Date(a.last_active || 0).getTime())
                                     .slice(0, 5)
                                     .map((subject: any, i: number) => {
-                                        const cardColors = ["bg-[#BAE6FD]", "bg-[#FBCFE8]", "bg-[#BBF7D0]", "bg-[#FDE68A]", "bg-[#DDD6FE]"]
+                                        const cardColors = ["bg-[#BAE6FD] dark:bg-sky-950/40", "bg-[#FBCFE8] dark:bg-pink-950/40", "bg-[#BBF7D0] dark:bg-emerald-950/40", "bg-[#FDE68A] dark:bg-amber-950/40", "bg-[#DDD6FE] dark:bg-violet-950/40"]
                                         const color = cardColors[i % cardColors.length]
 
                                         return (
                                             <Link href={`/workspace/subjects/${subject.id}`} key={subject.id} className="min-w-[260px] md:min-w-[280px]">
                                                 <div className={cn(
-                                                    "relative overflow-hidden border-2 border-border rounded-2xl p-6 transition-all duration-300 hover:-translate-y-2 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)] h-[180px] flex flex-col justify-between group",
+                                                    "relative overflow-hidden border-2 border-border rounded-2xl p-6 transition-all duration-300 hover:-translate-y-2 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[8px_8px_0px_0px_rgba(255,255,255,0.15)] h-[180px] flex flex-col justify-between group",
                                                     color
                                                 )}>
                                                     <div className="flex justify-between items-center">
@@ -206,7 +206,7 @@ export default function DashboardPage() {
                                 <h3 className="text-xl font-black mb-2 text-foreground">{t("nothingHere")}</h3>
                                 <p className="font-medium text-muted-foreground mb-6">{t("createSubjectDesc")}</p>
                                 <Link href="/workspace/subjects">
-                                    <Button className="h-12 border-2 border-border rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)]">
+                                    <Button className="h-12 border-2 border-border rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)]">
                                         <Plus className="mr-2 h-5 w-5" strokeWidth={3} /> {t("newSubject")}
                                     </Button>
                                 </Link>
@@ -220,7 +220,7 @@ export default function DashboardPage() {
                 {/* Sidebar Widget Area */}
                 <div className="space-y-8">
                     {/* Recent Quizzes Widget */}
-                    <div className="bg-[#FEF08A] border-2 border-border rounded-3xl p-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:shadow-[6px_6px_0px_0px_rgba(255,255,255,1)]">
+                    <div className="bg-[#FEF08A] dark:bg-yellow-500/15 border-2 border-border rounded-3xl p-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:shadow-[6px_6px_0px_0px_rgba(255,255,255,0.15)]">
                         <h3 className="font-black text-xl mb-6 flex items-center gap-2 text-foreground">
                             <Brain className="h-6 w-6" />
                             {t("recentStudySets")}

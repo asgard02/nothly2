@@ -46,7 +46,7 @@ export default function Sidebar() {
           isOpen ? "w-72" : "w-20"
         )}
       >
-        <div className="flex flex-col h-full bg-card border-2 border-border rounded-3xl shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)] overflow-hidden">
+        <div className="flex flex-col h-full bg-card border-2 border-border rounded-3xl shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,0.15)] overflow-hidden">
           {/* Header */}
           {isOpen ? (
             <div className="flex items-center justify-between p-6">
@@ -88,7 +88,7 @@ export default function Sidebar() {
                     isOpen ? "justify-start" : "justify-center px-0",
                     active
                       ? cn("bg-foreground text-background border-border font-bold translate-x-[-2px] translate-y-[-2px]", item.color)
-                      : "hover:bg-muted font-medium text-muted-foreground hover:text-foreground hover:border-border hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)] hover:translate-x-[-1px] hover:translate-y-[-1px]"
+                      : "hover:bg-muted font-medium text-muted-foreground hover:text-foreground hover:border-border hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.15)] hover:translate-x-[-1px] hover:translate-y-[-1px]"
                   )}
                   title={!isOpen ? item.label : undefined}
                 >

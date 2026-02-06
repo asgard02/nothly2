@@ -55,7 +55,7 @@ export default async function RootLayout({
 
   return (
       <html lang={locale} suppressHydrationWarning className="bg-background">
-      <body className={`${inter.className} min-h-screen bg-background text-foreground antialiased selection:bg-indigo-500/30 selection:text-indigo-200`}>
+      <body className={`${inter.className} min-h-screen bg-background text-foreground antialiased selection:bg-primary/30 selection:text-primary-foreground`}>
         <AntigravityBackground />
         <NextIntlClientProvider locale={locale} messages={messages}>
           <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>

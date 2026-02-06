@@ -40,7 +40,7 @@ export default function DeleteSubjectDialog({
       />
 
       {/* Dialog */}
-      <div className="relative bg-card border-2 border-border rounded-3xl shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)] p-8 max-w-md w-full animate-in zoom-in-95 duration-200">
+      <div className="relative bg-card border-2 border-border rounded-3xl shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,0.15)] p-8 max-w-md w-full animate-in zoom-in-95 duration-200">
         {/* Close button */}
         <button
           onClick={onClose}
@@ -50,7 +50,7 @@ export default function DeleteSubjectDialog({
         </button>
 
         {/* Icon */}
-        <div className="flex items-center justify-center w-16 h-16 rounded-full bg-destructive border-2 border-border shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] mx-auto mb-6 rotate-3">
+        <div className="flex items-center justify-center w-16 h-16 rounded-full bg-destructive border-2 border-border shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)] mx-auto mb-6 rotate-3">
           <AlertTriangle className="h-8 w-8 text-destructive-foreground" strokeWidth={3} />
         </div>
 
@@ -77,14 +77,14 @@ export default function DeleteSubjectDialog({
           <button
             onClick={onClose}
             disabled={isDeleting}
-            className="flex-1 h-12 rounded-xl font-bold text-foreground border-2 border-border bg-card hover:bg-muted shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] hover:translate-y-[2px] active:translate-y-[4px] active:shadow-none transition-all disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-wide"
+            className="flex-1 h-12 rounded-xl font-bold text-foreground border-2 border-border bg-card hover:bg-muted shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)] hover:translate-y-[2px] active:translate-y-[4px] active:shadow-none transition-all disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-wide"
           >
             {t('cancel')}
           </button>
           <button
             onClick={onConfirm}
             disabled={isDeleting}
-            className="flex-1 h-12 rounded-xl font-bold text-destructive-foreground bg-destructive border-2 border-border hover:bg-destructive/90 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] hover:translate-y-[2px] active:translate-y-[4px] active:shadow-none transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 uppercase tracking-wide"
+            className="flex-1 h-12 rounded-xl font-bold text-destructive-foreground bg-destructive border-2 border-border hover:bg-destructive/90 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)] hover:translate-y-[2px] active:translate-y-[4px] active:shadow-none transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 uppercase tracking-wide"
           >
             {isDeleting ? (
               <>

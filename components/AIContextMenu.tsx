@@ -81,7 +81,7 @@ export default function AIContextMenu({ isOpen, onClose, position, onTextAction 
 
       {/* Menu contextuel */}
       <div
-        className="fixed z-50 w-80 bg-card border-2 border-border rounded-xl shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:shadow-[6px_6px_0px_0px_rgba(255,255,255,1)] overflow-hidden animate-in fade-in slide-in-from-bottom-3 duration-200"
+        className="fixed z-50 w-80 bg-card border-2 border-border rounded-xl shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:shadow-[6px_6px_0px_0px_rgba(255,255,255,0.15)] overflow-hidden animate-in fade-in slide-in-from-bottom-3 duration-200"
         style={{
           bottom: `${position.bottom}px`,
           right: `${position.right}px`,

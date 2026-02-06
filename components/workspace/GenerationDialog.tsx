@@ -142,22 +142,22 @@ export function GenerationDialog({
 
     const getIntentBg = () => {
         switch (intent) {
-            case "flashcards": return "bg-[#FBCFE8]"
-            case "quiz": return "bg-[#BBF7D0]"
-            case "summary": return "bg-[#FDE68A]"
+            case "flashcards": return "bg-[#FBCFE8] dark:bg-pink-500/20"
+            case "quiz": return "bg-[#BBF7D0] dark:bg-emerald-500/20"
+            case "summary": return "bg-[#FDE68A] dark:bg-amber-500/20"
             default: return "bg-card"
         }
     }
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[600px] p-0 overflow-hidden bg-card border-2 border-border shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)] rounded-3xl duration-300">
+            <DialogContent className="sm:max-w-[600px] p-0 overflow-hidden bg-card border-2 border-border shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,0.15)] rounded-3xl duration-300">
                 <div className="relative flex flex-col h-[550px]">
 
                     {/* Header */}
                     <div className="px-8 py-6 border-b-2 border-border flex items-center justify-between bg-card">
                         <div className="flex items-center gap-4">
-                            <div className={cn("px-3 py-3 rounded-xl border-2 border-border shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)]", getIntentBg())}>
+                            <div className={cn("px-3 py-3 rounded-xl border-2 border-border shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.15)]", getIntentBg())}>
                                 {getIntentIcon()}
                             </div>
                             <div>
@@ -185,7 +185,7 @@ export function GenerationDialog({
                                 >
                                     <div className="space-y-8 max-w-md mx-auto w-full">
                                         <div className="text-center space-y-3">
-                                            <div className="inline-block p-4 rounded-full bg-[#BAE6FD] border-2 border-border shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] mb-4">
+                                            <div className="inline-block p-4 rounded-full bg-[#BAE6FD] dark:bg-sky-500/20 border-2 border-border shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)] mb-4">
                                                 <Sparkles className="h-8 w-8 text-foreground" strokeWidth={2.5} />
                                             </div>
                                             <h3 className="text-2xl font-black uppercase text-foreground">Quel est le sujet ?</h3>
@@ -208,7 +208,7 @@ export function GenerationDialog({
                                                         }
                                                     }}
                                                     className={cn(
-                                                        "h-16 text-lg px-6 rounded-2xl bg-card border-2 border-border focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:focus:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] focus:ring-0 focus:-translate-y-1 transition-all placeholder:text-muted-foreground font-bold uppercase text-foreground",
+                                                        "h-16 text-lg px-6 rounded-2xl bg-card border-2 border-border focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:focus:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)] focus:ring-0 focus:-translate-y-1 transition-all placeholder:text-muted-foreground font-bold uppercase text-foreground",
                                                         titleExists && "border-destructive bg-destructive/10"
                                                     )}
                                                     onKeyDown={(e) => {
@@ -226,7 +226,7 @@ export function GenerationDialog({
                                                 <motion.div
                                                     initial={{ opacity: 0, y: -10 }}
                                                     animate={{ opacity: 1, y: 0 }}
-                                                    className="flex items-start gap-3 p-4 rounded-xl bg-destructive/10 border-2 border-border shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)]"
+                                                    className="flex items-start gap-3 p-4 rounded-xl bg-destructive/10 border-2 border-border shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)]"
                                                 >
                                                     <div className="bg-destructive rounded-full p-0.5 border border-border text-destructive-foreground shrink-0">
                                                         <Check className="h-3 w-3 rotate-45" strokeWidth={4} />
@@ -241,7 +241,7 @@ export function GenerationDialog({
                                                 onClick={handleNext}
                                                 size="lg"
                                                 disabled={isCheckingTitle}
-                                                className="w-full rounded-xl h-14 text-lg font-black uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[6px_6px_0px_0px_rgba(255,255,255,1)] hover:-translate-y-[2px] active:translate-y-0 active:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:active:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)] transition-all border-2 border-border bg-foreground text-background hover:bg-foreground/90"
+                                                className="w-full rounded-xl h-14 text-lg font-black uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[6px_6px_0px_0px_rgba(255,255,255,0.15)] hover:-translate-y-[2px] active:translate-y-0 active:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:active:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.15)] transition-all border-2 border-border bg-foreground text-background hover:bg-foreground/90"
                                             >
                                                 {isCheckingTitle ? (
                                                     <>
@@ -283,14 +283,14 @@ export function GenerationDialog({
                                                     placeholder="RECHERCHER..."
                                                     value={searchQuery}
                                                     onChange={(e) => setSearchQuery(e.target.value)}
-                                                    className="pl-10 h-12 bg-card border-2 border-border rounded-xl font-bold placeholder:text-muted-foreground uppercase focus:ring-0 focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:focus:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] transition-all text-foreground"
+                                                    className="pl-10 h-12 bg-card border-2 border-border rounded-xl font-bold placeholder:text-muted-foreground uppercase focus:ring-0 focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:focus:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)] transition-all text-foreground"
                                                 />
                                             </div>
                                             <Button
                                                 variant="outline"
                                                 size="sm"
                                                 onClick={handleSelectAll}
-                                                className="whitespace-nowrap h-12 border-2 border-border rounded-xl font-bold uppercase hover:bg-foreground hover:text-background transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)] active:translate-y-[2px] active:shadow-none text-foreground"
+                                                className="whitespace-nowrap h-12 border-2 border-border rounded-xl font-bold uppercase hover:bg-foreground hover:text-background transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.15)] active:translate-y-[2px] active:shadow-none text-foreground"
                                             >
                                                 {selectedDocIds.length === filteredDocs.length ? "Tout désélectionner" : "Tout sélectionner"}
                                             </Button>
@@ -306,14 +306,14 @@ export function GenerationDialog({
                                                     className={cn(
                                                         "flex items-center gap-4 p-4 rounded-xl border-2 transition-all cursor-pointer group hover:-translate-y-1",
                                                         selectedDocIds.includes(doc.id)
-                                                            ? "bg-[#F0FDF4] border-border shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)]"
-                                                            : "bg-card border-border hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)]"
+                                                            ? "bg-[#F0FDF4] border-border shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)]"
+                                                            : "bg-card border-border hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)]"
                                                     )}
                                                 >
                                                     <div className={cn(
-                                                        "h-6 w-6 rounded border-2 border-border flex items-center justify-center transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)]",
+                                                        "h-6 w-6 rounded border-2 border-border flex items-center justify-center transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.15)]",
                                                         selectedDocIds.includes(doc.id)
-                                                            ? "bg-[#BBF7D0]"
+                                                            ? "bg-[#BBF7D0] dark:bg-emerald-500/20"
                                                             : "bg-card"
                                                     )}>
                                                         {selectedDocIds.includes(doc.id) && <Check className="h-4 w-4 text-foreground" strokeWidth={4} />}
@@ -344,7 +344,7 @@ export function GenerationDialog({
                                         <Button
                                             onClick={handleSubmit}
                                             disabled={selectedDocIds.length === 0}
-                                            className="bg-primary hover:bg-primary/90 text-primary-foreground font-black uppercase rounded-xl h-12 px-8 border-2 border-border shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] hover:translate-y-[2px] active:translate-y-[4px] active:shadow-none transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none disabled:translate-y-0"
+                                            className="bg-primary hover:bg-primary/90 text-primary-foreground font-black uppercase rounded-xl h-12 px-8 border-2 border-border shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)] hover:translate-y-[2px] active:translate-y-[4px] active:shadow-none transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none disabled:translate-y-0"
                                         >
                                             <Sparkles className="mr-2 h-5 w-5 fill-primary-foreground" />
                                             Lancer la génération

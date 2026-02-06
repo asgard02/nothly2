@@ -84,8 +84,8 @@ export default function SettingsLayout({ children }: SettingsLayoutProps) {
                     className={cn(
                       "w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 border-2 font-bold uppercase tracking-wide",
                       isActive
-                        ? "bg-foreground text-background border-border shadow-[4px_4px_0px_0px_#8B5CF6] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] translate-x-1"
-                        : "bg-card text-muted-foreground border-transparent hover:border-border hover:bg-accent hover:text-foreground hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] hover:-translate-y-1"
+                        ? "bg-foreground text-background border-border shadow-[4px_4px_0px_0px_#8B5CF6] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)] translate-x-1"
+                        : "bg-card text-muted-foreground border-transparent hover:border-border hover:bg-accent hover:text-foreground hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)] hover:-translate-y-1"
                     )}
                   >
                     <Icon className={cn("h-5 w-5 flex-shrink-0", isActive ? "text-accent" : "text-current")} strokeWidth={2.5} />

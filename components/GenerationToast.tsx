@@ -7,8 +7,8 @@ import { Check, Loader2 } from "lucide-react"
 const GenerationToastInner = ({ status = 'loading' }: { status?: 'loading' | 'success' }) => {
   if (status === 'success') {
     return (
-      <div className="flex items-center gap-4 bg-card border-2 border-border p-4 rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] w-full max-w-sm">
-        <div className="h-10 w-10 bg-[#BBF7D0] dark:bg-emerald-950/30 border-2 border-border rounded-lg flex items-center justify-center shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)]">
+      <div className="flex items-center gap-4 bg-card border-2 border-border p-4 rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)] w-full max-w-sm">
+        <div className="h-10 w-10 bg-[#BBF7D0] dark:bg-emerald-950/30 border-2 border-border rounded-lg flex items-center justify-center shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.15)]">
           <Check className="h-6 w-6 text-foreground" strokeWidth={3} />
         </div>
         <div>
@@ -20,8 +20,8 @@ const GenerationToastInner = ({ status = 'loading' }: { status?: 'loading' | 'su
   }
 
   return (
-    <div className="flex items-center gap-4 bg-card border-2 border-border p-4 rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] w-full max-w-sm">
-      <div className="relative h-10 w-10 bg-[#FDE68A] dark:bg-amber-950/30 border-2 border-border rounded-lg flex items-center justify-center shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)]">
+    <div className="flex items-center gap-4 bg-card border-2 border-border p-4 rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)] w-full max-w-sm">
+      <div className="relative h-10 w-10 bg-[#FDE68A] dark:bg-amber-950/30 border-2 border-border rounded-lg flex items-center justify-center shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.15)]">
         <Loader2 className="h-6 w-6 text-foreground animate-spin" strokeWidth={3} />
       </div>
       <div className="flex-1 min-w-0">

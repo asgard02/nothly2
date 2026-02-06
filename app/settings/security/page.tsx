@@ -80,7 +80,7 @@ export default function SecuritySettingsPage() {
       )}
 
       {/* Authentification */}
-      <div className="bg-card border-2 border-border rounded-xl shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)] p-6 mb-6">
+      <div className="bg-card border-2 border-border rounded-xl shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,0.15)] p-6 mb-6">
         <div className="flex items-center gap-3 mb-6">
           <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center border-2 border-border">
             <Lock className="h-5 w-5 text-primary" />
@@ -103,7 +103,7 @@ export default function SecuritySettingsPage() {
             <button
               onClick={handleResetPassword}
               disabled={loading}
-              className="px-4 py-2 rounded-xl border-2 border-border text-foreground hover:bg-muted transition-all duration-200 text-sm font-bold uppercase tracking-wide disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] hover:-translate-y-1"
+              className="px-4 py-2 rounded-xl border-2 border-border text-foreground hover:bg-muted transition-all duration-200 text-sm font-bold uppercase tracking-wide disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)] hover:-translate-y-1"
             >
               {loading ? t("sending") : t("change")}
             </button>

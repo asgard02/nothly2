@@ -135,12 +135,12 @@ export default function QuizHub() {
                     ) : quizzes.length > 0 ? (
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                             {quizzes.map((quiz: any, i: number) => (
-                                <div key={quiz.id} className="bg-card border-2 border-border rounded-3xl p-8 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:shadow-[6px_6px_0px_0px_rgba(255,255,255,1)] hover:-translate-y-1 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)] transition-all flex flex-col justify-between h-64 relative group overflow-hidden">
+                                <div key={quiz.id} className="bg-card border-2 border-border rounded-3xl p-8 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:shadow-[6px_6px_0px_0px_rgba(255,255,255,0.15)] hover:-translate-y-1 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[8px_8px_0px_0px_rgba(255,255,255,0.15)] transition-all flex flex-col justify-between h-64 relative group overflow-hidden">
                                     <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
                                         <Brain className="h-32 w-32 text-foreground" />
                                     </div>
                                     <div>
-                                        <span className="bg-[#BBF7D0] text-foreground border-2 border-border px-3 py-1 rounded-full text-xs font-black uppercase mb-4 inline-block">
+                                        <span className="bg-[#BBF7D0] dark:bg-emerald-500/20 text-foreground border-2 border-border px-3 py-1 rounded-full text-xs font-black uppercase mb-4 inline-block">
                                             {quiz.total_quiz || "?"} {t('questions')}
                                         </span>
                                         <h3 className="text-2xl font-black uppercase tracking-tight leading-none mb-2 text-foreground">{quiz.title}</h3>
@@ -159,10 +159,10 @@ export default function QuizHub() {
                         <div className="flex flex-col items-center justify-center p-16 bg-card border-2 border-dashed border-border rounded-3xl text-center min-h-[400px] relative overflow-hidden group">
 
                             {/* Decorative background elements */}
-                            <div className="absolute top-10 right-10 w-12 h-12 bg-[#FDE68A] rounded-full border-2 border-border"></div>
-                            <div className="absolute bottom-10 left-10 w-16 h-16 bg-[#BAE6FD] border-2 border-border rotate-12"></div>
+                            <div className="absolute top-10 right-10 w-12 h-12 bg-[#FDE68A] dark:bg-amber-500/20 rounded-full border-2 border-border"></div>
+                            <div className="absolute bottom-10 left-10 w-16 h-16 bg-[#BAE6FD] dark:bg-sky-500/20 border-2 border-border rotate-12"></div>
 
-                            <div className="z-10 bg-muted p-6 rounded-full border-2 border-border mb-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)]">
+                            <div className="z-10 bg-muted p-6 rounded-full border-2 border-border mb-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)]">
                                 <Trophy className="h-12 w-12 text-foreground" strokeWidth={2} />
                             </div>
 
@@ -174,7 +174,7 @@ export default function QuizHub() {
                             {/* DEMO BUTTON */}
                             <button
                                 onClick={() => startQuiz(demoQuiz)}
-                                className="px-8 py-4 bg-primary text-primary-foreground font-black uppercase text-lg rounded-xl border-2 border-border shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] hover:translate-y-[2px] hover:translate-x-[2px] transition-all active:shadow-none hover:shadow-none hover:bg-primary/90 relative z-20"
+                                className="px-8 py-4 bg-primary text-primary-foreground font-black uppercase text-lg rounded-xl border-2 border-border shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)] hover:translate-y-[2px] hover:translate-x-[2px] transition-all active:shadow-none hover:shadow-none hover:bg-primary/90 relative z-20"
                             >
                                 <span className="flex items-center gap-3">
                                     <Sparkles className="h-5 w-5 fill-primary-foreground" />
@@ -187,7 +187,7 @@ export default function QuizHub() {
 
                 {/* Recent Scores Sidebar */}
                 <div className="hidden md:block">
-                    <div className="bg-[#FFF1F2] dark:bg-red-950/20 border-2 border-border rounded-2xl p-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:shadow-[6px_6px_0px_0px_rgba(255,255,255,1)]">
+                    <div className="bg-[#FFF1F2] dark:bg-red-950/20 border-2 border-border rounded-2xl p-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:shadow-[6px_6px_0px_0px_rgba(255,255,255,0.15)]">
                         <h3 className="font-black text-xl mb-6 flex items-center gap-2 text-foreground">
                             <BarChart className="h-6 w-6" />
                             {t('leaderboard')}
@@ -208,7 +208,7 @@ export default function QuizHub() {
                         exit={{ opacity: 0, y: 50 }}
                         className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-8 bg-black/60 backdrop-blur-sm"
                     >
-                        <div className="w-full max-w-5xl h-full md:h-auto md:max-h-[90vh] bg-background border-2 border-border rounded-3xl overflow-hidden flex flex-col shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)]">
+                        <div className="w-full max-w-5xl h-full md:h-auto md:max-h-[90vh] bg-background border-2 border-border rounded-3xl overflow-hidden flex flex-col shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,0.15)]">
 
                             {/* Modal Header */}
                             <div className="p-6 md:p-8 border-b-2 border-border flex items-center justify-between bg-card">
@@ -294,11 +294,11 @@ export default function QuizHub() {
                                     {t('score')}: {score}
                                 </div>
                                 {isAnswerRevealed ? (
-                                    <Button onClick={nextQuestion} className="h-14 px-10 rounded-xl border-2 border-border bg-foreground text-background hover:bg-primary text-xl font-bold shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] hover:translate-y-[2px] active:translate-y-[4px] active:shadow-none transition-all">
+                                    <Button onClick={nextQuestion} className="h-14 px-10 rounded-xl border-2 border-border bg-foreground text-background hover:bg-primary text-xl font-bold shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)] hover:translate-y-[2px] active:translate-y-[4px] active:shadow-none transition-all">
                                         {currentQuestionIndex < activeQuiz.questions.length - 1 ? t('nextQuestion') : t('finishQuiz')} <ArrowRight className="ml-3 h-6 w-6" strokeWidth={3} />
                                     </Button>
                                 ) : (
-                                    <Button onClick={checkAnswer} disabled={selectedOption === null} className="h-14 px-10 rounded-xl border-2 border-border bg-accent text-foreground hover:bg-accent/90 text-xl font-bold shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] hover:translate-y-[2px] active:translate-y-[4px] active:shadow-none transition-all disabled:opacity-50 disabled:shadow-none disabled:translate-y-[4px]">
+                                    <Button onClick={checkAnswer} disabled={selectedOption === null} className="h-14 px-10 rounded-xl border-2 border-border bg-accent text-foreground hover:bg-accent/90 text-xl font-bold shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)] hover:translate-y-[2px] active:translate-y-[4px] active:shadow-none transition-all disabled:opacity-50 disabled:shadow-none disabled:translate-y-[4px]">
                                         {t('checkAnswer')}
                                     </Button>
                                 )}

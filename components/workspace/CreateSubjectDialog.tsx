@@ -22,17 +22,17 @@ export function CreateSubjectDialog({
   const router = useRouter()
   const { resumeTutorial } = useTutorial()
   const [title, setTitle] = useState("")
-  const [selectedColor, setSelectedColor] = useState("bg-[#FDE68A]")
+  const [selectedColor, setSelectedColor] = useState("bg-[#FDE68A] dark:bg-amber-500/20")
   const createSubject = useCreateSubject()
 
   // Neo-Brutalism Colors matching SubjectsPage
   const colorOptions = [
-    "bg-[#FDE68A]", // Yellow
-    "bg-[#FBCFE8]", // Pink
-    "bg-[#BAE6FD]", // Blue
-    "bg-[#BBF7D0]", // Green
-    "bg-[#DDD6FE]", // Purple
-    "bg-[#FDBA74]", // Orange
+    "bg-[#FDE68A] dark:bg-amber-500/20", // Yellow
+    "bg-[#FBCFE8] dark:bg-pink-500/20", // Pink
+    "bg-[#BAE6FD] dark:bg-sky-500/20", // Blue
+    "bg-[#BBF7D0] dark:bg-emerald-500/20", // Green
+    "bg-[#DDD6FE] dark:bg-violet-500/20", // Purple
+    "bg-[#FDBA74] dark:bg-orange-500/20", // Orange
   ]
 
   const handleCreate = async () => {
@@ -44,7 +44,7 @@ export function CreateSubjectDialog({
         color: selectedColor,
       })
       setTitle("")
-      setSelectedColor("bg-[#FDE68A]")
+      setSelectedColor("bg-[#FDE68A] dark:bg-amber-500/20")
       onOpenChange(false)
       
       // Navigate to the newly created subject and resume tutorial (was paused while dialog was open)
@@ -69,7 +69,7 @@ export function CreateSubjectDialog({
       />
       <div
         onClick={(e) => e.stopPropagation()}
-        className="relative z-50 w-full max-w-md bg-card border-2 border-border rounded-3xl p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)] animate-in zoom-in-95 slide-in-from-bottom-2 duration-200 ease-out"
+        className="relative z-50 w-full max-w-md bg-card border-2 border-border rounded-3xl p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,0.15)] animate-in zoom-in-95 slide-in-from-bottom-2 duration-200 ease-out"
       >
         <div className="flex items-center justify-between mb-8">
           <h2 className="text-3xl font-black text-foreground uppercase tracking-tight">{t("title")}</h2>
@@ -97,7 +97,7 @@ export function CreateSubjectDialog({
               }}
               placeholder={t("namePlaceholder")}
               data-tutorial="create-subject-dialog-input"
-              className="w-full rounded-xl border-2 border-border bg-card px-4 py-3 text-lg font-bold text-foreground placeholder:text-muted-foreground focus:outline-none focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:focus:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] focus:-translate-y-1 focus:-translate-x-1 transition-all"
+              className="w-full rounded-xl border-2 border-border bg-card px-4 py-3 text-lg font-bold text-foreground placeholder:text-muted-foreground focus:outline-none focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:focus:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)] focus:-translate-y-1 focus:-translate-x-1 transition-all"
               autoFocus
             />
           </div>
@@ -114,7 +114,7 @@ export function CreateSubjectDialog({
                   className={cn(
                     "h-10 w-10 rounded-full border-2 transition-all relative overflow-hidden",
                     selectedColor === color
-                      ? "border-border scale-110 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)]"
+                      ? "border-border scale-110 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.15)]"
                       : "border-border/20 hover:border-border hover:scale-105"
                   )}
                 >
@@ -143,7 +143,7 @@ export function CreateSubjectDialog({
             onClick={handleCreate}
             disabled={!title.trim() || createSubject.isPending}
             data-tutorial="create-subject-dialog-button"
-            className="h-12 px-6 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground border-2 border-border shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] hover:translate-y-[2px] active:translate-y-[4px] active:shadow-none transition-all font-black uppercase tracking-wide"
+            className="h-12 px-6 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground border-2 border-border shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)] hover:translate-y-[2px] active:translate-y-[4px] active:shadow-none transition-all font-black uppercase tracking-wide"
           >
             {createSubject.isPending ? t("creating") : t("create")}
           </Button>

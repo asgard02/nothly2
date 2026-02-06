@@ -28,7 +28,7 @@ export default function DeleteDeckDialog({
       />
 
       {/* Dialog */}
-      <div className="relative bg-card border-2 border-border rounded-2xl shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)] p-6 max-w-md w-full mx-4 animate-in fade-in zoom-in duration-200">
+      <div className="relative bg-card border-2 border-border rounded-2xl shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,0.15)] p-6 max-w-md w-full mx-4 animate-in fade-in zoom-in duration-200">
         {/* Close button */}
         <button
           onClick={onClose}
