@@ -52,7 +52,7 @@ interface QuizViewerProps {
   onClose?: () => void
 }
 
-const MASTERY_COLORS: Record<MasteryLevel, { bg: string; text: string; border: string; icon: typeof Brain; shadow: string }> = {
+const MASTERY_COLORS: Record<MasteryLevel, { bg: string; text: string; border: string; icon: typeof Award; shadow: string }> = {
   new: {
     bg: "bg-card",
     text: "text-foreground",
