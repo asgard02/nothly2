@@ -22,7 +22,7 @@ export function UploadDialog({
 }: UploadDialogProps) {
   const t = useTranslations("UploadDialog")
   const queryClient = useQueryClient()
-  const { isOpen: isTutorialOpen, isPaused: isTutorialPaused, resumeTutorial } = useTutorial()
+  const { isOpen: isTutorialOpen, resumeTutorial } = useTutorial()
   const [file, setFile] = useState<File | null>(null)
   const [title, setTitle] = useState("")
   const [uploadError, setUploadError] = useState<string | null>(null)
@@ -135,9 +135,8 @@ export function UploadDialog({
       resetForm()
       onOpenChange(false)
       
-      // Resume tutorial if it was paused (waiting for upload)
-      if (isTutorialOpen && isTutorialPaused) {
-        // Small delay to let dialog close animation complete
+      // Resume tutorial after upload (advance to next step)
+      if (isTutorialOpen) {
         setTimeout(() => {
           resumeTutorial()
         }, 300)
@@ -152,7 +151,7 @@ export function UploadDialog({
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div role="dialog" data-state="open" className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div
         className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
         onClick={() => handleOpenChange(false)}

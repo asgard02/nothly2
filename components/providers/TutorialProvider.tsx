@@ -114,6 +114,10 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
     const pathname = usePathname()
     const router = useRouter()
     const hasCheckedOnboarding = useRef(false)
+    const isOpenRef = useRef(false)
+
+    // Keep ref in sync with state
+    useEffect(() => { isOpenRef.current = isOpen }, [isOpen])
 
     // Global steps (single ordered list)
     const steps = GLOBAL_TUTORIAL_STEPS
@@ -178,13 +182,16 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
     }, [])
 
     const resumeTutorial = useCallback(() => {
+        // Only advance if the tutorial is actually open
+        if (!isOpenRef.current) return
         setIsPaused(false)
-        if (currentStep < totalSteps - 1) {
-            setCurrentStep(prev => prev + 1)
-        } else {
-            completeTutorial()
-        }
-    }, [currentStep, totalSteps])
+        setCurrentStep(prev => {
+            if (prev < totalSteps - 1) {
+                return prev + 1
+            }
+            return prev
+        })
+    }, [totalSteps])
 
     // Check onboarding status from the database on first load in workspace
     useEffect(() => {
