@@ -39,7 +39,7 @@ next-env.d.ts
 # Video feature (kept locally, not pushed)
 app/api/videos/
 components/video/
-lib/hooks/useVideo.ts
+# lib/hooks/useVideo.ts - stub needed for build
 lib/video/
 scripts/check-video-jobs.ts
 scripts/process-video-jobs.ts
