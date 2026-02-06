@@ -3,7 +3,7 @@
 
 export function useCreateVideo() {
   return {
-    createVideo: async () => null,
+    createVideo: async (type: string, sourceId: string, title: string): Promise<string | null> => null,
     isCreating: false,
     error: null as string | null,
   }
