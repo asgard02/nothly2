@@ -1234,12 +1234,12 @@ export default function SubjectView({ subject, onBack, onSelectDocument, onUpdat
                                     <Video className="h-6 w-6 text-[#8b5cf6]" strokeWidth={2.5} />
                                   </div>
                                   <span className="bg-foreground text-background px-2 py-1 rounded-lg text-xs font-black uppercase">
-                                    {v.slide_count} slide{v.slide_count > 1 ? "s" : ""}
+                                    {v.slide_count || 0} slide{(v.slide_count || 0) > 1 ? "s" : ""}
                                   </span>
                                 </div>
                                 <h3 className="font-black text-xl mb-1 relative z-10 line-clamp-2 uppercase text-foreground">{v.title}</h3>
                                 <p className="text-muted-foreground text-xs font-bold uppercase relative z-10">
-                                  {Math.floor(v.duration_seconds / 60)}:{(v.duration_seconds % 60).toString().padStart(2, "0")} · {new Date(v.created_at).toLocaleDateString()}
+                                  {Math.floor((v.duration_seconds || 0) / 60)}:{((v.duration_seconds || 0) % 60).toString().padStart(2, "0")} · {v.created_at ? new Date(v.created_at).toLocaleDateString() : ""}
                                 </p>
                               </div>
                             ))}
