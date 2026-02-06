@@ -61,7 +61,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
         if (isOpen && !ActiveComponent) {
             loadComponent("profile")
         }
-    }, [isOpen])
+    }, [isOpen, ActiveComponent])
 
     if (!isOpen) return null
 

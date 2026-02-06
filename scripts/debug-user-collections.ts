@@ -4,6 +4,11 @@ import { getSupabaseAdmin } from "@/lib/db"
 
 async function main() {
   const admin = getSupabaseAdmin()
+  if (!admin) {
+    console.error("Supabase admin client is not configured")
+    process.exit(1)
+  }
+
   const userId = "52b54b05-f4bc-43ef-a797-1cad08c12d45" // User ID from logs
 
   console.log("Checking collections for user:", userId)

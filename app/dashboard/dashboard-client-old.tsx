@@ -39,6 +39,54 @@ export default function DashboardClient({ user }: DashboardClientProps) {
     loadNotes()
   }, [])
 
+  const loadNotes = async () => {
+    const res = await fetch("/api/notes")
+    if (res.ok) {
+      const data = await res.json()
+      setNotes(data)
+    }
+  }
+
+  const createNote = async () => {
+    const res = await fetch("/api/notes", {
+      method: "POST",
+    })
+
+    if (res.ok) {
+      const newNote = await res.json()
+      setNotes([newNote, ...notes])
+      selectNote(newNote)
+    }
+  }
+
+  const selectNote = (note: Note) => {
+    setSelectedNote(note)
+    setTitle(note.title)
+    setContent(note.content)
+    setSaveStatus("")
+  }
+
+  const saveNote = useCallback(async () => {
+    if (!selectedNote) return
+
+    const res = await fetch(`/api/notes/${selectedNote.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title, content }),
+    })
+
+    if (res.ok) {
+      const updatedNote = await res.json()
+
+      // Met à jour la liste des notes
+      setNotes(notes.map(n =>
+        n.id === updatedNote.id ? updatedNote : n
+      ))
+
+      setSaveStatus("saved")
+    }
+  }, [selectedNote, title, content, notes])
+
   // Auto-save avec debounce de 500ms
   useEffect(() => {
     if (!selectedNote) return
@@ -49,7 +97,7 @@ export default function DashboardClient({ user }: DashboardClientProps) {
     }, 500)
 
     return () => clearTimeout(timer)
-  }, [content, title, selectedNote?.id])
+  }, [content, title, selectedNote, saveNote])
 
   // Gestion de la sélection de texte pour le menu contextuel
   useEffect(() => {
@@ -89,54 +137,6 @@ export default function DashboardClient({ user }: DashboardClientProps) {
       document.removeEventListener("keyup", handleSelection)
     }
   }, [isContextualMode])
-
-  const loadNotes = async () => {
-    const res = await fetch("/api/notes")
-    if (res.ok) {
-      const data = await res.json()
-      setNotes(data)
-    }
-  }
-
-  const createNote = async () => {
-    const res = await fetch("/api/notes", {
-      method: "POST",
-    })
-    
-    if (res.ok) {
-      const newNote = await res.json()
-      setNotes([newNote, ...notes])
-      selectNote(newNote)
-    }
-  }
-
-  const selectNote = (note: Note) => {
-    setSelectedNote(note)
-    setTitle(note.title)
-    setContent(note.content)
-    setSaveStatus("")
-  }
-
-  const saveNote = async () => {
-    if (!selectedNote) return
-    
-    const res = await fetch(`/api/notes/${selectedNote.id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title, content }),
-    })
-
-    if (res.ok) {
-      const updatedNote = await res.json()
-      
-      // Met à jour la liste des notes
-      setNotes(notes.map(n => 
-        n.id === updatedNote.id ? updatedNote : n
-      ))
-      
-      setSaveStatus("saved")
-    }
-  }
 
   const deleteNote = async () => {
     if (!selectedNote) return
