@@ -29,13 +29,13 @@ type RateLimitType = "ai" | "api" | "auth" | "upload"
 
 const RATE_LIMIT_CONFIGS: Record<RateLimitType, { requests: number; window: string }> = {
   // Endpoints IA - plus restrictifs (coûteux)
-  ai: { requests: 20, window: "1m" },
+  ai: { requests: 20, window: "60 s" },
   // Endpoints API standard
-  api: { requests: 100, window: "1m" },
+  api: { requests: 100, window: "60 s" },
   // Endpoints d'authentification (protection brute force)
-  auth: { requests: 10, window: "1m" },
+  auth: { requests: 10, window: "60 s" },
   // Uploads de fichiers
-  upload: { requests: 10, window: "1m" },
+  upload: { requests: 10, window: "60 s" },
 }
 
 function getRatelimiter(type: RateLimitType): Ratelimit | null {
@@ -50,7 +50,7 @@ function getRatelimiter(type: RateLimitType): Ratelimit | null {
     const config = RATE_LIMIT_CONFIGS[type]
     const limiter = new Ratelimit({
       redis: redisClient,
-      limiter: Ratelimit.slidingWindow(config.requests, config.window),
+      limiter: Ratelimit.slidingWindow(config.requests, config.window as any),
       analytics: true,
       prefix: `ratelimit:${type}`,
     })
