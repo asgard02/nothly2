@@ -36,6 +36,7 @@ const DEFAULT_OPTIONS: Required<RetryOptions> = {
     "ECONNRESET",
     "ETIMEDOUT",
   ],
+  context: {},
 }
 
 /**
