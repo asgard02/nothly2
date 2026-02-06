@@ -17,6 +17,7 @@ export default function DashboardPage() {
     const [user, setUser] = useState<{ email?: string, user_metadata?: { full_name?: string, name?: string } } | null>(null)
     const [loadingUser, setLoadingUser] = useState(true)
     const [dayStreak, setDayStreak] = useState(0)
+    const [mounted, setMounted] = useState(false)
     const { data: subjects = [] } = useSubjects()
     const { data: documents = [] } = useDocuments()
 
@@ -58,12 +59,13 @@ export default function DashboardPage() {
     const t = useTranslations("Dashboard")
     const format = useFormatter()
 
-    const today = format.dateTime(new Date(), { weekday: 'long', month: 'long', day: 'numeric' })
-    const hour = new Date().getHours()
+    useEffect(() => { setMounted(true) }, [])
+
+    const today = mounted ? format.dateTime(new Date(), { weekday: 'long', month: 'long', day: 'numeric' }) : ""
+    const hour = mounted ? new Date().getHours() : 8
 
     const rawName = user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split('@')[0]
     const userName = rawName || "Friend"
-
 
     let greetingKey = "goodMorning"
     if (hour >= 12 && hour < 18) greetingKey = "goodAfternoon"
@@ -91,8 +93,8 @@ export default function DashboardPage() {
                 <div className="relative z-10 flex flex-col md:flex-row items-start md:items-end justify-between gap-6">
                     <div>
                         <div className="flex items-center gap-2 mb-4">
-                            <span suppressHydrationWarning className="bg-foreground text-background px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow-[2px_2px_0px_0px_rgba(167,139,250,1)]">
-                                {today}
+                            <span className="bg-foreground text-background px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow-[2px_2px_0px_0px_rgba(167,139,250,1)]">
+                                {today || "\u00A0"}
                             </span>
                         </div>
                         <h1 className="text-4xl md:text-6xl font-black tracking-tight text-foreground flex flex-wrap gap-2 items-center">

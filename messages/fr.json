@@ -495,7 +495,8 @@
     "deleteSummaryTitle": "Supprimer ce résumé ?",
     "deleteSummaryDesc": "Êtes-vous sûr de vouloir supprimer ce résumé ?",
     "documentDeleted": "Document supprimé",
-    "itemDeleted": "Élément supprimé"
+    "itemDeleted": "Élément supprimé",
+    "conversationalAssistant": "Assistant conversationnel"
   },
   "Library": {
     "title": "Matières",
