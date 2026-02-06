@@ -104,24 +104,6 @@ export default function Sidebar() {
             })}
           </nav>
 
-          {/* Promo Widget (Only visible when open) */}
-          {isOpen && (
-            <div className="px-4 mb-4">
-              <div className="bg-accent border-2 border-border rounded-xl p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] relative overflow-hidden group hover:translate-x-[-2px] hover:translate-y-[-2px] transition-transform">
-                {/* Decorations */}
-                <div className="absolute -right-4 -top-4 w-12 h-12 bg-card rounded-full border-2 border-border"></div>
-                <div className="absolute -left-2 -bottom-2 w-8 h-8 bg-secondary rounded-full border-2 border-border"></div>
-
-                <div className="relative z-10">
-                  <h4 className="font-black text-lg leading-tight mb-1 text-foreground">{t("proTitle")}</h4>
-                  <p className="text-xs font-bold mb-3 text-muted-foreground">{t("proDesc")}</p>
-                  <button className="bg-foreground text-background text-xs font-bold px-3 py-2 rounded-lg w-full hover:bg-card hover:text-foreground border-2 border-transparent hover:border-border transition-colors">
-                    {t("upgrade")}
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
 
           {/* Footer - Settings/User */}
           <div className="border-t-2 border-border p-4 bg-muted">

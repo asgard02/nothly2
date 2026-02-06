@@ -56,22 +56,22 @@ export default function Navbar() {
           {/* Navigation Links */}
           <div className="hidden md:flex items-center space-x-8">
             <a
-              href="#flow"
-              onClick={(event) => handleAnchorNavigation(event, "flow")}
+              href="#audience"
+              onClick={(event) => handleAnchorNavigation(event, "audience")}
               className="text-sm font-bold uppercase tracking-wider text-black hover:bg-black hover:text-white px-3 py-1 transition-all duration-200 cursor-pointer border-2 border-transparent hover:border-black rounded-lg"
             >
               How it works
             </a>
             <a
-              href="#value"
-              onClick={(event) => handleAnchorNavigation(event, "value")}
+              href="#flow"
+              onClick={(event) => handleAnchorNavigation(event, "flow")}
               className="text-sm font-bold uppercase tracking-wider text-black hover:bg-black hover:text-white px-3 py-1 transition-all duration-200 cursor-pointer border-2 border-transparent hover:border-black rounded-lg"
             >
               Value
             </a>
             <a
-              href="#audience"
-              onClick={(event) => handleAnchorNavigation(event, "audience")}
+              href="#value"
+              onClick={(event) => handleAnchorNavigation(event, "value")}
               className="text-sm font-bold uppercase tracking-wider text-black hover:bg-black hover:text-white px-3 py-1 transition-all duration-200 cursor-pointer border-2 border-transparent hover:border-black rounded-lg"
             >
               Who is it for?
