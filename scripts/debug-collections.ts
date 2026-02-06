@@ -11,7 +11,7 @@ async function main() {
   // 1. Count all collections
   const { data: allCollections, error: allError } = await admin
     .from("collections")
-    .select("id, title, user_id")
+    .select("id, title, user_id, is_favorite")
   
   if (allError) {
     console.error("Error fetching all collections:", allError)
